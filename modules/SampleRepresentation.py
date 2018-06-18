@@ -2,6 +2,9 @@
 """Deals with the sample representation for simulation of the reflectivity."""
 
 
+#Python Version 2.7
+
+
 __author__ = "Yannic Utz"
 __copyright__ = ""
 __credits__ = ["Yannic Utz and Martin Zwiebler"]
@@ -13,12 +16,15 @@ __status__ = "Prototype"
 
 
 import os.path
+import numbers
+import numpy
+import ast
+from  scipy import interpolate
+import matplotlib.pyplot
 import Pythonreflectivity
 
 
-import Parameters
-
-
+from . import Parameters
 
 
 class Heterostructure(object):
@@ -95,11 +101,42 @@ class Heterostructure(object):
         
     
     def _getNumberOfLayers_(self):
+        """Return number of different layers (i.e. number of different indices)."""
         return self._number_of_layers
+    
+    
+    def _getTotalNumberOfLayers_(self):
+        """Return total number of layers (counting also multiple use of the same layer according to \'multilayer_structure\')."""
+        n=0
+        for item in self._multilayer_structure:
+            if isinstance(item, int):
+                n+=1
+            elif isinstance(item, list):
+                n+=item[0]*len(item[1])
+        return n
+        
     
     def _getMultilayerStructure_(self):
         return self._multilayer_structure
         
+    def _mapTotalIndexToInternal(self,tot_ind):
+        """Return the index used within \'multilayer_structure\' which corresponds to the total index of the layer counting from the bottom."""
+        if tot_ind>=self.N_total:
+            raise ValueError("Index out of range.")        
+        i=0
+        for item in self._multilayer_structure:
+            if isinstance(item, int):
+                if i==tot_ind:
+                    return item
+                i+=1
+            elif isinstance(item, list):
+                for loop in range(item[0]):
+                    for subitem in item[1]:
+                        if i==tot_ind:
+                            return subitem
+                        i+=1
+
+    
     #public methods
                                 
     def setLayout(self, number_of_layers, multilayer_structure=None):
@@ -131,7 +168,7 @@ class Heterostructure(object):
         
     def setLayer(self,index, layer):
         """
-        Place \'layer\' (instance of LayerObject) at position \'index\' (counting from 0, starting from the bottom).
+        Place \'layer\' (instance of LayerObject) at position \'index\' (counting from 0, starting from the bottom or according to \'multilayer_structure\').
         """
         if not isinstance(index,int):
             raise TypeError("\'index\' must be of type int.")
@@ -145,7 +182,7 @@ class Heterostructure(object):
     
     def getLayer(self,index):
         """
-        Return the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom).
+        Return the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom or according to \'multilayer_structure\').
         """
         if not isinstance(index,int):
             raise TypeError("\'index\' must be of type int.")
@@ -154,12 +191,16 @@ class Heterostructure(object):
         if index>=self._number_of_layers:
             raise ValueError("\'index\' exceeds defined number of layers.")
         return self._listoflayers[index]
-    
          
+    def getTotalLayer(self,index):
+        """
+        Return the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom, even if a latter sequence is repeated with help of \'multilayer_structure\').
+        """
+        return self.getLayer(self._mapTotalIndexToInternal(index))
     
     def removeLayer(self,index):
         """
-        Remove the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom from the  heterostructructure.
+        Remove the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom from the  heterostructructure or according to \'multilayer_structure\').
         
         
         \'index\' can also be a list of indices.
@@ -189,8 +230,6 @@ class Heterostructure(object):
         """
         Return list of layers (layer type from Pythonreflectivity) which can be directly used as input for \'Pythonreflectivity.Reflectivity( )\'
         """
-        print self._number_of_layers
-        print self._PyReflMLstring
         PyReflStructure=Pythonreflectivity.Generate_structure(self._number_of_layers,self._PyReflMLstring)
         index=0
         for layer in self._listoflayers:
@@ -206,7 +245,8 @@ class Heterostructure(object):
             
 
     #properties
-    N=property(_getNumberOfLayers_)
+    N=property(_getNumberOfLayers_)                                             #number of different layers
+    N_total=property(_getTotalNumberOfLayers_)                                  #total number of layers (counting also multiple use of the same layer according to \'multilayer_structure\')
     MLstructure=property(_getMultilayerStructure_)
     
 
@@ -219,7 +259,7 @@ class LayerObject(object):
        It handels the basic properties of 
     """
     
-    def __init__(self, chitensor=[], d=None,  sigma=None, magdir="0"):
+    def __init__(self, chitensor=None, d=None,  sigma=None, magdir="0"):
         """Creates a new Layer.
         
         \'d\' is its thickness, \'sigma\' is the roughness of its upper surface, \'chitensor\' is its electric susceptibility tensor, and \'magdir\' gives the magnetization directrion for MOKE
@@ -342,9 +382,93 @@ class LayerObject(object):
         
         
         
-class AtomLayerObject(object):
-    """Speciallized Layer to deal with compositions of Atoms and their absorption spectra."""
-    pass
+class AtomLayerObject(LayerObject):
+    """
+    Speciallized Layer to deal with compositions of Atoms and their absorption spectra.
+    
+    Especially usefull to deal with atomic layers, but can also be used for bulk.
+    The atoms and their formfactors have to be registered a the class (with registerAtom) before they can be used to instantiate a new AtomLayerObject.
+    The atom density can be plotted with plotAtomDensity() (see convenience functions).
+    Density in mol/cm$^3$
+    """
+    
+    def __init__(self, densitydict={}, d=None,  sigma=None, magdir="0"):
+        """
+        Create an AtomLayerObject.
+        
+        \'densitydict\' ist a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of the Parameter class or derived classes).
+        """
+        if not isinstance(densitydict,dict):
+            raise TypeError("\'densitydict\' has to be a dictionary.")
+        for atomname in densitydict:
+            if not isinstance(atomname,str):
+                raise TypeError("The keys of the \'densitydict\' dictionary have to be stings.")
+            if not isinstance(densitydict[atomname], Parameters.Parameter):
+                raise TypeError("The values of the \'densitydict\' dictionary have to be instances of the \'Parameter\' class or of derived classes.")
+            if atomname not in type(self)._atomdict:
+                raise ValueError("Atom \'"+atomname+"\' has not been registered yet.")
+        
+        self._densitydict=densitydict.copy()                                #The usage of "copy" creates a copy of the dictionary. By this, we ensure, that changes of the original dictionary outside the object will not affect the AtomLayerObject
+        
+         #call constructor of the base class
+        super(AtomLayerObject,self).__init__(None, d,  sigma, magdir)     
+        
+           
+    def getDensitydict(self,fitpararray=None):
+        """Return the density dictionary either with evaluated paramters (needs fitpararray) or with the raw '\Parameter\' objects (use fitparraray=None)."""
+        if fitpararray==None:
+            return self._densitydict.copy()
+        elif not isinstance(fitpararray,list):
+            raise TypeError("\fitparray\' has to be a list.")
+        else:
+            return dict(zip(self._densitydict.keys(),[item.getValue(fitpararray) for item in self._densitydict.values()]))              #pack new dictionary from atomnames and "unpacked" parameters (actual values instead of abstract parameter)
+       
+    def getChi(self,fitpararray,energy):
+        
+        #debug
+        print "WARNING: Calculation of susceptibility from formfactor is not verified!"
+        
+        ffsum=sum([item[1].getValue(fitpararray)*(type(self)._atomdict[item[0]]).getFF(energy,fitpararray) for item in self._densitydict.items()])  #gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
+               
+        return list(ffsum*830.3584763651544/energy**2)                #no idea why there is this strange numerical factor 
+        
+        
+        
+        
+    
+    #classvariables
+    _atomdict={}
+    
+    #classmethods                                               #are not related to an instance of a class and are here used to deal with the collection of all registered atoms
+    @classmethod
+    def registerAtom(cls, name,formfactor):
+        """
+        Register an atom for later use to instantiate an AtomLayerObject.
+        
+        \'formfactor\' as to be an instance of \'Formfactor\' or of a derived class.
+        """        
+        if not isinstance(name,str):
+            raise TypeError("The atom \'name\' has to be a string.")
+        if not isinstance(formfactor,Formfactor):
+            raise TypeError("\'formfactor\' has to be an instance of \'Formfactor\' or of a derived class.")
+        if name in cls._atomdict:
+            print "WARNING: Atom \'"+str(name)+"\' is replaced."
+        cls._atomdict.update({name: formfactor})
+    
+    @classmethod
+    def getAtom(cls, name):
+        """Return the Formfactor object registered for Atom \'name\'."""
+        if not isinstance(name,str):
+            raise TypeError("The atom \'name\' has to be a string.")
+        if name not in cls._atomdict:
+            raise ValueError("The atom \'name\' is not registered.")
+        return cls._atomdict[name]
+    
+    @classmethod
+    def getAtomNames(cls):
+        """Return a list of names of registered atoms."""
+        return cls._atomdict.keys()
+    
 
 
 
@@ -361,7 +485,10 @@ class Formfactor(object):
     def __init__(self):
         raise NotImplementedError
     
-    def get(self,E,fitpararray=None):
+    def getFF(self,energy,fitpararray=None):
+        """
+        Return the formfactor for \'energy\' corresponding to fitpararray (if it depends on it).
+        """
         raise NotImplementedError
 
 
@@ -369,21 +496,176 @@ class FFfromFile(Formfactor):
     """
     Class to deal with energy-dependent atomic form-factors which are tabulated in files.
     """
-    
-    def __init__(self, filename, linereaderfctn):
+  
+    def __init__(self, filename, linereaderfctn=None):
         """Initializes the FFfromFile object with the data from filename.
         
            The \'linereaderfctn\' is used to convert one line from the text file to data.
-           It should be a function which takes a string and returns a list of 10 values: [energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz]
+           It should be a function which takes a string and returns a list of 10 values: [energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz] 
+           It can also return \'None\' if it detects a comment line.
            You can use FFfromFile.getLinereader to get a standard function, which just reads this array as whitespace seperated from the line.
         """
         if not isinstance(filename,str):
             raise TypeError("\'filename\' needs to be a string.")
+        if linereaderfctn is None:
+            linereaderfctn=self.getLinereader()
         if not callable(linereaderfctn):
             raise TypeError("\'linereaderfctn\' needs to be a callable object.")
         if not os.path.isfile(filename):
             raise Exception("File \'"+filename+"\' does not exist.")
-        self._energydepff=[]                                    #the energy-dependent formfactors should be stored in here like this: [[E_1,[f1_xx,f1_xy,...,f1_zy,f1_zz]], ...,[E_n,[fn_xx,fn_xy,...,fn_zy,fn_zz]] 
+        energies=[]
+        formfactors=[]
         with open(filename,'r') as f:
-        
+            for line in f:
+                linereaderoutput=linereaderfctn(line)
+                if linereaderoutput is None:
+                    break
+                if not isinstance(linereaderoutput,list):
+                    raise TypeError("Linereader function has to return a list.")
+                if not  len(linereaderoutput)==10:
+                    raise ValueError("Linereader function hast to return a list with 10 elements.")
+                for item in linereaderoutput:
+                    if not isinstance(item,numbers.Number):
+                        raise ValueError("Linereader function hast to return a list of numbers.")
+                if isinstance(linereaderoutput[0],complex):
+                    raise ValueError("Linereader function hast to return a real value for the energy.")
+                energies.append(linereaderoutput[0])                                                        #store energies in one list
+                formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+        formfactors=numpy.array(formfactors)                                                                #convert list formfactors to a numpy array for convinience
+        self._minE=min(energies)
+        self._maxE=max(energies)
+        #Create an interpolation function based on the given energie-formfactor-points. The formfactors are thererfore transformed to arrays of length 18 but with real values. 
+        #After that the array of N arrays of 18 element is transformed to an array of 18 arrays of N elements as needed by the interp1d function.
+        #Therefore, this function will return an array of length 18 wich has to be transformed back to 9 complex valued elements.
+        #Energies and formfactors don't have to be stored explicitly , because they are contained in the "self._interpolator" function.
+        self._interpolator=interpolate.interp1d(energies,numpy.transpose(numpy.concatenate((formfactors.real,formfactors.imag),1))) 
     
+    def _getMinE_(self):
+        return self._minE
+    
+    def _getMaxE_(self):
+        return self._maxE
+    
+    
+    #public methods
+    
+    @staticmethod
+    def getLinereader(complex_numbers=True):
+        """
+        Return the standard linereader function.
+        
+        This standard linereader function reads energy and complex elements of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes \'#\' as comment sign.
+        If complex_numbers==0 then the reader reads real and imaginary part of every element sepeately, i.e. every line has to consist of 19 numbers seperated by whitespaces.
+        """
+        commentsymbol='#'
+        if complex_numbers==True:
+            def linereader(line):
+                if not isinstance(line,str):
+                    raise TypeError("\'line\' needs to be a string.")
+                line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+                if not line.isspace():                               #ignore empty lines        
+                    linearray=line.split()
+                    if not len(linearray)==10:
+                        raise Exception("Formfactor file has wrong format.")
+                    linearray=[ast.literal_eval(item) for item in linearray]
+                    return linearray
+                else:
+                    return None
+        elif complex_numbers==False:
+            def linereader(line):
+                if not isinstance(line,str):
+                    raise TypeError("\'line\' needs to be a string.")
+                line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+                if not line.isspace():                               #ignore empty lines        
+                    linearray=line.split()
+                    if not len(linearray)==19:
+                        raise Exception("Formfactor file has wrong format.")
+                    linearray=[ast.literal_eval(item) for item in linearray]
+                    return [linearray[0], linearray[1]+1j*linearray[2], linearray[3]+1j*linearray[4], linearray[5]+1j*linearray[6], linearray[7]+1j*linearray[8], linearray[9]+1j*linearray[10], linearray[11]+1j*linearray[12], linearray[13]+1j*linearray[14], linearray[15]+1j*linearray[16], linearray[17]+1j*linearray[18]]
+                else:
+                    return None
+        else:
+            raise TypeError("\'complex_numbers\' has to be boolean.")
+        return linereader                                                               #here the FUNKTION linereader is returned
+            
+    def getFF(self,energy,fitpararray=None):
+        """
+        Return the formfactor for \'energy\' as an interpolation between the stored values from file as 1-D numpy array.
+        
+        \'fitpararray\' is not used.
+        """
+        if energy<self.minE or energy>self.maxE:
+            raise ValueError("\'energy="+str(energy)+"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
+        FFallReal=self._interpolator(energy)
+        #return list(FFallReal[:9]+FFallReal[9:]*1j)
+        return FFallReal[:9]+FFallReal[9:]*1j
+        
+        
+        
+    #properties
+    maxE=property(_getMaxE_)
+    minE=property(_getMinE_)
+    
+    
+#--------------------------------------------------------------------------------------------------------------------------
+# convenience functions
+
+def plotAtomDensity(hs,fitpararray,atomnames=None,colormap=[]):
+    """Make a plot of the atom densities of all AtomLayerObjects contained in the \'Heterostructure\' \'hs\' corresdonding to the \'fitpararray\' and return the plotted information.
+    
+        You can define which atoms you want to plot or in which order. Give \'atomnames\' as a list of strings.
+        You can also define the colors of the bars. Just give a list of matplotlib color names. They will be used in the given order.
+    """
+    if not isinstance(hs,Heterostructure):
+        raise TypeError("\'hs\' has to be of type \'SampleRepresentation.Heterostructure\'.")
+    elif not isinstance(fitpararray,list):
+            raise TypeError("\fitparray\' has to be a list.")
+    elif not isinstance(colormap,list):
+            raise TypeError("\colormap\' has to be a list.")
+    elif not isinstance(atomnames,list):
+            raise TypeError("\atomnames\' has to be a list.")
+    for item in atomnames:
+        if not isinstance(item,str):
+            raise TypeError("\atomnames\' has to be a list of strings.")
+    
+    number_of_layers=hs.N_total
+    if atomnames is None:
+        atomnames=AtomLayerObject.getAtomNames()
+        widthstep=0.9/len(atomnames)                #if no order is given plot each set of bar with smaller width to not cover the underlying bar
+    else:
+        widthstep=0.0
+    if atomnames==[]:
+        print "No atoms registered."
+        return
+    
+    densitylistdict={}
+    for name in atomnames:
+        densitylistdict[name]=numpy.zeros(number_of_layers)                                 #create dictionary, which has an entry for every atom, with its name as key and as value a list. These lists are as long as there are numbers of layers and filled with zeros.
+    
+    for i in range(hs.N):                                                   
+        layer=hs.getLayer(i)                                                    #go through all layers in the heterostructure
+        if isinstance(layer,AtomLayerObject):                                   #if it is an instance of AtomLayerObject (i.e. contains information about atom densities)
+            densitydict=layer.getDensitydict(fitpararray)           #get the density dictionary from this layer with the parameters evaluated (i.e. take the value contained in fitpararray)
+            for name in atomnames:                                  #if atom with a certain name is contained within this layer, ad its density to the corresponding list in densitylistdict
+                if name in densitydict:
+                    densitylistdict[name][i]=densitydict[name]
+        
+        
+    colorindex=0
+    w=1
+    widthstep=0.9/len(atomnames)
+    for name in densitylistdict:
+        if colorindex<len(colormap):
+            matplotlib.pyplot.bar(range(number_of_layers), densitylistdict[name],align='center',width=w,label=name,color=colormap[colorindex],alpha=0.9)
+            colorindex+=1
+        else:
+            matplotlib.pyplot.bar(range(number_of_layers), densitylistdict[name], align='center', width=w,label=name,alpha=0.9)
+        w-=widthstep
+       
+    matplotlib.pyplot.xlabel("Layer number")
+    matplotlib.pyplot.ylabel(r'Density in mol/cm$^3$')
+    matplotlib.pyplot.legend()
+    matplotlib.pyplot.xlim(0,number_of_layers)
+    matplotlib.pyplot.show()
+    
+    return densitylistdict                      #contains a dictionary, which has an entry for every atom, with its name as key and as value a list. These lists are as long as there are numbers of layers and filled with

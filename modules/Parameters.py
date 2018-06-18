@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Provide an easy and transparent handling of fit parameters"""
 
+#Python Version 2.7
 
 __author__ = "Yannic Utz"
 __copyright__ = ""
@@ -287,6 +288,11 @@ class Fitparameter(Parameter):
 class ParameterPool(object):
     """Collects a pool of Parameter objects and connects them with a parameter file."""
     
+    #file format
+    nonesymbol='-'                          #if this symbol is found in the parameter file the corresponding property is set to "None"
+    commentsymbol='#'                       #Lines starting with this symbol in the parameter file are ignored
+    lineorder=[0,1,2,3,4]                 #gives the order of parameter properties in a line of the parameter file. [pos of start_value, pos of fixed, pos of lower_lim, pos of upper_lim, name]
+    
     def __init__(self,parfilename=None):
         """Initialize a new ParameterPool. Read parameter initialisation from file \'parfilename\'.
         
@@ -324,11 +330,7 @@ class ParameterPool(object):
             return str(number)
 
         
-    #file format
-    nonesymbol='-'                          #if this symbol is found in the parameter file the corresponding property is set to "None"
-    commentsymbol='#'                       #Lines starting with this symbol in the parameter file are ignored
-    lineorder=[0,1,2,3,4]                 #gives the order of parameter properties in a line of the parameter file. [pos of start_value, pos of fixed, pos of lower_lim, pos of upper_lim, name]
-    
+
     
     #public methods
     
@@ -361,7 +363,8 @@ class ParameterPool(object):
         """
         with open(parfilename,'r') as f:
             for line in f:
-                if not line[0]==self.commentsymbol:                       #ignore lines starting with '#', for comments
+                line=(line.split(self.commentsymbol))[0]   #ignore everythin behind a commentsymbol
+                if not line.isspace() and not line=="":                       #ignore empty lines
                     l=line.split()
       
                     #the order of the parameter properties is coded here, with the help of the lineorder array

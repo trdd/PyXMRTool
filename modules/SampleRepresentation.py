@@ -229,6 +229,8 @@ class Heterostructure(object):
     def GetSingleEnergyStructure(self,fitpararray,energy=None):
         """
         Return list of layers (layer type from Pythonreflectivity) which can be directly used as input for \'Pythonreflectivity.Reflectivity( )\'
+        
+        \'energy\' in units of eV
         """
         PyReflStructure=Pythonreflectivity.Generate_structure(self._number_of_layers,self._PyReflMLstring)
         index=0
@@ -264,6 +266,7 @@ class LayerObject(object):
         
         \'d\' is its thickness, \'sigma\' is the roughness of its upper surface, \'chitensor\' is its electric susceptibility tensor, and \'magdir\' gives the magnetization directrion for MOKE
         \'d\', \'sigma\' ,and the entries of \'chitensor\' are expected to be an instances of a \"Parameter\" class (also \"Fitparamter\").
+        \'d\' and \'sigma\' are both of dimension length. You are free to choose whatever unit you want, but use the same for every length troughout the project.
         \'chitensor\' is a list of either  1,3, 4 or 9 elements (see also documentation for Pythonreflectivity).
         [chi] sets chi_xx = chi_yy = chi_zz = chi
         [chi_xx,chi_yy,chi_z] sets  chi_xx,chi_yy,chi_zz, others are zero
@@ -333,6 +336,7 @@ class LayerObject(object):
         Return the chitensor as a list numbers of  for a certain energy.
     
         For the base implementation of class \'LayerObject\' the parameter \'energy\' is not used. But it may be used by derived classes like \'AtomLayerObject\'.
+        \'energy\' in units of eV.
         """
         #check tensor bevor giving it to the outside
         if not (len(self._chitensor)==1 or len(self._chitensor)==3 or len(self._chitensor)==4 or len(self._chitensor)==9):
@@ -343,14 +347,22 @@ class LayerObject(object):
         return [item.getValue(fitpararray) for item in self._chitensor]
     
     def getD(self,fitpararray):
-        """Return the thickness d as a an actual number."""
+        """
+        Return the thickness d as a an actual number.
+        
+        The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.
+        """
         if self._d is None:
             return 0
         else:
             return self._d.getValue(fitpararray)
     
     def getSigma(self,fitpararray):
-        """Return sigma as a an actual number."""
+        """
+        Return sigma as a an actual number.
+        
+        The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.
+        """
         if self._sigma is None:
             return 0
         else:
@@ -384,19 +396,23 @@ class LayerObject(object):
         
 class AtomLayerObject(LayerObject):
     """
-    Speciallized Layer to deal with compositions of Atoms and their absorption spectra.
+    Speciallized Layer to deal with compositions of Atoms and their energy dependent formfactors (which can be obtained from absorption spectra).
     
     Especially usefull to deal with atomic layers, but can also be used for bulk.
     The atoms and their formfactors have to be registered a the class (with registerAtom) before they can be used to instantiate a new AtomLayerObject.
     The atom density can be plotted with plotAtomDensity() (see convenience functions).
-    Density in mol/cm$^3$
+    Density in mol/cm$^3$ (as long as no densityunitfactor is applied)
     """
     
-    def __init__(self, densitydict={}, d=None,  sigma=None, magdir="0"):
+    def __init__(self, densitydict={}, d=None,  sigma=None, magdir="0", densityunitfactor=1.0):
         """
         Create an AtomLayerObject.
         
         \'densitydict\' ist a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of the Parameter class or derived classes).
+        For the other parameters see \'LayerObject\'.
+        
+        If the densities in densitydict are measured in another unit than mol/cm^3, state the \'densityunitfactor\' which translates your generic density to the one used internally.
+        I.e.    rho_in_mol_per_cubiccm = densityunitfactor * rho_in_whateverunityouwant
         """
         if not isinstance(densitydict,dict):
             raise TypeError("\'densitydict\' has to be a dictionary.")
@@ -424,13 +440,23 @@ class AtomLayerObject(LayerObject):
             return dict(zip(self._densitydict.keys(),[item.getValue(fitpararray) for item in self._densitydict.values()]))              #pack new dictionary from atomnames and "unpacked" parameters (actual values instead of abstract parameter)
        
     def getChi(self,fitpararray,energy):
+        """
+        Return the chitensor as a list numbers of  for a certain energy.
+    
+        \'energy\' in units of eV.
+        """
+        #gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
+        ffsum=sum([item[1].getValue(fitpararray)*(type(self)._atomdict[item[0]]).getFF(energy,fitpararray) for item in self._densitydict.items()])
         
-        #debug
-        print "WARNING: Calculation of susceptibility from formfactor is not verified!"
         
-        ffsum=sum([item[1].getValue(fitpararray)*(type(self)._atomdict[item[0]]).getFF(energy,fitpararray) for item in self._densitydict.items()])  #gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
-               
-        return list(ffsum*830.3584763651544/energy**2)                #no idea why there is this strange numerical factor 
+        
+        # Return the susceptibility tensor chi
+        # As chi is very small, the linear approximation can be used.
+        # If there is no densityunitfactor defined, the densities are assumed to be in units of mol/cm^3.
+        # Energy is assumed to be in units of eV.
+        # The susceptibility is therefore given as: chi= 4* pi * h_bar^2 [eV*s]^2 * c^2 [m/s]^2 * r_e [m] * N_A [1/mol] * (100cm)^3/m^3 * ffsum (mol/cm^3) / E^2 (eV)^2
+        # N_A: Arvogardros number, r_e: thomson scattering length/classical electron radius
+        return list(ffsum*830.3584763651544/energy**2)                
         
         
         
@@ -488,6 +514,8 @@ class Formfactor(object):
     def getFF(self,energy,fitpararray=None):
         """
         Return the formfactor for \'energy\' corresponding to fitpararray (if it depends on it).
+        
+        \'energy\' in units of eV.
         """
         raise NotImplementedError
 
@@ -497,22 +525,29 @@ class FFfromFile(Formfactor):
     Class to deal with energy-dependent atomic form-factors which are tabulated in files.
     """
   
-    def __init__(self, filename, linereaderfctn=None):
+    def __init__(self, filename, linereaderfctn=None, energyshift=Parameters.Parameter(0)):
         """Initializes the FFfromFile object with the data from filename.
         
            The \'linereaderfctn\' is used to convert one line from the text file to data.
-           It should be a function which takes a string and returns a list of 10 values: [energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz] 
+           It should be a function which takes a string and returns a tuple or list of 10 values: (energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz) 
+           \'energy\' in units of eV, formfactors in units of "e/atom" (dimensionless)
            It can also return \'None\' if it detects a comment line.
-           You can use FFfromFile.getLinereader to get a standard function, which just reads this array as whitespace seperated from the line.
+           You can use FFfromFile.createLinereader to get a standard function, which just reads this array as whitespace seperated from the line.
+           
+           \'energyshift\' has to be an instance of \'Paramater\' or of a derived class. It can be used to specify a fittable energyshift between
+           the energy-dependent formfactor from filename and the \'real\' one in the reflectivity measurement. So the formfactor delivered from getFF() 
+           will not be formfactor_from_file(E) but formfactor_from_file(E+energyshift).
         """
         if not isinstance(filename,str):
             raise TypeError("\'filename\' needs to be a string.")
         if linereaderfctn is None:
-            linereaderfctn=self.getLinereader()
+            linereaderfctn=self.createLinereader()
         if not callable(linereaderfctn):
             raise TypeError("\'linereaderfctn\' needs to be a callable object.")
         if not os.path.isfile(filename):
             raise Exception("File \'"+filename+"\' does not exist.")
+        if not isinstance(energyshift,Parameters.Parameter):
+            raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
         energies=[]
         formfactors=[]
         with open(filename,'r') as f:
@@ -520,13 +555,13 @@ class FFfromFile(Formfactor):
                 linereaderoutput=linereaderfctn(line)
                 if linereaderoutput is None:
                     break
-                if not isinstance(linereaderoutput,list):
-                    raise TypeError("Linereader function has to return a list.")
+                if not isinstance(linereaderoutput,(tuple,list)) :
+                    raise TypeError("Linereader function has to return a list/tuple.")
                 if not  len(linereaderoutput)==10:
-                    raise ValueError("Linereader function hast to return a list with 10 elements.")
+                    raise ValueError("Linereader function hast to return a list/tuple with 10 elements.")
                 for item in linereaderoutput:
                     if not isinstance(item,numbers.Number):
-                        raise ValueError("Linereader function hast to return a list of numbers.")
+                        raise ValueError("Linereader function hast to return a list/tuple of numbers.")
                 if isinstance(linereaderoutput[0],complex):
                     raise ValueError("Linereader function hast to return a real value for the energy.")
                 energies.append(linereaderoutput[0])                                                        #store energies in one list
@@ -534,6 +569,7 @@ class FFfromFile(Formfactor):
         formfactors=numpy.array(formfactors)                                                                #convert list formfactors to a numpy array for convinience
         self._minE=min(energies)
         self._maxE=max(energies)
+        self._energyshift=energyshift                                                                       #Attention: this is supposed to be an instance of "Parameters.Parameter". So a value can be obtained with self._energyshift.getValue(fitparraray)
         #Create an interpolation function based on the given energie-formfactor-points. The formfactors are thererfore transformed to arrays of length 18 but with real values. 
         #After that the array of N arrays of 18 element is transformed to an array of 18 arrays of N elements as needed by the interp1d function.
         #Therefore, this function will return an array of length 18 wich has to be transformed back to 9 complex valued elements.
@@ -550,7 +586,7 @@ class FFfromFile(Formfactor):
     #public methods
     
     @staticmethod
-    def getLinereader(complex_numbers=True):
+    def createLinereader(complex_numbers=True):
         """
         Return the standard linereader function.
         
@@ -590,14 +626,17 @@ class FFfromFile(Formfactor):
             
     def getFF(self,energy,fitpararray=None):
         """
-        Return the formfactor for \'energy\' as an interpolation between the stored values from file as 1-D numpy array.
+        Return the (energy-shifted )formfactor for \'energy\' as an interpolation between the stored values from file as 1-D numpy array.
         
-        \'fitpararray\' is not used.
+        \'energy\' in units of eV.
+        \'fitpararray\' is actually only needed when an energyshift has been defined.
         """
-        if energy<self.minE or energy>self.maxE:
-            raise ValueError("\'energy="+str(energy)+"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
-        FFallReal=self._interpolator(energy)
-        #return list(FFallReal[:9]+FFallReal[9:]*1j)
+        energyshift=self._energyshift.getValue(fitpararray)
+        
+        if energy+energyshift<self.minE or energy+energyshift>self.maxE:
+            raise ValueError("\'energy + energyshift = "+str(energy)+" + "+ str(energyshift) + " = " + str(energy+energyshift) +"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
+        FFallReal=self._interpolator(energy+energyshift)
+        #return directly the numpy array, it is usefull further Calculation
         return FFallReal[:9]+FFallReal[9:]*1j
         
         
@@ -610,23 +649,25 @@ class FFfromFile(Formfactor):
 #--------------------------------------------------------------------------------------------------------------------------
 # convenience functions
 
-def plotAtomDensity(hs,fitpararray,atomnames=None,colormap=[]):
+def plotAtomDensity(hs,fitpararray,colormap=[],atomnames=None):
     """Make a plot of the atom densities of all AtomLayerObjects contained in the \'Heterostructure\' \'hs\' corresdonding to the \'fitpararray\' and return the plotted information.
     
-        You can define which atoms you want to plot or in which order. Give \'atomnames\' as a list of strings.
-        You can also define the colors of the bars. Just give a list of matplotlib color names. They will be used in the given order.
+        
+        You can  define the colors of the bars. Just give a list of matplotlib color names. They will be used in the given order.
+        You can define which atoms you want to plot or in which order. Give \'atomnames\' as a list of strings. If atomnames is not given, the bars will have different width, such that overlapped bars can be seen.
     """
     if not isinstance(hs,Heterostructure):
         raise TypeError("\'hs\' has to be of type \'SampleRepresentation.Heterostructure\'.")
     elif not isinstance(fitpararray,list):
             raise TypeError("\fitparray\' has to be a list.")
     elif not isinstance(colormap,list):
-            raise TypeError("\colormap\' has to be a list.")
-    elif not isinstance(atomnames,list):
-            raise TypeError("\atomnames\' has to be a list.")
-    for item in atomnames:
-        if not isinstance(item,str):
-            raise TypeError("\atomnames\' has to be a list of strings.")
+            raise TypeError("\'colormap\' has to be a list.")
+    elif not (isinstance(atomnames,list) or atomnames is None):
+            raise TypeError("\'atomnames\' has to be a list.")
+    if not atomnames is None:
+        for item in atomnames:
+            if not isinstance(item,str):
+                raise TypeError("\'atomnames\' has to be a list of strings.")
     
     number_of_layers=hs.N_total
     if atomnames is None:
@@ -653,8 +694,7 @@ def plotAtomDensity(hs,fitpararray,atomnames=None,colormap=[]):
         
     colorindex=0
     w=1
-    widthstep=0.9/len(atomnames)
-    for name in densitylistdict:
+    for name in atomnames:
         if colorindex<len(colormap):
             matplotlib.pyplot.bar(range(number_of_layers), densitylistdict[name],align='center',width=w,label=name,color=colormap[colorindex],alpha=0.9)
             colorindex+=1

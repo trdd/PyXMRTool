@@ -261,7 +261,7 @@ class Fitparameter(Parameter):
     def getValue(self,fitpararray):
         """Return the value of the parameter corresponding to the given array of values."""        
         if self._fixed==1:
-            self._start_val
+            return self._start_val
         elif self._index is None:
             raise Exception("Parameter has to be attached to a ParameterPool.")
         elif self.pool.GetFitArrayLen()<>len(fitpararray):
@@ -394,12 +394,17 @@ class ParameterPool(object):
                         par.lower_lim=lower_limit
                         par.upper_lim=upper_limit
     
-    def WriteToFile(self,parfilename):
-        """Write all paramters to file. 
-        
+    def WriteToFile(self,parfilename,fitpararray=None):
+        """Write paramters to file. 
+           
            Can be used to create a template for a parameter initialisation file or to store paramters after fitting.
+           If \'fitpararray is\' is given, these values are used as start_values. Else the stored start_values are used
         """   
         columnwidth=25
+        
+        if fitpararray is not None and len(fitpararray)<>self.GetFitArrayLen():
+            raise ValueError("\'fitpararray\' has wrong length.")
+        
         if os.path.isfile(parfilename) :
             #ask if overwrite
             answer=raw_input("Do you realy want to overwrite \'"+parfilename+"\'? [y/N]")

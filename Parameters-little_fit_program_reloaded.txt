@@ -1,0 +1,17 @@
+#<start_value>           <fixed>                  <lower_limit>            <upper_limit>            <name>                      <comments/units>
+250                      0                        100                      500                      peak_height                 
+5                        0                        2                        20                       peak_width                  eV
+650                      0                        640                      660                      peak_position               eV
+0.5                      0                        0.005                    2                        peak_step 
+20                       0                        -50                      50                       mag_height      
+5                        0                        2                        20                       mag_width                   eV
+650                      0                        640                      660                      mag_position                eV
+-5                       0                        -15                      -2                       ffre_offset    
+1                        0                        0.1                      10                       cap_chi_factor           
+100                      0                        80                       120                      layer_thickness             
+20                       0                        4                        40                       cap_thickness               
+3                        0                        1                        6                        substrate_roughness         
+3                        0                        1                        6                        layer_roughness             
+3                        0                        1                        6                        cap_roughness               
+1.0e-7                   0                        1.0e-9                   1.0e-5                   background               
+0.5                      0                        0.1                      1                        multiplier               

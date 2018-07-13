@@ -264,8 +264,8 @@ class Fitparameter(Parameter):
             return self._start_val
         elif self._index is None:
             raise Exception("Parameter has to be attached to a ParameterPool.")
-        elif self.pool.GetFitArrayLen()<>len(fitpararray):
-            raise Exception("Given fit value array is "+str(len(fitpararray))+" entries long but should have a length of "+str(self.pool.GetFitArrayLen())+".")
+        elif self.pool.getFitArrayLen()<>len(fitpararray):
+            raise Exception("Given fit value array is "+str(len(fitpararray))+" entries long but should have a length of "+str(self.pool.getFitArrayLen())+".")
         elif self._complex==1:
             return complex(fitpararray[self._index],fitpararray[self._index+1])
         else:
@@ -336,7 +336,7 @@ class ParameterPool(object):
     
     def NewParameter(self,name,fixed=0,start_val=None,lower_lim=None,upper_lim=None):
         """Create a New Parameter and return a reference to it or return the reference to an existing one."""
-        par=self.GetParameter(name)
+        par=self.getParameter(name)
         if par is None:
             par=Fitparameter(name,fixed,start_val,lower_lim,upper_lim)
             self._parPool.append(par)
@@ -345,7 +345,7 @@ class ParameterPool(object):
         return par
         
         
-    def GetParameter(self,name):
+    def getParameter(self,name):
         """Return existing parameter with name \'name\' or return \'None\' if not existing."""
         if not isinstance(name,str):
             raise TypeError("\'name\' has to be a string.")
@@ -383,7 +383,7 @@ class ParameterPool(object):
                         print line
                         raise ValueError("Start value and limits in the parameter file should be either all complex numbers or none of them.\n Bad line: "+line)                                
                     
-                    par=self.GetParameter(name)
+                    par=self.getParameter(name)
                     if par is None:
                         par=Fitparameter(name,fixed,start_value,lower_limit,upper_limit)
                         self._parPool.append(par)
@@ -402,7 +402,7 @@ class ParameterPool(object):
         """   
         columnwidth=25
         
-        if fitpararray is not None and len(fitpararray)<>self.GetFitArrayLen():
+        if fitpararray is not None and len(fitpararray)<>self.getFitArrayLen():
             raise ValueError("\'fitpararray\' has wrong length.")
         
         if os.path.isfile(parfilename) :
@@ -418,7 +418,7 @@ class ParameterPool(object):
                 parray=[self._convertNumberToStr(item) for item in [p.start_val,p.fixed,p.lower_lim,p.upper_lim,p.name]]
                 f.write(parray[self.lineorder[0]].ljust(columnwidth)+parray[self.lineorder[1]].ljust(columnwidth)+parray[self.lineorder[2]].ljust(columnwidth)+parray[self.lineorder[3]].ljust(columnwidth)+parray[self.lineorder[4]].ljust(columnwidth)+"\n")
     
-    def GetStartLowerUpper(self):
+    def getStartLowerUpper(self):
         """Return a tupel of arrays of parameter start values and limits in the order of occurence in the pool (order of parameter creation) of parameters which are not fixed. Real parameters first, then the complex ones."""
         self.update()
         start_vals=[]
@@ -445,7 +445,7 @@ class ParameterPool(object):
             upper_lims.append(self._parPool[poolindex].upper_lim.imag)
         return (start_vals,lower_lims,upper_lims)
     
-    def SetStartValues(self,fitvalues):
+    def setStartValues(self,fitvalues):
         """Set the start values of all parameters which are not fixed in the order of occurence in the pool (order of parameter creation). First real and then complex ones.
         
            Can be used befor WriteToFile() if you want to write out results of a fit to a file.
@@ -460,10 +460,10 @@ class ParameterPool(object):
             self._parPool[self._complexUnfixedArray[i]].start_val=complex(fitvalues[lenreal+2*i],fitvalues[lenreal+2*i+1])
             
     
-    def GetFitArrayLen(self):
+    def getFitArrayLen(self):
         return len(self._realUnfixedArray)+2*len(self._complexUnfixedArray)
     
-    def GetNames(self):
+    def getNames(self):
         """Return the names of all registered Fitparamters as a list in the same order they should be in the fitpararrays."""
         self.update()
         namearray=[]

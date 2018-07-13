@@ -77,6 +77,7 @@ class ReflDataSimulator(object):
             self._mode=mode                                   #for the other modes the mode-string can stay as it is
         
         #set length scale. Has direct impact for the calculation of wavelengths from energies.
+        self._lengthscale=length_scale                                                                  #need this property only for the methode setMode
         self._hcfactor=scipy.constants.physical_constants["Planck constant in eV s"][0]*scipy.constants.physical_constants["speed of light in vacuum"][0]/length_scale   
         
         
@@ -113,7 +114,7 @@ class ReflDataSimulator(object):
         flatsimdata=[]
         for item in self._expdata:
             #item[0] is the energy, item[1] is the list of angles at this energy
-            singeE_HS=self._hs.GetSingleEnergyStructure(fitpararray,item[0])      
+            singeE_HS=self._hs.getSingleEnergyStructure(fitpararray,item[0])      
             wavelength=self._hcfactor/item[0]
             rcalc=Pythonreflectivity.Reflectivity(singeE_HS, item[1],wavelength, Output="T", MultipleScattering=self._multiplescattering, MagneticCutoff=self._magneticcutoff)
             
@@ -222,6 +223,15 @@ class ReflDataSimulator(object):
             raise ValueError("Either use \'energies\', \'angles\' or \'filenamereaderfunction\' but not several of them.")
         if (energies is not None or angles is not None) and isinstance(files,str):
             raise ValueError("\'energies\' or \'angles\' can only be used if \'files\' is an array of filenames.")
+        
+        #store parameters for later use with setMode
+        self._datafiles=files
+        self._datalinereaderfunction=linereaderfunction
+        self._dataenergies=energies
+        self._dataangles=angles
+        self._datafilenamereaderfunction=filenamereaderfunction
+        self._datapointmodifierfunction=pointmodifierfunction
+        self._dataheaderlines=headerlines
         
         
         #get filenames of files in directory
@@ -577,11 +587,31 @@ class ReflDataSimulator(object):
         
         plt.show(block=False)
         plt.pause(1)
-
+    
+    def setMode(self,mode):
+        """Change the mode after instanciation.
+           
+           Be carefull with this function. Errors can occur if the mode does not fit to the available information in the data files.
+           
+           \'mode\' can be:    \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
+                               \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
+                               \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
+                               \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously
+                                               \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting
+                                               e.g.   \'cx20\' or \'cx0.1\'
+                               \'lL\',\'cL\',
+                               \'xL\',
+                               \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs there logarithms are stored and simulated. 
+        """
+        
+        #use the __init__ method to change mode to be sure to treat mode in the same way, even if changes occur in the futu
+        self.__init__(mode,self._lengthscale)
+        #read data again if already read
+        if hasattr(self,"_expdata"):
+            self.ReadData(self._datafiles,self._datalinereaderfunction, self._dataenergies, self._dataangles, self._datafilenamereaderfunction, self._datapointmodifierfunction, self._dataheaderlines)
 
         
-        
-                
+               
         
     @staticmethod
     def createLinereader(energy_column=None,angle_column=None,rsigma_column=None,rpi_column=None,rleft_column=None,rright_column=None,xmcd_column=None,commentsymbol='#'):

@@ -226,7 +226,7 @@ class Heterostructure(object):
 
     
     
-    def GetSingleEnergyStructure(self,fitpararray,energy=None):
+    def getSingleEnergyStructure(self,fitpararray,energy=None):
         """
         Return list of layers (layer type from Pythonreflectivity) which can be directly used as input for \'Pythonreflectivity.Reflectivity( )\'
         

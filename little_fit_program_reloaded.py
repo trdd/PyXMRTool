@@ -102,8 +102,7 @@ if __name__ == '__main__':
     # and xmcd are simultaniously handeled by the object and the xmcd is multiplied by the xfactor contribution_of_xmcd_to_fit, to make it more important for the fit)
     # length_scale=1e-9 means every length (thickness, wavelength, rouughness, ...) is measured in nm (this is also the default), for Angstroem you should enter length_scale=1e-10 
     simu = Experiment.ReflDataSimulator(mode="cLx"+str(contribution_of_xmcd_to_fit), length_scale=1e-10)      
-    #simu = Experiment.ReflDataSimulator(mode="c", length_scale=1e-10) 
-    #simu = Experiment.ReflDataSimulator(mode="x", length_scale=1e-10) 
+
     
     #define the function namereader which delivers the energy belonging to a certain data file from its name as tupel (energy, angle) where angle is set to None because there are different angles in every data file
     namereader = lambda string: (float(string[4:9]), None)           
@@ -143,7 +142,7 @@ if __name__ == '__main__':
     #####################################################################################
     #####  do the FITTING and PLOTTING
     
-    start,lower_limits,upper_limits = pp.GetStartLowerUpper()                   #get start values, lower and upper limits of the fit parameters as lists of values
+    start,lower_limits,upper_limits = pp.getStartLowerUpper()                   #get start values, lower and upper limits of the fit parameters as lists of values
     
     simu.plotData(start)                                                        #plot experimental data and simulated data according to the start values of the fit paramters
     
@@ -153,14 +152,30 @@ if __name__ == '__main__':
     #Instead is has to be wrapped into another function "rescost" which is defined here. (Usual functions are ok instead of instance methods.)
     def rescost(fitpararray):
         return simu.getResidualsSSR(fitpararray)
-    best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost, simu.getLenDataFlat(), pp.GetStartLowerUpper(), parallel_points=20 ,number_of_cores=used_cores, strict=False, control_file=None)
+    best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost, simu.getLenDataFlat(), pp.getStartLowerUpper(), parallel_points=20 ,number_of_cores=used_cores, strict=False, control_file=None)
     
     simu.plotData(best)                                                         #plot experimental data and simulated data according to best fitted values
     
-    
+    #write fitted parameters to file
+    pp.setStartValues(best)
+    pp.WriteToFile("Parameters-little_fit_program_reloaded--output.txt")     
     
     #output of fitted parameters and comparison with parameters which were originally used to create/simulate the data
     simulationparameters=numpy.array([261, 7, 651, 0.8, 32, 4, 649, -6, 1.2, 103, 15,2.5, 3.5, 4.1, 3.0e-7, 0.34])
+    print "parameter name".ljust(20)+"fitted parameters".ljust(30)+"original model parameters".ljust(30)
+    i=0
+    for item in best:
+        print pp.getNames()[i].ljust(20)+str(item).ljust(30)+str(simulationparameters[i]).ljust(30)
+        i+=1
+        
+    
+    #obtain and plot simulated reflectivity data instead of logarithm
+    simu.setMode("cx")
+    simdata=simu.getSimData(best)
+    simu.plotData(best)
+
+    
+    
     
     
     

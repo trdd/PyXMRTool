@@ -30,7 +30,7 @@ import copy
 numerical_derivative_factor=1.0e-9                          #defines in principle the the magnitude of  "Delta x" for the aproximation of a derivative by "Delta y/Delta x"
 #####################################
 
-def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), iterations, number_of_cores=1, generation_size=300, mutation_probability=0.6, mutation_strength=0.15, elite=2, parent_percentage=0.25, control_file=None):
+def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), iterations, number_of_cores=1, generation_size=300, mutation_strength=0.01, elite=2, parent_percentage=0.25, control_file=None, plotfunction=None):
     """
     Evolutionary fit algorithm. Slow but good in finding the global minimum.
     Return the optimized parameter set and the coresponding value of the costfunction.
@@ -41,12 +41,19 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
     \'iterations\': number of iterations
     \'number_of_cores\': number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
     \'generation_size\':    Use this many individual fit parameter sets in each step
-    \'mutation_probability\' chance of mutation of a particular inherited fit parameter
-    \'mutation_strength\' Mutates by this factor
+    \'mutation_strength\' Mutates by adding this factor times (upper_limit - lower_limit)  --> use rather small values 
     \'elite\' Remember the best individuals for the next generation
     \'parent_percentage\' #Take this subset for reproduction
     
     If \'control_file\' is given, you can abort the optimization routine by writing "terminate 1" to the beginning of its first line.
+    
+        
+    If \'plotfunction\' is given, it will be used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration. It should take only one parameter: the array of fitparameters.
+    
+    This Evolutionary algorithm is mainly the same as Martins. Only the rule for mutation has changed:
+     Martin: children[i]=children[i] * (1 + s * random float(-1,1))
+     I:      children[i]=children[i] + s * random float(-1,1)*(upper_limits-lower_limits) 
+
     """
     
     #check parameters
@@ -60,7 +67,7 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
             raise TypeError("Invalid parameter.")
         if p<0:
             raise ValueError("Parameter has to be positive.")
-    pos_real_pars=[mutation_probability, mutation_strength, elite, parent_percentage]
+    pos_real_pars=[mutation_strength, elite, parent_percentage]
     for p in pos_real_pars:
         if not isinstance(p, numbers.Real):
             raise TypeError("Invalid parameter.")
@@ -68,6 +75,8 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
             raise ValueError("Parameter has to be positive.")
     if control_file is not None and not os.path.exists(control_file):
         raise Exception(str(control_file)+" is not an existing path.")
+    if plotfunction is not None and not callable(plotfunction):
+        raise TypeError("\'plotfunction\' has to be callable.")
 
     
 
@@ -84,6 +93,7 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
     number_of_fitparameters=len(startfitparameters)
     randomnumbers=numpy.random.rand(generation_size, number_of_fitparameters)
     all_fitpararrays=lower_limits+randomnumbers*(upper_limits-lower_limits)
+    all_fitpararrays[0]=startfitparameters                                          #use the given start values just as one of many guesses (replace one random guess)
     children=numpy.zeros((generation_size, number_of_fitparameters))
     
     print "Start Evolution of "+str(iterations)+" Generations with "+str(len(startfitparameters))+" Parameters."
@@ -95,8 +105,11 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
         #Calculate the costfunction (usually chisquare) for each individuum
         out=joblib.Parallel(n_jobs=number_of_cores)(joblib.delayed(costfunction)(all_fitpararrays[i]) for i in range(generation_size) )  
         ranking_list=numpy.argsort(out)                                 #stores the best results as indices of the elements of out
-        #Write the current statecheck for termination
+        #Write the current state
         print "   Generation " + str(ite) + ": Cost=" + str(out[ranking_list[0]])
+        #plot the current state (best guess)
+        if plotfunction is not None:
+            plotfunction(all_fitpararrays[ranking_list[0]])
         #check for termination
         if control_file is not None:
             with open(control_file) as f:
@@ -127,12 +140,13 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
 
                 #Mutate the children
                 r=2*numpy.random.rand(number_of_fitparameters)-1
-                children[i]=children[i]*(1+r*mutation_strength)
-                for j in range(number_of_fitparameters):
+                r=r*(upper_limits-lower_limits)                                #added by Yannic to make the mutation depending on the value range of a parameter
+                children[i]=children[i] + r*mutation_strength                  #changed mutation rule by Yannic (mutation not depending on parameter value)
+                for j in range(number_of_fitparameters):    #periodic boundaries (changed by Yannic; Martin sets to the limits if theey are exceeded)
                     if(children[i][j]<lower_limits[j]):
-                        children[i][j]=lower_limits[j]
+                        children[i][j]=upper_limits[j]-(lower_limits[j]-children[i][j])%(upper_limits[j]-lower_limits[j])
                     elif(children[i][j]>upper_limits[j]):
-                        children[i][j]=upper_limits[j]
+                        children[i][j]=lower_limits[j]+(children[i][j]-upper_limits[j])%(upper_limits[j]-lower_limits[j])
         #The children are now the new generation
         all_fitpararrays=children
         
@@ -140,20 +154,21 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
 
         
         
-def Levenberg_Marquardt_Fitter(residualandcostfunction, number_of_datapoints, (startfitparameters, lower_limits, upper_limits), parallel_points ,number_of_cores=1, strict=True, control_file=None):
+def Levenberg_Marquardt_Fitter(residualandcostfunction,  (startfitparameters, lower_limits, upper_limits), parallel_points ,number_of_cores=1, strict=True, control_file=None, plotfunction=None):
     """
     Modified Levenberg-Marquard algorithm (see PhD thesis of Martin Zwiebler). Good convergence, but might end up in a local mininum.
     Return the optimized parameter set and the coresponding value of the costfunction.
     
     \'residualandcostfunction\' should usally be the method \'getResidualsSSR\' of an instance of \'ReflDataSimulator\'. Can also be any other function which takes the array of fit parameters and returns a tuple of 
         1.) a list of residuals (will be used to determine derivatives) 2.) a value of the costfunction which should be minimized (usually the sum of squared residuals)
-    \'number_of_datapoints\': total number of data points used for the fitting (beware: for reflectivities each direction counts once)
     (\'startfitparameters\',\'lower_limits\',\'upper_limits): tuple/list of arrays/lists of start values/lower limits/upper limits for the fit parameters.
     \'parallel_points\': This should be something like the number of threads that can run in parallel/number of cores. The algorithm will first find a direction for a good descent and then check this number of points on the line. The best one will yield the new fit parameter set
     \'number_of_cores\': number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
     \'strict\': usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set \'stict=False\' this parameter will be neglected locally.
     
     If \'control_file\' is given, you can abort the optimization routine by writing "terminate 1" to the beginning of its first line.
+    
+    If \'plotfunction\' is given, it will be used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration. It should take only one parameter: the array of fitparameters.
     """
     
     #check parameters
@@ -161,7 +176,7 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction, number_of_datapoints, (s
         raise TypeError("\'residualandcostfunction\' has to be callable.")
     if not (len(startfitparameters)==len(lower_limits) and len(lower_limits)==len(upper_limits)):
         raise ValueError("\'startfitparameters\' and constraints don't match in length.")
-    pos_integer_pars=[number_of_cores,parallel_points,number_of_datapoints]
+    pos_integer_pars=[number_of_cores,parallel_points]
     for p in pos_integer_pars:
         if not isinstance(p, numbers.Integral):
             raise TypeError("Invalid parameter.")
@@ -171,6 +186,8 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction, number_of_datapoints, (s
         raise TypeError("\'strict\' has to be of type bool.")
     if control_file is not None and not os.path.exists(control_file):
         raise Exception(str(control_file)+" is not an existing path.")
+    if plotfunction is not None and not callable(plotfunction):
+        raise TypeError("\'plotfunction\' has to be callable.")
 
     
 
@@ -183,9 +200,6 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction, number_of_datapoints, (s
     number_of_fitparameters=len(startfitparameters)
     
     aite=startfitparameters
-
-    #this Matrix stores all the residuals derivatives
-    DT=numpy.zeros((number_of_fitparameters,number_of_datapoints))
 
     "Start Levenberg-Marquardt algorithm with "+str(len(startfitparameters))+" Parameters."
     ite=0
@@ -232,6 +246,10 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction, number_of_datapoints, (s
             
             print "   Iteration "+ str(ite)+": old cost = "+str(fiterror1)+", new cost = "+str(fiterror2)
             
+            #plot the current state of fitting
+            if plotfunction is not None:
+                plotfunction(aite)
+            
 
             
        
@@ -252,12 +270,13 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction, number_of_datapoints, (s
         ##Calculate the residuals and cost (e.g. difference between simulated and measured reflectivities) at each delta-step, in parallel
 
         out=joblib.Parallel(n_jobs=number_of_cores)(joblib.delayed(residualandcostfunction)( all_fitpararrays[i] ) for i in range(number_of_fitparameters+1) )
-
-
-
-        #Calculate the first fit error
+        
         if(ite==0):
+            #Calculate the first fit error
             fiterror1= out[ number_of_fitparameters ][1]
+            #in first iteration: create the matrix DT to stores all the residuals derivatives
+            number_of_datapoints=len(out[0][0])
+            DT=numpy.zeros((number_of_fitparameters,number_of_datapoints))
         else:
             fiterror1=fiterror2
         #Calculate the derivative of the reflectivity

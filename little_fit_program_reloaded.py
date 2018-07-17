@@ -146,30 +146,56 @@ if __name__ == '__main__':
     
     simu.plotData(start)                                                        #plot experimental data and simulated data according to the start values of the fit paramters
     
-    #the fit itself is done with the Levenberg_Marquardt_Fitter (there are also others).
+   
+   
+   
+    #you can also use the evolutionary fitting algorithm (but usually it is better for searching good start values for the Levenberg_Marquardt_Fitter
+    #it needs only a costfunction (usually sum of squared residuals), not the residuals
+    def cost(fitpararray):
+        return simu.getSSR(fitpararray)
+    best, ssr = Fitters.Evolution(cost, pp.getStartLowerUpper(), iterations=10, number_of_cores=3, generation_size=300, mutation_strength=0.01, elite=3, parent_percentage=0.25, control_file=None)# plotfunction=simu.plotData)
+   
+   
+    #getting staring values, lower and upper limits individually and replace start by best
+    start,lower,uppper=pp.getStartLowerUpper()
+    start=best
+   
+   
+   #the fit itself is done with the Levenberg_Marquardt_Fitter (there are also others).
     #It does not know about the data. It just varies the list of parameter values within the limits and gets the residuals and the sum of squared residuals
     #from the method "simu.getResidualsSSR". However there is an issue due to parallization, which does not allow to give this instance method directly to the fitter function.
     #Instead is has to be wrapped into another function "rescost" which is defined here. (Usual functions are ok instead of instance methods.)
+    #plotfunction=simu.plotData leads to a plot of the current state after every iteration. Can also be set to \'None\' (default) if not needed.
     def rescost(fitpararray):
         return simu.getResidualsSSR(fitpararray)
-    best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost, simu.getLenDataFlat(), pp.getStartLowerUpper(), parallel_points=20 ,number_of_cores=used_cores, strict=False, control_file=None)
+    best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost, (start,lower,upper), parallel_points=20 ,number_of_cores=used_cores, strict=False, control_file=None,plotfunction=simu.plotData)
     
-    simu.plotData(best)                                                         #plot experimental data and simulated data according to best fitted values
     
-    #write fitted parameters to file
-    pp.setStartValues(best)
-    pp.WriteToFile("Parameters-little_fit_program_reloaded--output.txt")     
+    
+        
+    #plot experimental data and simulated data according to best fitted values
+    simu.plotData(best)                                                         
+    
+        
     
     #output of fitted parameters and comparison with parameters which were originally used to create/simulate the data
     simulationparameters=numpy.array([261, 7, 651, 0.8, 32, 4, 649, -6, 1.2, 103, 15,2.5, 3.5, 4.1, 3.0e-7, 0.34])
+    print "######"
+    print "Result"
+    print "######"
     print "parameter name".ljust(20)+"fitted parameters".ljust(30)+"original model parameters".ljust(30)
     i=0
     for item in best:
         print pp.getNames()[i].ljust(20)+str(item).ljust(30)+str(simulationparameters[i]).ljust(30)
         i+=1
-        
+    print "######"
+    
+    #write fitted parameters to file
+    pp.setStartValues(best)
+    pp.WriteToFile("Parameters-little_fit_program_reloaded--output.txt") 
     
     #obtain and plot simulated reflectivity data instead of logarithm
+    print "--> Plot result"
     simu.setMode("cx")
     simdata=simu.getSimData(best)
     simu.plotData(best)

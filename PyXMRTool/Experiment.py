@@ -22,6 +22,7 @@ import scipy.constants
 import copy
 from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 import Pythonreflectivity
 
@@ -118,6 +119,16 @@ class ReflDataSimulator(object):
             wavelength=self._hcfactor/item[0]
             rcalc=Pythonreflectivity.Reflectivity(singeE_HS, item[1],wavelength, Output="T", MultipleScattering=self._multiplescattering, MagneticCutoff=self._magneticcutoff)
             
+            #if non-magnetic, Pythonreflectivity.Reflectivity delivers only pi and sigma polarization!
+            #check for this case and get left and right circular as average of pi and sigma if necessary
+            if len(rcalc)==2 and (self._mode=="c" or self._mode=="cL" or self._mode=="x" or self._mode=="cx" or self._mode=="cLx"):
+                average=(rcalc[0]+rcalc[1])/2.0
+                circular=numpy.empty((2,len(average)))
+                circular[0]=average         #left circular polarization
+                circular[1]=average         #right circular polarization
+                rcalc=numpy.append(rcalc,circular,0)           
+                #dedug
+                print "magnetic zero"
             
             
             if self._mode=="l":  #linear polarization
@@ -429,37 +440,53 @@ class ReflDataSimulator(object):
         ssr = numpy.sum( numpy.square( residuals  ))
         return residuals,ssr
     
-    def plotData(self, fitpararray,simcolor='r',expcolor='b'):
+    def plotData(self, fitpararray,simcolor='r',expcolor='b',simlabel='simulated',explabel='experimental'):
         """
         Plot simulated and experimental Data.
         
         This function generates a plot at the first call and refreshes it if called again.
-        This method is not perfect as it will not create a new plot once the plot window is closed.
         
         \'simcolor\' and \'expcolor\' are supposed to be strings which specify a color for the plotting with pyplot (see https://matplotlib.org/users/colors.html).
         Defaults are red and blue.
+        \'simlabel\' and \'explabel\' are the labels shown in the legend of the plot.
         """
+        
+        #check parameters
+        if not isinstance(simcolor,str):
+            raise TypeError("\'simcolor\' must be of string type.")
+        if not isinstance(expcolor,str):
+            raise TypeError("\'expcolor\' must be of string type.")
+        if not isinstance(simlabel,str):
+            raise TypeError("\'simlabel\' must be of string type.")
+        if not isinstance(explabel,str):
+            raise TypeError("\'explabel\' must be of string type.")
+        
+        
+        
+        #get data
         simdata=self.getSimData(fitpararray)
         expdata=self.getExpData()
         
         
        
-        if not hasattr(self, '_fig'):                     #create plot if not already existing
-            if self._mode == "l" or self._mode == "lL" or self._mode == "c" or self._mode == "cL":      #linear and circula polarization (or logarithm of it)       
-                self._fig = plt.figure(figsize=(10,5))
-                self._ax1 = self._fig.add_subplot(121,projection='3d')                  
-                self._ax2 = self._fig.add_subplot(122,projection='3d')                  
-                       
-            elif self._mode == "x":          #xmcd
-                self._fig = plt.figure(figsize=(10,5))
-                self._ax1 = self._fig.add_subplot(111,projection='3d')              #for xmcd
-            
-            elif self._mode == "cx" or self._mode == "cLx" :    #circular polarization and xmcd
-                self._fig = plt.figure(figsize=(15,5))
-                self._ax1 = self._fig.add_subplot(131,projection='3d')              #for left circular pol 
-                self._ax2 = self._fig.add_subplot(132,projection='3d')              #for right circular pol
-                self._ax3 = self._fig.add_subplot(133,projection='3d')              #for xmcd
-
+           
+        if hasattr(self,'_fig'):            #close previous figure
+            plt.close(self._fig)
+        
+        #create figure and subplots
+        if self._mode == "l" or self._mode == "lL" or self._mode == "c" or self._mode == "cL":      #linear and circula polarization (or logarithm of it)       
+            self._fig = plt.figure(figsize=(10,5))
+            self._ax1 = self._fig.add_subplot(121,projection='3d')                  
+            self._ax2 = self._fig.add_subplot(122,projection='3d')                  
+        elif self._mode == "x":          #xmcd
+            self._fig = plt.figure(figsize=(10,5))
+            self._ax1 = self._fig.add_subplot(111,projection='3d')              #for xmcd
+        elif self._mode == "cx" or self._mode == "cLx" :    #circular polarization and xmcd
+            self._fig = plt.figure(figsize=(15,5))
+            self._ax1 = self._fig.add_subplot(131,projection='3d')              #for left circular pol 
+            self._ax2 = self._fig.add_subplot(132,projection='3d')              #for right circular pol
+            self._ax3 = self._fig.add_subplot(133,projection='3d')              #for xmcd
+        
                 
         if self._mode == "l":            #linear polarization
             self._ax1.clear()
@@ -584,6 +611,11 @@ class ReflDataSimulator(object):
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
                 self._ax3.plot(item[1],item[0]*numpy.ones(len(item[1])),numpy.array(item[4]),color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+        
+        #create legend
+        exp_patch = mpatches.Patch(color=expcolor,label=explabel)
+        sim_patch = mpatches.Patch(color=simcolor,label=simlabel)
+        plt.legend(handles=[exp_patch,sim_patch])
         
         plt.show(block=False)
         plt.pause(1)

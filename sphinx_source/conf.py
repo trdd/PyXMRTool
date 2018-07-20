@@ -195,7 +195,7 @@ def setup(app):
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-# -- needed to avoid problems regarding numpy imports with Readthedocs
+# -- needed to avoid problems regarding numpy and other imports with Readthedocs
 import sys
 from mock import Mock as MagicMock
 
@@ -204,5 +204,5 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ['numpy','Pythonreflectivity']
+MOCK_MODULES = ['numpy','Pythonreflectivity','scipy','scipy.linalg','scipy.constants']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""Deals the description of the experiment and brings experimental and simulated data together."""
+"""Deals with the description of the experiment and brings experimental and simulated data together.
+It contains currently only the class :class:`.ReflDataSimulator`, which does this job.
+"""
 
 #Python Version 2.7
 
@@ -10,7 +12,7 @@ __license__ = ""
 __version__ = ""
 __maintainer__ = "Yannic Utz"
 __email__ = "yannic.utz@tu-dresden.de"
-__status__ = "Prototype"
+__status__ = "beta"
 
 
 
@@ -33,25 +35,24 @@ import SampleRepresentation
 
 
 class ReflDataSimulator(object):
-    """Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver chi_square (which measures the difference between the data and the simulation with a certain parameter set."""
+    """Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver the sum of squared residuals (:meth:`.getSimData`) and the residuals themselfs (:meth:`.getResidualsSSR`), which both describe the difference between data and simulation at a certain parameter set. It can be in different modes which determins which data or which derived data is stored and simulated."""
     
-    def __init__(self, mode, length_scale=10e-9):
+    def __init__(self, mode, length_scale=1e-9):
         """
         Initialize the ReflDataSimulator with a certain mode.
         
-        \'mode\' can be:    \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
-                            \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
-                            \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
-                            \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously
-                                               \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting
-                                               e.g.   \'cx20\' or \'cx0.1\'
-                            \'lL\',\'cL\',
-                            \'xL\',
-                            \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs there logarithms are stored and simulated. 
-        
-        
-        Define with \'length_scale\' in which units lengths are measured in your script. The unit is then \'length_scale\'*meters. Standard is \'length_scale=10e-9\' which means nm.
-        It is important to define it here due to conversion between energies and wavelength.
+        Parameters
+        ----------
+        mode : string
+            The following modes are implemented so far:
+                
+            * \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
+            * \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
+            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
+            * \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.\'cx20\' or \'cx0.1\'
+            * \'lL\', \'cL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. 
+        length_scale : float
+            Defines in which unit lengths are measured in your script. The unit is then **length_scale** * meters. Default is **length_scale** = *1e-9* which means *nm*. It is important to define it here due to conversion between energies and wavelength.
         """
         
         if not isinstance(mode,str):
@@ -82,16 +83,16 @@ class ReflDataSimulator(object):
         self._hcfactor=scipy.constants.physical_constants["Planck constant in eV s"][0]*scipy.constants.physical_constants["speed of light in vacuum"][0]/length_scale   
         
         
-        
+    #private methods
     
-    def _getMode_(self):
+    def _getMode(self):
         if self._mode=='cx' or self._mode=='cLx':
             return self._mode+str(self._xmcdfactor)
         else:
             return self._mode
     
     
-    def _getExpDataFlat_(self):
+    def _getExpDataFlat(self):
         flatexpdata=[]
         if self._mode=="l" or self._mode=="lL" or self._mode=="c" or self._mode=="cL":
             for item in self._expdata:
@@ -107,7 +108,7 @@ class ReflDataSimulator(object):
                 flatexpdata.extend(item[4])                
         return flatexpdata
     
-    def _getSimDataFlat_(self,fitpararray):
+    def _getSimDataFlat(self,fitpararray):
         """
         Return simulated data according to the bevor set-up model and the parameter values given with fitpararray as flat array.
         """
@@ -165,7 +166,7 @@ class ReflDataSimulator(object):
         return flatsimdata
             
     
-    def _getHCFactor_(self):
+    def _getHCFactor(self):
         return self._hcfactor
     
     
@@ -173,29 +174,29 @@ class ReflDataSimulator(object):
     
     def ReadData(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0):
         """
-        Read the data files and store the data corresponding to the \'mode\' specified with instanciation.
+        Read the data files and store the data corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`)
         
         This function enables a very flexible reading of the data files.
-        Logically this function uses data point which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd).
+        Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd).
         So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
-        Where this information comes from can differ.
+        Where the values for the independent variables comes from can differ: either from lists (**energies**,**angles**), from the filenames (**filenamereaderfunction**) or from the lines in the data file (**linereaderfunction**).
         
-        At first, there are two different ways to specify the data files: Either a list of filenames (strings) or one foldername (string) of a folder containing all the data files (and only them!).
-        
-        One possibility is that all information comes from the \'linereaderfunction\'. This function can be defined by the user (or created with createLinereader()).
-        It takes one line as a string and returns a list/tuple of real numbers (energy,angle,rsigma,rpi,rleft,rright,xmcd). Entries can also be \'None\'. The function will complain only if the needed information for the specified \'mode\' is not delivered.
-        
-        Sometimes, not all the information on independent variables can be obtained from single lines of the file. To specify an independent variable which is valid for complete files there are 3 different possibilities, which cannot be mixed:
-        Set the list \'energies\': Only possible if \'files\' is a list of filenames. Gives the energies which belong to the corresponding files (same order) as floats.
-        Set the list \'angles\': Only possible if \'files\' is a list of filenames. Gives the angles which belong to the corresponding files (same order) as floats.
-        Set \'filenamereaderfunction\': Give a user-specified function to the function \'ReadData()\'. It should take a string (a filename without path), extract energy and/or angle out of it and return this as a tuple/list (energy,angle). Both entries can also be set to \'None\', but their will be an exception if the information for the data points can also not be obtained from the linereaderfunction.
-        
-        
-        With the parameter \'pointmodifierfunction\' you can hand over a functions which takes the list of independent and dependent variables of a single data point and returns a modified one.
-        Can be used e.g. if the data file contains qz values instead of angles. The \'pointmodifierfunction\' can calculate the angles.
-        Of course you can also use a adopted linereaderfunction for this (if all necessary information can be found in one line of the data files).
-        
-        \'headerlines\' specifies the number of lines which should be ignored in each file.
+        Parameters
+        ---------
+        files : str or list of str
+            Specifies the set of data files. Either a list of filenames or one foldername of a folder containing all the data files (and only them!).
+        linereaderfunction : callable
+            A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers *(energy,angle,rsigma,rpi,rleft,rright,xmcd)*. Entries can also be \'None\'. Exceptions will only be trown if the needed information for the specified **mode** is not delivered. An easy way to create such a function is to use the method :meth:`.createLinereader`.
+        energies : list of floats
+            Only possible to be different from *None* if **files** is a list of filenames and **angles** is `None`. Gives the energies which belong to the corresponding files (same order) as floats.
+        angles : list of floats
+            Only possible to be different from *None* if **files** is a list of filenames and **energies** is `None`. Gives the angles which belong to the corresponding files (same order) as floats.
+        filenamereaderfunction : callable
+            A user-defined function which reads energies and/or angles from the filenames of the data files. This function should take a string (a filename without path), extract energy and/or angle out of it and return this as a tuple/list *(energy,angle)*. Both entries can also be set to *None*, but their will be an exception if the needed information for the data points can also not be obtained from the **linereaderfunction**.
+        pointmodifierfunction : callable
+            A user-definde function which is used to modify the obtained information. It takes the tuple/list of independent and dependent variables of a single data point and returns a modified one. It can be used for example if the data file contains qz values instead of angles. In this case you can read the qz values first as angles and replace them afterwards with the angles calculated out of it with the **pointmodifierfunction**. Of course you can also use a adopted **linereaderfunction** for this purpose (if all necessary information can be found in one line of the data files).
+        headerlines : int
+            specifies the number of lines which should be ignored at the top of each file.
         """
         
         #Parameter checking
@@ -346,24 +347,26 @@ class ReflDataSimulator(object):
         """
         Set up the model for the simulation of the reflectivity data. 
         
-        The simulation of the reflectivities is in prinicple done by using the information about the sample stored in heterostructure (of type SampleRepresentation.Heterostructure).
-        The reflectivities calculated by this are then given to the \'reflmodifierfunction\' (takes one number or numpy array and the fitpararray; returns one number or numpy array). This funktion has to be defined 
-        by the user and can be used e.g. to multiply the reflectivity by a global number and/or to add a common background. To make these numbers fittable, use the fitparameters registerd at the ParamterPool
-        e.g
-          pp=Paramters.ParameterPool("any_parameterfile")
-          ...
-          b=pp.NewParameter("background")
-          m=pp.NewParameter("multiplier")
-          reflmodifierfunction=lambda r, fitpararray: b.getValue(fitpararra) + r * m.getValue(fitpararray)
-        and give this function to \'setModel\'.
+        The simulation of the reflectivities is in prinicple done by using the information about the sample stored in **heterostructure** (of type :class:`SampleRepresentation.Heterostructure`).
+        The calculated reflectivities are then given to the **reflmodifierfunction** (takes one number or numpy array and the fitpararray; returns one number or a numpy array). This function has to be defined 
+        by the user and can be used for example to multiply the reflectivity by a global number and/or to add a common background. To make these numbers fittable, use the fitparameters registerd at an instance of :class:`Paramters.ParamterPool`.
+        Example::
+        
+            pp=Paramters.ParameterPool("any_parameterfile")
+            ...
+            b=pp.NewParameter("background")
+            m=pp.NewParameter("multiplier")
+            reflmodifierfunction=lambda r, fitpararray: b.getValue(fitpararray) + r * m.getValue(fitpararray)
+        
+        and give this function to :meth:`.setModel`.
+        
         BEWARE: The reflmodifierfunction is called very often during fitting procedures. Make it performant!
+               
+        With **MultipleScattering** you can switch on (*True*) and off (*False*) the simulation of multiple scattering. *False* is 20 percent faster. Default is *True*. Has no effect on calculations that require the full matrix.
         
+        **MagneticCutoff**: If an off-diagonal element of chi (chi_g) fulfills abs(chi_g)<MagneticCutoff, it is set to zero. It defaults to 10e-50.
         
-        With \'MultipleScattering\' you can switch on (True) and off (False) the simulation of multiple scattering. False is 20 percent faster. Default is True. Has no effect on calculations that require the full matrix.
-        
-        MagneticCutoff: If an off-diagonal element of chi (chi_g) fulfills abs(chi_g)<MagneticCutoff, it is set to zero. It defaults to 10e-50.
-        
-        The last to parameters are directly passed to Pythonreflectivity.Reflectivity. See also the Documentation of Pythonreflectivity.
+        The last two parameters are directly passed to :func:`Pythonreflectivity.Reflectivity`. See also the Documentation of :mod:`Pythonreflectivity`.
         """
         
         if not isinstance(heterostructure,SampleRepresentation.Heterostructure):
@@ -386,18 +389,25 @@ class ReflDataSimulator(object):
         """
         Return length of the flat data representation. 
         
-        It will be the number of measured data points times 2 for mode "l" and "c", only the number of measured data points for mode "x and the number of measured data points times 3 for mode cx"
+        It will be the number of measured data points times 2 for mode "l" and "c", only the number of measured data points for mode "x" and the number of measured data points times 3 for mode "cx"
         """
-        return len(self._getExpDataFlat_())
+        return len(self._getExpDataFlat())
         
         
     def getSimData(self,fitpararray):
         """
-        Return simulated data according to the bevor set-up model and the parameter values given with fitpararray.
+        Return simulated data according to the bevor set-up model and the parameter values given with **fitpararray** (see also :mod:`Parameters`).
+        
+        The retured data is a list and has on of the following or similar shapes::
+            
+            [[energy1,[angle1,....angleN], [rsigma1, .... rsigmaN], [rpi1,...rpiN]], ...[energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]] 
+            [[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 
+            [[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
+            [[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
         """
         # leave out parameter test, and test for existance of heterostructure to speed things up (this function will be called often in fit routines)
         simdata=copy.deepcopy(self._expdata)                                    #copy experimental data to get energies and angles
-        simdata_flat=self._getSimDataFlat_(fitpararray)
+        simdata_flat=self._getSimDataFlat(fitpararray)
         #replace the copied experimental data with simulated values
         startindex=0
         if self._mode=="l" or self._mode=="lL" or self._mode=="c" or self._mode=="cL":
@@ -422,33 +432,50 @@ class ReflDataSimulator(object):
     
     def getExpData(self):
         """
-        Return experimental data in the shape in which it is stored internally.
+        Return stored experimental data.
+        
+        
+        The retured data is a list and has on of the following or similar shapes::
+            
+            [[energy1,[angle1,....angleN], [rsigma1, .... rsigmaN], [rpi1,...rpiN]], ...[energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]] 
+            [[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 
+            [[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
+            [[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
         """
         return self._expdata
     
     def getSSR(self,fitpararray):
         """
-        Return sum of squared residuals.
+        Return sum of squared residuals as float according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
         """
-        return numpy.sum( numpy.square( numpy.array(self._getSimDataFlat_(fitpararray)) -  numpy.array(self._getExpDataFlat_()) )  )
+        return numpy.sum( numpy.square( numpy.array(self._getSimDataFlat(fitpararray)) -  numpy.array(self._getExpDataFlat()) )  )
     
     def getResidualsSSR(self,fitpararray):
         """
-        Return tuple: array of differences between simulated and measured data, sum of squared residuals.
+        Return the residuals and the sum of squared residuals according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
+        
+        The information is returned as tuple: array of differences between simulated and measured data, sum of squared residuals.
         """
-        residuals = numpy.array(self._getSimDataFlat_(fitpararray)) - numpy.array(self._getExpDataFlat_())
+        residuals = numpy.array(self._getSimDataFlat(fitpararray)) - numpy.array(self._getExpDataFlat())
         ssr = numpy.sum( numpy.square( residuals  ))
         return residuals,ssr
     
     def plotData(self, fitpararray,simcolor='r',expcolor='b',simlabel='simulated',explabel='experimental'):
         """
-        Plot simulated and experimental Data.
+        Plot simulated and experimental data.
         
         This function generates a plot at the first call and refreshes it if called again.
         
-        \'simcolor\' and \'expcolor\' are supposed to be strings which specify a color for the plotting with pyplot (see https://matplotlib.org/users/colors.html).
-        Defaults are red and blue.
-        \'simlabel\' and \'explabel\' are the labels shown in the legend of the plot.
+        Parameters
+        ---------
+            simcolor : str
+                Specifies the color of the simulated data for the plotting with pyplot (see https://matplotlib.org/users/colors.html). Default is red.
+            expcolor : str  are supposed to be strings which specify a color for the plotting with pyplot (see https://matplotlib.org/users/colors.html).
+                Specifies the color of the experimental data for the plotting with pyplot (see https://matplotlib.org/users/colors.html). Default is blue.
+            simlabel : str 
+                Label shown in the legend of the plot for the simulated data. Default is *"simulated"*.
+            explabel : str 
+                Label shown in the legend of the plot for the experimental data. Default is *"experimental"*.
         """
         
         #check parameters
@@ -621,19 +648,20 @@ class ReflDataSimulator(object):
         plt.pause(1)
     
     def setMode(self,mode):
-        """Change the mode after instanciation.
+        """Change the mode after instantiation.
            
-           Be carefull with this function. Errors can occur if the mode does not fit to the available information in the data files.
+        Be carefull with this function. Errors can occur if the mode does not fit to the available information in the data files.
            
-           \'mode\' can be:    \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
-                               \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
-                               \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
-                               \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously
-                                               \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting
-                                               e.g.   \'cx20\' or \'cx0.1\'
-                               \'lL\',\'cL\',
-                               \'xL\',
-                               \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs there logarithms are stored and simulated. 
+        Parameters
+        ----------
+        mode : string
+            The following modes are implemented so far:
+                
+            * \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
+            * \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
+            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
+            * \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.\'cx20\' or \'cx0.1\'
+            * \'lL\', \'cL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. 
         """
         
         #use the __init__ method to change mode to be sure to treat mode in the same way, even if changes occur in the futu
@@ -648,9 +676,9 @@ class ReflDataSimulator(object):
     @staticmethod
     def createLinereader(energy_column=None,angle_column=None,rsigma_column=None,rpi_column=None,rleft_column=None,rright_column=None,xmcd_column=None,commentsymbol='#'):
         """
-        Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers [energy,angle,rsigma,rpi,rleft,rright,xmcd] (or None).
+        Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers *[energy,angle,rsigma,rpi,rleft,rright,xmcd]* (or *None* for a uncommented line).
         
-        With the parameters \'..._column\' you can determin wich column is interpreted how.
+        With the parameters *..._column* you can determin wich column is interpreted how.
         Column numbers are starting from 0.
         """
         #check parameters
@@ -684,5 +712,7 @@ class ReflDataSimulator(object):
     
     
     #public properties
-    mode = property(_getMode_)
-    hcfactor = property(_getHCFactor_)
+    mode = property(_getMode)
+    """The current mode. See :meth:`.__init__`for possible modes. Read-only."""
+    hcfactor = property(_getHCFactor)
+    """Planck constant times the speed of light in units of *eV* times the unit of length which was defined by **length_scale** with :meth:`.__init__`. Read-only."""

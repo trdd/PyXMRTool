@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""Contains different optimization algorithms designed for to fit reflectivity data.
+"""Contains different optimization algorithms designed to fit reflectivity data.
    They take advantage of parallelization to be used on multiprocessor system.
    
-   The algorithms are developed by Martin Zwiebel and I just adopted them to PyXMRTool.
+   The algorithms are developed by Martin Zwiebel and I just adopted them with slight changes to PyXMRTool.
    More information can be found in the PhD thesis of Martin Zwiebler.
 """
 
@@ -15,7 +15,7 @@ __license__ = ""
 __version__ = ""
 __maintainer__ = "Yannic Utz"
 __email__ = "yannic.utz@tu-dresden.de"
-__status__ = "Prototype"
+__status__ = "beta"
 
 
 import numbers
@@ -30,31 +30,52 @@ import copy
 numerical_derivative_factor=1.0e-9                          #defines in principle the the magnitude of  "Delta x" for the aproximation of a derivative by "Delta y/Delta x"
 #####################################
 
-def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), iterations, number_of_cores=1, generation_size=300, mutation_strength=0.01, elite=2, parent_percentage=0.25, control_file=None, plotfunction=None):
+def Evolution(costfunction, parameter_settings , iterations, number_of_cores=1, generation_size=300, mutation_strength=0.01, elite=2, parent_percentage=0.25, control_file=None, plotfunction=None):
     """
     Evolutionary fit algorithm. Slow but good in finding the global minimum.
     Return the optimized parameter set and the coresponding value of the costfunction.
     
-    \'costfunction\' should usally be the method \'getSSR\' of an instance of \'ReflDataSimulator\' (returns the sum of squared residuals of i.e. the reflectivities or logarithms of reflectivities).
-       Can also be any other function which takes the array of fit parameters and returns one real value should be minimized by \'Evolution\'.
-    (\'startfitparameters\',\'lower_limits\',\'upper_limits): tuple/list of arrays/lists of start values/lower limits/upper limits for the fit parameters.
-    \'iterations\': number of iterations
-    \'number_of_cores\': number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
-    \'generation_size\':    Use this many individual fit parameter sets in each step
-    \'mutation_strength\' Mutates by adding this factor times (upper_limit - lower_limit)  --> use rather small values 
-    \'elite\' Remember the best individuals for the next generation
-    \'parent_percentage\' #Take this subset for reproduction
+    Parameters
+    ----------
+    costfunction : callable
+        A function which returns a measure (cost) for the difference between measurement and simulated data according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getSSR` of an instance of :class:`SampleRepresentation.ReflDataSimulator` wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.
+        Example for the wrapping::
+            
+            simu = SampleRepresentation.ReflDataSimulator("l")
+            ...
+            def cost(fitpararray):
+                return simu.getSSR(fitpararray)
     
-    If \'control_file\' is given, you can abort the optimization routine by writing "terminate 1" to the beginning of its first line.
-    
+        Pass then the function *cost* as **costfunction**. It can also be any other function which takes the array of fit parameters and returns one real value which should be minimized by :meth:`.Evolution`.
         
-    If \'plotfunction\' is given, it will be used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration. It should take only one parameter: the array of fitparameters.
+    parameter_settings: tuple of lists of floats
+        Sets start values, lower and upper limit of the parameters as *(startfitparameters, lower_limits, upper_limits )*, where each of the entries is an list/array of values of same length.
+    iterations : int 
+        number of iterations/generations
+    number_of_cores : int 
+        Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
+    generation_size : int 
+        Generate this many individual fit parameter sets in each generation.
+    mutation_strength : float
+        Mutates children by adding this factor times (upper_limit - lower_limit)  --> use rather small values 
+    elite : int
+        Remember the best individuals for the next generation.
+    parent_percentage : flota
+        Use this fraction of a gereneration (the best) for reproduction.
+    control_file : str 
+        Filename of a control file. If it is given, you can abort the optimization routine by writing "terminate 1" to the beginning of its first line.
+    plotfunction : callable
+        Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.
+    
     
     This Evolutionary algorithm is mainly the same as Martins. Only the rule for mutation has changed:
-     Martin: children[i]=children[i] * (1 + s * random float(-1,1))
-     I:      children[i]=children[i] + s * random float(-1,1)*(upper_limits-lower_limits) 
+    
+    | Martin: ``children[i]=children[i] * (1 + s * random float(-1,1))``
+    | I:      ``children[i]=children[i] + s * random float(-1,1)*(upper_limits-lower_limits)``
 
     """
+    #unpack parameter settings
+    (startfitparameters, lower_limits, upper_limits )=parameter_settings
     
     #check parameters
     #if not callable(costfunction):
@@ -154,22 +175,42 @@ def Evolution(costfunction, (startfitparameters, lower_limits, upper_limits), it
 
         
         
-def Levenberg_Marquardt_Fitter(residualandcostfunction,  (startfitparameters, lower_limits, upper_limits), parallel_points ,number_of_cores=1, strict=True, control_file=None, plotfunction=None):
+def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , parallel_points ,number_of_cores=1, strict=True, control_file=None, plotfunction=None):
     """
     Modified Levenberg-Marquard algorithm (see PhD thesis of Martin Zwiebler). Good convergence, but might end up in a local mininum.
     Return the optimized parameter set and the coresponding value of the costfunction.
     
-    \'residualandcostfunction\' should usally be the method \'getResidualsSSR\' of an instance of \'ReflDataSimulator\'. Can also be any other function which takes the array of fit parameters and returns a tuple of 
-        1.) a list of residuals (will be used to determine derivatives) 2.) a value of the costfunction which should be minimized (usually the sum of squared residuals)
-    (\'startfitparameters\',\'lower_limits\',\'upper_limits): tuple/list of arrays/lists of start values/lower limits/upper limits for the fit parameters.
-    \'parallel_points\': This should be something like the number of threads that can run in parallel/number of cores. The algorithm will first find a direction for a good descent and then check this number of points on the line. The best one will yield the new fit parameter set
-    \'number_of_cores\': number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
-    \'strict\': usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set \'stict=False\' this parameter will be neglected locally.
     
-    If \'control_file\' is given, you can abort the optimization routine by writing "terminate 1" to the beginning of its first line.
+    Parameters
+    ----------
+    residualandcostfunction : callable
+        A function which returns the differences between simulated and measured data points (residuals) as list and a scalar measure (cost) for these differences in total according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getResidualsSSR` of an instance of :class:`SampleRepresentation.ReflDataSimulator` wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.
+        Example for the wrapping::
+            
+            simu = SampleRepresentation.ReflDataSimulator("l")
+            ...
+            def rescost(fitpararray):
+                return simu.getResidualsSSR(fitpararray)
     
-    If \'plotfunction\' is given, it will be used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration. It should take only one parameter: the array of fitparameters.
+        Pass then the function *rescost* as **costfunction**. It can also be any other function which takes the array of fit parameters and returns a tuple of 
+        1.) a list of residuals (will be used to determine derivatives) 2.) a value of the costfunction which should be minimized by :meth:`.Levenberg_Marquardt_Fitter`.
+        
+    parameter_settings: tuple of lists of floats
+        Sets start values, lower and upper limit of the parameters as *(startfitparameters, lower_limits, upper_limits )*, where each of the entries is an list/array of values of same length.
+    parallel_points : int 
+        This should be something like the number of threads that can run in parallel/number of cores. The algorithm will first find a direction for a good descent and then check this number of points on the line. The best one will yield the new fit parameter set.
+    number_of_cores : int 
+        Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
+    strict : bool
+        Usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set **stict** = *False* this parameter will be neglected locally.
+    control_file : str 
+        Filename of a control file. If it is given, you can abort the optimization routine by writing "terminate 1" to the beginning of its first line.
+    plotfunction : callable
+        Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.
     """
+    
+    #unpack parameter settings
+    (startfitparameters, lower_limits, upper_limits )=parameter_settings
     
     #check parameters
     if not callable(residualandcostfunction):

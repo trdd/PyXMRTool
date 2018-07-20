@@ -1,0 +1,937 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SampleRepresentation &#8212; PyXMRTool 0.9 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">todo: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">todo: Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for SampleRepresentation</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Deals with the sample representation for simulation of the reflectivity.</span>
+
+<span class="sd">A multilayer sample is represented by a :class:`.Heterostructure` object. Its main pupose is to deliver the list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) with defined susceptibilities at certain energies via :meth.`Heterostructure.getSingleEnergyStructure`. The layers within this heterostructure are represented by instances of :class:`.LayerObject` or of derived classes, which alows for a very flexibel modelling of the sample.</span>
+
+<span class="sd">So far the following layer types are implemented:</span>
+
+<span class="sd">* :class:`.LayerObject`: Layer with a constant (over energy) but fittable electric susceptibility tensor.</span>
+
+<span class="sd">* :class:`.ModelChiLayerObject`: This layer type holds the electric susceptibility tensor as a user-defined function of energy.</span>
+<span class="sd">    </span>
+<span class="sd">* :class:`.AtomLayerObject`: This layer deals with compositions of atoms with different formfactors. The densities of the atoms can be varied during fitting procedures and plotted with using :func:`.plotAtomDensity`. The formfactors are represented by instances of classes which are derived from :class:`.Formfactor` (the base class is abstract and cannot be used directly).</span>
+
+<span class="sd">So far the following formfactor types are implemented:</span>
+
+<span class="sd">* :class:`.FFfromFile`: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.</span>
+<span class="sd">    </span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="c1">#Python Version 2.7</span>
+
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Yannic Utz&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Yannic Utz and Martin Zwiebler&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s2">&quot;Yannic Utz&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;yannic.utz@tu-dresden.de&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s2">&quot;beta&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">ast</span>
+<span class="kn">from</span>  <span class="nn">scipy</span> <span class="k">import</span> <span class="n">interpolate</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span>
+<span class="kn">import</span> <span class="nn">Pythonreflectivity</span>
+
+
+<span class="kn">import</span> <span class="nn">Parameters</span>
+
+
+<div class="viewcode-block" id="Heterostructure"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure">[docs]</a><span class="k">class</span> <span class="nc">Heterostructure</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a heterostructure as a stack of instances of :class:`.LayerObject` or of derived classes.</span>
+<span class="sd">    Its main pupose is to model the sample in a very flexibel way and to get the list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) with defined susceptibilities at certain energies.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    In contrast to Martin&#39;s list of Layer-type objects, this class contains all information also for different energies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="Heterostructure.__init__"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number_of_layers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">multilayer_structure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create heterostructructure object.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        number_of_layers : int </span>
+<span class="sd">            gives the number of different layers</span>
+<span class="sd">        multilayer_structure : list</span>
+<span class="sd">            Makes it possible to define multilayers which contain identical layers several times.</span>
+<span class="sd">            This can be done by passing a list containing the indices of layers from the lowest (e.g. substrate) to the highest (top layer, hit first by the beam).</span>
+<span class="sd">            Default is ``[0,1,2,3, ...,number_of_layers-1]``. Multilayer syntax is e.g.``[0,1,2,[100,[3,4,5,6]],7,.,1,..]`` which repeats 100 times the sequence of</span>
+<span class="sd">            layers 3,4,5,6 in between 2 and 7 and later on layer 1 is repeated once.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">,</span><span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">number_of_layers</span><span class="se">\&#39;</span><span class="s2"> must be of type int.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">number_of_layers</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">number_of_layers</span><span class="se">\&#39;</span><span class="s2"> must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">multilayer_structure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">multilayer_structure</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">multilayer_structure</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> has to be a list.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_consistency_check</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">,</span> <span class="n">multilayer_structure</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span><span class="o">=</span><span class="n">number_of_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_multilayer_structure</span><span class="o">=</span><span class="n">multilayer_structure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_updatePyReflMLString</span><span class="p">()</span></div>
+        
+    <span class="c1">#private members</span>
+    
+    <span class="k">def</span> <span class="nf">_consistency_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">number_of_layers</span><span class="p">,</span><span class="n">multilayer_structure</span><span class="p">):</span>
+        <span class="n">index_list</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">multilayer_structure</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index_list</span><span class="p">:</span>
+                    <span class="n">index_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="nb">list</span><span class="p">)):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> has wrong format.&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">subitem</span> <span class="ow">in</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subitem</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> has wrong format.&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">subitem</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index_list</span><span class="p">:</span>
+                        <span class="n">index_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subitem</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> has wrong format.&quot;</span><span class="p">)</span>
+        <span class="n">index_list</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">index_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;&gt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Indices in </span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> have to start from 0.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">&lt;&gt;</span><span class="nb">len</span><span class="p">(</span><span class="n">index_list</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Highest index in </span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> does not agree with the number of different indices-1.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">index_list</span><span class="p">)</span><span class="o">&lt;&gt;</span><span class="n">number_of_layers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Number of different indices in </span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> does not agree with </span><span class="se">\&#39;</span><span class="s2">number_of_layers</span><span class="se">\&#39;</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">index_list</span><span class="p">)</span>
+    
+    
+    <span class="k">def</span> <span class="nf">_updatePyReflMLString</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multilayer_structure</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">+=</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;,&quot;</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">+=</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">+=</span><span class="s2">&quot;*&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">+=</span><span class="s2">&quot;(&quot;</span>
+                <span class="k">for</span> <span class="n">subitem</span> <span class="ow">in</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">+=</span><span class="nb">str</span><span class="p">(</span><span class="n">subitem</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;,&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1">#remove last comma</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">+=</span><span class="s2">&quot;),&quot;</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1">#remove last comma</span>
+
+        
+    
+    <span class="k">def</span> <span class="nf">_getNumberOfLayers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return number of different layers (i.e. number of different indices).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span>
+    
+    
+    <span class="k">def</span> <span class="nf">_getTotalNumberOfLayers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return total number of layers (counting also multiple use of the same layer according to \&#39;multilayer_structure\&#39;).&quot;&quot;&quot;</span>
+        <span class="n">n</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multilayer_structure</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">n</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">n</span><span class="o">+=</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">n</span>
+        
+         
+    <span class="k">def</span> <span class="nf">_mapTotalIndexToInternal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">tot_ind</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the index used within \&#39;multilayer_structure\&#39; which corresponds to the total index of the layer counting from the bottom.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tot_ind</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">N_total</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Index out of range.&quot;</span><span class="p">)</span>        
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multilayer_structure</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="n">tot_ind</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">item</span>
+                <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="k">for</span> <span class="n">subitem</span> <span class="ow">in</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="n">tot_ind</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="n">subitem</span>
+                        <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+
+    
+    <span class="c1">#public methods</span>
+                                
+<div class="viewcode-block" id="Heterostructure.setLayout"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure.setLayout">[docs]</a>    <span class="k">def</span> <span class="nf">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number_of_layers</span><span class="p">,</span> <span class="n">multilayer_structure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Change the layout of the heterostructure.</span>
+<span class="sd">        </span>
+<span class="sd">           See :meth:`.__init__` for details. Only difference is: you cannot make changes which would remove layers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">,</span><span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">number_of_layers</span><span class="se">\&#39;</span><span class="s2"> must be of type int.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">number_of_layers</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">number_of_layers</span><span class="se">\&#39;</span><span class="s2"> must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">multilayer_structure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">multilayer_structure</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">)</span>
+            <span class="n">numberofindices</span><span class="o">=</span><span class="n">number_of_layers</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">multilayer_structure</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">multilayer_structure</span><span class="se">\&#39;</span><span class="s2"> has to be a list.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">numberofindices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_consistency_check</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">,</span> <span class="n">multilayer_structure</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">numberofindices</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">[</span><span class="n">numberofindices</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot change layout. Remove layers with index &gt; &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">numberofindices</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; first.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">[:</span><span class="n">numberofindices</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">numberofindices</span><span class="o">&gt;</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="o">+=</span><span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numberofindices</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span><span class="o">=</span><span class="n">number_of_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_multilayer_structure</span><span class="o">=</span><span class="n">multilayer_structure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_updatePyReflMLString</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="Heterostructure.setLayer"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure.setLayer">[docs]</a>    <span class="k">def</span> <span class="nf">setLayer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">,</span> <span class="n">layer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Place **layer** (instance of :class:`.LayerObject`) at position **index** (counting from 0, starting from the bottom or according to indices defined by **multilayer_structure**).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> must be of type int.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> exceeds defined number of layers.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span><span class="n">LayerObject</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">layer</span><span class="se">\&#39;</span><span class="s2"> has to be an instance of </span><span class="se">\&#39;</span><span class="s2">LayerObject</span><span class="se">\&#39;</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">=</span><span class="n">layer</span></div>
+    
+<div class="viewcode-block" id="Heterostructure.getLayer"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure.getLayer">[docs]</a>    <span class="k">def</span> <span class="nf">getLayer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the instance of :class:`.LayerObject` which is placed at position **index** (counting from 0, starting from the bottom or according to indices defined by **multilayer_structure**).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> must be of type int.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> exceeds defined number of layers.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">[</span><span class="n">index</span><span class="p">]</span></div>
+         
+<div class="viewcode-block" id="Heterostructure.getTotalLayer"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure.getTotalLayer">[docs]</a>    <span class="k">def</span> <span class="nf">getTotalLayer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the instance of :class:`.LayerObject` which is placed at position **index** (counting from 0, starting from the bottom, repeated layers are counted repeatedly).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getLayer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mapTotalIndexToInternal</span><span class="p">(</span><span class="n">index</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="Heterostructure.removeLayer"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure.removeLayer">[docs]</a>    <span class="k">def</span> <span class="nf">removeLayer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the instance of :class:`.LayerObject` which is placed at position **index** (counting from 0, starting from the bottom or according to indices defined by **multilayer_structure**).</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        **index** can also be a list of indices.</span>
+<span class="sd">        BEWARE: The instance of :class:`.LayerObject` itself and the corresdonding instances of :class:`Parameters.Fitparameter` are not deleted! So in a following fitting procedure, these parameters might still be varied even though they don&#39;t have any effect on the result.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">index</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> must be positive.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">index</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> exceeds defined number of layers.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">index</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span><span class="nb">int</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="s2">&quot;Entries of </span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> list must be of type int.&quot;</span>
+                <span class="k">if</span> <span class="n">item</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Entries of </span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> list must be positive.&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">item</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Entry of </span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> list exceeds defined number of layers.&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">[</span><span class="n">item</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span> 
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> must be of type int or list of int&quot;</span><span class="p">)</span></div>
+
+    
+    
+<div class="viewcode-block" id="Heterostructure.getSingleEnergyStructure"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure.getSingleEnergyStructure">[docs]</a>    <span class="k">def</span> <span class="nf">getSingleEnergyStructure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">,</span><span class="n">energy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) which can be directly used as input for :func:`Pythonreflectivity.Reflectivity`.</span>
+<span class="sd">        </span>
+<span class="sd">        **energy** in units of eV</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">PyReflStructure</span><span class="o">=</span><span class="n">Pythonreflectivity</span><span class="o">.</span><span class="n">Generate_structure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_number_of_layers</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_PyReflMLstring</span><span class="p">)</span>
+        <span class="n">index</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listoflayers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s2">&quot;WARNING: Layer &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; is undefined!&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">PyReflStructure</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">setd</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">getD</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span>
+                <span class="n">PyReflStructure</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">setsigma</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">getSigma</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span>
+                <span class="n">PyReflStructure</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">setmag</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">getMagDir</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span>
+                <span class="n">PyReflStructure</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">setchi</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">getChi</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">,</span><span class="n">energy</span><span class="p">))</span>
+            <span class="n">index</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="n">PyReflStructure</span></div>
+            
+
+    <span class="c1">#properties</span>
+    <span class="n">N</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getNumberOfLayers</span><span class="p">)</span>                                             
+    <span class="sd">&quot;&quot;&quot;(*int*) Number of different layers. Read-only.&quot;&quot;&quot;</span>
+    <span class="n">N_total</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getTotalNumberOfLayers</span><span class="p">)</span>                                
+    <span class="sd">&quot;&quot;&quot;(*int*) Total number of layers counting also multiple use of the same layer according to **multilayer_structure**. Read-only.&quot;&quot;&quot;</span></div>
+    
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="LayerObject"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.LayerObject">[docs]</a><span class="k">class</span> <span class="nc">LayerObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="LayerObject.__init__"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.LayerObject.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chitensor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magdir</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        d : :class:`Parameters.Parameter`</span>
+<span class="sd">            Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</span>
+<span class="sd">        sigma : :class:`Parameters.Parameter`</span>
+<span class="sd">            The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.</span>
+<span class="sd">        chitensor : list of :class:`Parameters.Parameter`</span>
+<span class="sd">            Electric susceptibility tensor of the layer.</span>
+<span class="sd">            | *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*</span>
+<span class="sd">            | *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero</span>
+<span class="sd">            | *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir** *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)</span>
+<span class="sd">            | *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements</span>
+<span class="sd">         </span>
+<span class="sd">        magdir : str</span>
+<span class="sd">            Gives the magnetization direction for MOKE. Possible values are *\&quot;x\&quot;*, *\&quot;y\&quot;*, *\&quot;z\&quot;* and *\&quot;0\&quot;* (no magnetization).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1">#check parameters</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">d</span><span class="se">\&#39;</span><span class="s2"> must be an instance of class </span><span class="se">\&#39;</span><span class="s2">Parameters.Parameter</span><span class="se">\&#39;</span><span class="s2"> or of an derived class (e.g. </span><span class="se">\&#39;</span><span class="s2">Parameters.Fitparameter</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">chitensor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">chitensor</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Elements of </span><span class="se">\&#39;</span><span class="s2">d</span><span class="se">\&#39;</span><span class="s2"> must be instances of class </span><span class="se">\&#39;</span><span class="s2">Parameters.Parameter</span><span class="se">\&#39;</span><span class="s2"> or of an derived class (e.g. </span><span class="se">\&#39;</span><span class="s2">Parameters.Fitparameter</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">sigma</span><span class="se">\&#39;</span><span class="s2"> must be an instance of class </span><span class="se">\&#39;</span><span class="s2">Parameters.Parameter</span><span class="se">\&#39;</span><span class="s2"> or of an derived class (e.g. </span><span class="se">\&#39;</span><span class="s2">Parameters.Fitparameter</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">magdir</span><span class="p">,</span><span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">magdir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">magdir</span><span class="se">\&#39;</span><span class="s2"> must be of type </span><span class="se">\&#39;</span><span class="s2">str</span><span class="se">\&#39;</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;x&#39;</span> <span class="ow">or</span> <span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;y&#39;</span> <span class="ow">or</span> <span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;z&#39;</span> <span class="ow">or</span> <span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;0&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid input for </span><span class="se">\&#39;</span><span class="s2">magdir</span><span class="se">\&#39;</span><span class="s2">. Valid inputs are </span><span class="se">\&#39;</span><span class="s2">x</span><span class="se">\&#39;</span><span class="s2">,</span><span class="se">\&#39;</span><span class="s2">y</span><span class="se">\&#39;</span><span class="s2">,</span><span class="se">\&#39;</span><span class="s2">z</span><span class="se">\&#39;</span><span class="s2">, and </span><span class="se">\&#39;</span><span class="s2">0</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        
+        <span class="c1">#asign members</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="o">=</span><span class="n">d</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="o">=</span><span class="n">chitensor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sigma</span><span class="o">=</span><span class="n">sigma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_magdir</span><span class="o">=</span><span class="n">magdir</span></div>
+     
+    <span class="k">def</span> <span class="nf">_setd_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">d</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">d</span><span class="se">\&#39;</span><span class="s2"> must be an instance of class </span><span class="se">\&#39;</span><span class="s2">Parameters.Parameter</span><span class="se">\&#39;</span><span class="s2"> or of an derived class (e.g. </span><span class="se">\&#39;</span><span class="s2">Parameters.Fitparameter</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="o">=</span><span class="n">d</span>
+    
+    <span class="k">def</span> <span class="nf">_getd_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span>
+    
+    <span class="k">def</span> <span class="nf">_getChitensor_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span>
+    
+    <span class="k">def</span> <span class="nf">_setChitensor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">chitensor</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">chitensor</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Elements of </span><span class="se">\&#39;</span><span class="s2">chitensor</span><span class="se">\&#39;</span><span class="s2"> must be instances of class </span><span class="se">\&#39;</span><span class="s2">Parameters.Parameter</span><span class="se">\&#39;</span><span class="s2"> or of an derived class (e.g. </span><span class="se">\&#39;</span><span class="s2">Parameters.Fitparameter</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="o">=</span><span class="n">chitensor</span>
+    
+    <span class="k">def</span> <span class="nf">_getMagdir_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magdir</span>
+    
+    <span class="k">def</span> <span class="nf">_setMagdir_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">magdir</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">magdir</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">magdir</span><span class="se">\&#39;</span><span class="s2"> must be of type </span><span class="se">\&#39;</span><span class="s2">str</span><span class="se">\&#39;</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;x&#39;</span> <span class="ow">or</span> <span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;y&#39;</span> <span class="ow">or</span> <span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;z&#39;</span> <span class="ow">or</span> <span class="n">magdir</span><span class="o">==</span><span class="s1">&#39;0&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid input for </span><span class="se">\&#39;</span><span class="s2">magdir</span><span class="se">\&#39;</span><span class="s2">. Valid inputs are </span><span class="se">\&#39;</span><span class="s2">x</span><span class="se">\&#39;</span><span class="s2">,</span><span class="se">\&#39;</span><span class="s2">y</span><span class="se">\&#39;</span><span class="s2">,</span><span class="se">\&#39;</span><span class="s2">z</span><span class="se">\&#39;</span><span class="s2">, and </span><span class="se">\&#39;</span><span class="s2">0</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_magdir</span><span class="o">=</span><span class="n">magdir</span>
+    
+    <span class="k">def</span> <span class="nf">_getSigma_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigma</span>
+    
+    <span class="k">def</span> <span class="nf">_setSigma_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">sigma</span><span class="se">\&#39;</span><span class="s2"> must be an instance of class </span><span class="se">\&#39;</span><span class="s2">Parameters.Parameter</span><span class="se">\&#39;</span><span class="s2"> or of an derived class (e.g. </span><span class="se">\&#39;</span><span class="s2">Parameters.Fitparameter</span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sigma</span><span class="o">=</span><span class="n">sigma</span>
+     
+    
+    <span class="c1">#public methods</span>
+<div class="viewcode-block" id="LayerObject.getChi"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.LayerObject.getChi">[docs]</a>    <span class="k">def</span> <span class="nf">getChi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">,</span><span class="n">energy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the electric susceptibility tensor as a list of numbers for a certain **energy** corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).</span>
+<span class="sd">    </span>
+<span class="sd">        The returned list can be of length 1,3,4 or 9 (see :meth:`.__init__`).</span>
+<span class="sd">        For the base implementation of :class:`.LayerObject` the parameter **energy** is not used. But it may be used by derived classes like :class:`.AtomLayerObject` and therefore needed for compatibility.l</span>
+<span class="sd">        **energy** is measured in units of eV.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#check tensor bevor giving it to the outside</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">3</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">4</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">9</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Chitensor must be either of length 1, 3, 4, or 9.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">4</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magdir</span><span class="o">==</span><span class="s2">&quot;0&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You have to define the direction of magnetization </span><span class="se">\&#39;</span><span class="s2">magdir</span><span class="se">\&#39;</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="c1">#return the checked list filled with actual values</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chitensor</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="LayerObject.getD"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.LayerObject.getD">[docs]</a>    <span class="k">def</span> <span class="nf">getD</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the thickness of the layer as a number corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).</span>
+<span class="sd">        </span>
+<span class="sd">        The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="LayerObject.getSigma"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.LayerObject.getSigma">[docs]</a>    <span class="k">def</span> <span class="nf">getSigma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the roughness of the upper surface of the layer as a number corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).</span>
+<span class="sd">        </span>
+<span class="sd">        The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigma</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="LayerObject.getMagDir"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.LayerObject.getMagDir">[docs]</a>    <span class="k">def</span> <span class="nf">getMagDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return magnetization direction</span>
+<span class="sd">        </span>
+<span class="sd">        **fitpararray** is not used and just there to give a common interface. Maybe a derived classes will have a benefit from it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magdir</span></div>
+    
+    
+    
+    
+    <span class="c1">#exposed properties (feel like instance variables but are protected via getter and setter methods)</span>
+    <span class="c1">#BEWARE: theese properties contain the &quot;Parameter&quot; objects. E.g. to get a certain value for the thicknes do this: &quot;layer.d.getValue(parameterarray)&quot;</span>
+    <span class="n">d</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getd_</span><span class="p">,</span><span class="n">_setd_</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Thickness of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.&quot;&quot;&quot;</span>
+    <span class="n">chitensor</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getChitensor_</span><span class="p">,</span><span class="n">_setChitensor_</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Electric susceptibility tensor of the layer. See :meth:`.__init__` for details.&quot;&quot;&quot;</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getSigma_</span><span class="p">,</span><span class="n">_setSigma_</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Roughness of the upper surface of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.&quot;&quot;&quot;</span>
+    <span class="n">magdir</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getMagdir_</span><span class="p">,</span><span class="n">_setMagdir_</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Magnetization direction for MOKE. Possible values are *\&quot;x\&quot;*, *\&quot;y\&quot;*, *\&quot;z\&quot;* and *\&quot;0\&quot;* (no magnetization).&quot;&quot;&quot;</span></div>
+    
+    
+
+<div class="viewcode-block" id="ModelChiLayerObject"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.ModelChiLayerObject">[docs]</a><span class="k">class</span> <span class="nc">ModelChiLayerObject</span><span class="p">(</span><span class="n">LayerObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Speciallized layer to deal with an electrical suszeptibility tensor (Chi) which is modelled as function of energy.</span>
+<span class="sd">    </span>
+<span class="sd">    BEWARE: The inherited property :attr:`.chitensor` is now a function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="ModelChiLayerObject.__init__"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.ModelChiLayerObject.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chitensorfunction</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magdir</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        d : :class:`Parameters.Parameter`</span>
+<span class="sd">            Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</span>
+<span class="sd">        sigma : :class:`Parameters.Parameter`</span>
+<span class="sd">            The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.</span>
+<span class="sd">        chitensorfunction : callable</span>
+<span class="sd">            Energy-dependent electric susceptibility tensor of the layer.</span>
+<span class="sd">            It is supposed to be a function of two parameters (**fitpararray**, **energy**) which returns a list of either 1,3,4 or 9 real or complex numbers.</span>
+<span class="sd">            See also documentation of :mod:`Pythonreflectivity`.</span>
+<span class="sd">            </span>
+<span class="sd">            * *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*</span>
+<span class="sd">            * *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero</span>
+<span class="sd">            * *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir**</span>
+<span class="sd">              *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)</span>
+<span class="sd">            * *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements</span>
+<span class="sd">            </span>
+<span class="sd">        magdir : str</span>
+<span class="sd">            Gives the magnetization direction for MOKE. Possible values are *\&quot;x\&quot;*, *\&quot;y\&quot;*, *\&quot;z\&quot;* and *\&quot;0\&quot;* (no magnetization).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1">#check parameters</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">chitensorfunction</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">chitensorfunction has to be callable.&quot;</span><span class="p">)</span>
+        <span class="c1">#asign members</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chitensorfunction</span><span class="o">=</span><span class="n">chitensorfunction</span>
+        <span class="c1">#call constructor of the base class</span>
+        <span class="nb">super</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span>  <span class="n">sigma</span><span class="p">,</span> <span class="n">magdir</span><span class="p">)</span>       </div>
+        
+    <span class="k">def</span> <span class="nf">_getChitensor_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chitensorfunction</span>
+    
+    <span class="k">def</span> <span class="nf">_setChitensor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">chitensorfunction</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">chitensorfunction</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">chitensorfunction has to be callable.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chitensorfunction</span><span class="o">=</span><span class="n">chitensorfunction</span>
+
+    
+    <span class="c1">#public methods</span>
+<div class="viewcode-block" id="ModelChiLayerObject.getChi"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.ModelChiLayerObject.getChi">[docs]</a>    <span class="k">def</span> <span class="nf">getChi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">,</span><span class="n">energy</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the electric susceptibility tensor as a list of numbers for a certain **energy** corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).</span>
+<span class="sd">    </span>
+<span class="sd">        **energy** is measured in units of eV.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#get chitensor from chitensorfunction</span>
+        <span class="n">chitensor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_chitensorfunction</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">,</span> <span class="n">energy</span><span class="p">)</span>
+        <span class="c1">#check tensor bevor giving it to the outside</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">3</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">4</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">9</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">chitensorfunction</span><span class="se">\&#39;</span><span class="s2"> must return an array of length 1, 3, 4, or 9.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chitensor</span><span class="p">)</span><span class="o">==</span><span class="mi">4</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magdir</span><span class="o">==</span><span class="s2">&quot;0&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You have to define the direction of magnetization </span><span class="se">\&#39;</span><span class="s2">magdir</span><span class="se">\&#39;</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">chitensor</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span><span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Elements of the array returnd by </span><span class="se">\&#39;</span><span class="s2">chitensorfunction</span><span class="se">\&#39;</span><span class="s2"> have to be numbers.&quot;</span><span class="p">)</span>
+        <span class="c1">#return the checked list</span>
+        <span class="k">return</span> <span class="n">chitensor</span></div></div>
+    
+        
+        
+<div class="viewcode-block" id="AtomLayerObject"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.AtomLayerObject">[docs]</a><span class="k">class</span> <span class="nc">AtomLayerObject</span><span class="p">(</span><span class="n">LayerObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Speciallized layer class to deal with compositions of atoms and their energy dependent formfactors (which can be obtained from absorption spectra).</span>
+<span class="sd">    </span>
+<span class="sd">    Especially usefull to deal with atomic layers, but can also be used for bulk.</span>
+<span class="sd">    The atoms and their formfactors have to be registered a the class (with registerAtom) before they can be used to instantiate a new AtomLayerObject.</span>
+<span class="sd">    The atom density can be plotted with :func:`.plotAtomDensity`.</span>
+<span class="sd">    Density is measured in mol/cm$^3$ (as long as no **densityunitfactor** is applied)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="AtomLayerObject.__init__"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.AtomLayerObject.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">densitydict</span><span class="o">=</span><span class="p">{},</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">magdir</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="n">densityunitfactor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        densitydict :</span>
+<span class="sd">            a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of :class:`Parameters.Parameter` or of a derived class).</span>
+<span class="sd">        d : :class:`Parameters.Parameter`</span>
+<span class="sd">            Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</span>
+<span class="sd">        sigma : :class:`Parameters.Parameter`</span>
+<span class="sd">            The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.</span>
+<span class="sd">        chitensor : list of :class:`Parameters.Parameter`</span>
+<span class="sd">            Electric susceptibility tensor of the layer.</span>
+<span class="sd">            | *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*</span>
+<span class="sd">            | *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero</span>
+<span class="sd">            | *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir** *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)</span>
+<span class="sd">            | *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements</span>
+<span class="sd">         </span>
+<span class="sd">        magdir : str</span>
+<span class="sd">            Gives the magnetization direction for MOKE. Possible values are *\&quot;x\&quot;*, *\&quot;y\&quot;*, *\&quot;z\&quot;* and *\&quot;0\&quot;* (no magnetization).</span>
+<span class="sd">        densityunitfactor : float</span>
+<span class="sd">            If the densities in densitydict are measured in another unit than mol/cm^3, state this value which translates your generic density to the one used internally.</span>
+<span class="sd">            I.e.::</span>
+<span class="sd">            </span>
+<span class="sd">                rho_in_mol_per_cubiccm = densityunitfactor * rho_in_whateverunityouwant</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">densitydict</span><span class="p">,</span><span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">densitydict</span><span class="se">\&#39;</span><span class="s2"> has to be a dictionary.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">atomname</span> <span class="ow">in</span> <span class="n">densitydict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">atomname</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The keys of the </span><span class="se">\&#39;</span><span class="s2">densitydict</span><span class="se">\&#39;</span><span class="s2"> dictionary have to be stings.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">densitydict</span><span class="p">[</span><span class="n">atomname</span><span class="p">],</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The values of the </span><span class="se">\&#39;</span><span class="s2">densitydict</span><span class="se">\&#39;</span><span class="s2"> dictionary have to be instances of the </span><span class="se">\&#39;</span><span class="s2">Parameter</span><span class="se">\&#39;</span><span class="s2"> class or of derived classes.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">atomname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_atomdict</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Atom </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">atomname</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> has not been registered yet.&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_densitydict</span><span class="o">=</span><span class="n">densitydict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>                                <span class="c1">#The usage of &quot;copy&quot; creates a copy of the dictionary. By this, we ensure, that changes of the original dictionary outside the object will not affect the AtomLayerObject</span>
+        
+         <span class="c1">#call constructor of the base class</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AtomLayerObject</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span>  <span class="n">sigma</span><span class="p">,</span> <span class="n">magdir</span><span class="p">)</span>     </div>
+        
+           
+<div class="viewcode-block" id="AtomLayerObject.getDensitydict"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.AtomLayerObject.getDensitydict">[docs]</a>    <span class="k">def</span> <span class="nf">getDensitydict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the density dictionary either with evaluated paramters (needs **fitpararray**) or with the raw :class:`Parameters.Parameter` objects (use **fitparraray** = *None*).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fitpararray</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_densitydict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\f</span><span class="s2">itparray</span><span class="se">\&#39;</span><span class="s2"> has to be a list.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_densitydict</span><span class="o">.</span><span class="n">keys</span><span class="p">(),[</span><span class="n">item</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_densitydict</span><span class="o">.</span><span class="n">values</span><span class="p">()]))</span>              <span class="c1">#pack new dictionary from atomnames and &quot;unpacked&quot; parameters (actual values instead of abstract parameter)</span></div>
+       
+<div class="viewcode-block" id="AtomLayerObject.getChi"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.AtomLayerObject.getChi">[docs]</a>    <span class="k">def</span> <span class="nf">getChi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">,</span><span class="n">energy</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the electric susceptibility tensor as a list of numbers for a certain **energy** corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).</span>
+<span class="sd">    </span>
+<span class="sd">        **energy** is measured in units of eV.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert</span>
+        <span class="n">ffsum</span><span class="o">=</span><span class="nb">sum</span><span class="p">([</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_atomdict</span><span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">getFF</span><span class="p">(</span><span class="n">energy</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_densitydict</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+        
+        
+        
+        <span class="c1"># Return the susceptibility tensor chi</span>
+        <span class="c1"># As chi is very small, the linear approximation can be used.</span>
+        <span class="c1"># If there is no densityunitfactor defined, the densities are assumed to be in units of mol/cm^3.</span>
+        <span class="c1"># Energy is assumed to be in units of eV.</span>
+        <span class="c1"># The susceptibility is therefore given as: chi= 4* pi * h_bar^2 [eV*s]^2 * c^2 [m/s]^2 * r_e [m] * N_A [1/mol] * (100cm)^3/m^3 * ffsum (mol/cm^3) / E^2 (eV)^2</span>
+        <span class="c1"># N_A: Arvogardros number, r_e: thomson scattering length/classical electron radius</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">ffsum</span><span class="o">*</span><span class="mf">830.3584763651544</span><span class="o">/</span><span class="n">energy</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>                </div>
+        
+        
+        
+        
+    
+    <span class="c1">#classvariables</span>
+    <span class="n">_atomdict</span><span class="o">=</span><span class="p">{}</span>
+    
+    <span class="c1">#classmethods                                               #are not related to an instance of a class and are here used to deal with the collection of all registered atoms</span>
+<div class="viewcode-block" id="AtomLayerObject.registerAtom"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.AtomLayerObject.registerAtom">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">registerAtom</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span><span class="n">formfactor</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register an atom called **name** for later use to instantiate an AtomLayerObject.</span>
+<span class="sd">        </span>
+<span class="sd">        **formfactor** as to be an instance of :class:`.Formfactor` or of a derived class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The atom </span><span class="se">\&#39;</span><span class="s2">name</span><span class="se">\&#39;</span><span class="s2"> has to be a string.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formfactor</span><span class="p">,</span><span class="n">Formfactor</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">formfactor</span><span class="se">\&#39;</span><span class="s2"> has to be an instance of </span><span class="se">\&#39;</span><span class="s2">Formfactor</span><span class="se">\&#39;</span><span class="s2"> or of a derived class.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_atomdict</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;WARNING: Atom </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> is replaced.&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_atomdict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="n">formfactor</span><span class="p">})</span></div>
+    
+<div class="viewcode-block" id="AtomLayerObject.getAtom"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.AtomLayerObject.getAtom">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getAtom</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the :class:`.Formfactor` object registered for atom **name**.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The atom </span><span class="se">\&#39;</span><span class="s2">name</span><span class="se">\&#39;</span><span class="s2"> has to be a string.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_atomdict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The atom </span><span class="se">\&#39;</span><span class="s2">name</span><span class="se">\&#39;</span><span class="s2"> is not registered.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_atomdict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="AtomLayerObject.getAtomNames"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.AtomLayerObject.getAtomNames">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getAtomNames</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of names of registered atoms.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_atomdict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div></div>
+    
+
+
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="Formfactor"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Formfactor">[docs]</a><span class="k">class</span> <span class="nc">Formfactor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class to deal with energy-dependent atomic form-factors.</span>
+<span class="sd">    </span>
+<span class="sd">    This base class is an abstract class an cannot be used directly.</span>
+<span class="sd">    The user should derive from this class if he wants to build his own models.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="Formfactor.__init__"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Formfactor.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+    
+<div class="viewcode-block" id="Formfactor.getFF"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.Formfactor.getFF">[docs]</a>    <span class="k">def</span> <span class="nf">getFF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">energy</span><span class="p">,</span><span class="n">fitpararray</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the formfactor for **energy** corresponding to **fitpararray** (if it depends on it) as 9-element list of complex numbers.</span>
+<span class="sd">        </span>
+<span class="sd">        **energy** is measured in units of eV.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="FFfromFile"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.FFfromFile">[docs]</a><span class="k">class</span> <span class="nc">FFfromFile</span><span class="p">(</span><span class="n">Formfactor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to deal with energy-dependent atomic form-factors which are tabulated in files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+  
+<div class="viewcode-block" id="FFfromFile.__init__"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.FFfromFile.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">linereaderfunction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">energyshift</span><span class="o">=</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;Initializes the FFfromFile object with an energy-dependent formfactor given as file.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            Path to the text file which contains the formfactor.       </span>
+<span class="sd">        linereaderfunction : callable</span>
+<span class="sd">            This function is used to convert one line from the text file to data.</span>
+<span class="sd">            It should be a function which takes a string and returns a tuple or list of 10 values: ``(energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz)``,</span>
+<span class="sd">            where `energy` is measured in units of `eV` and formfactors in units of `e/atom` (dimensionless).</span>
+<span class="sd">            It can also return `None` if it detects a comment line.</span>
+<span class="sd">            You can use :meth:`FFfromFile.createLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.</span>
+<span class="sd">        energyshift : :class:`Parameters.Parameter`</span>
+<span class="sd">            Species a fittable energyshift between the energy-dependent formfactor from **filename** and the `real` one in the reflectivity measurement.</span>
+<span class="sd">            So the formfactor delivered from :meth:`FFfromFile.getFF` will not be `formfactor_from_file(E)` but `formfactor_from_file(E+energyshift)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">filename</span><span class="se">\&#39;</span><span class="s2"> needs to be a string.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">linereaderfunction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">linereaderfunction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">createLinereader</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">linereaderfunction</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">linereaderfunction</span><span class="se">\&#39;</span><span class="s2"> needs to be a callable object.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;File </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">filename</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">energyshift</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">energyshift</span><span class="se">\&#39;</span><span class="s2"> has to be of type Parameters.Parameter.&quot;</span><span class="p">)</span>
+        <span class="n">energies</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">formfactors</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">linereaderoutput</span><span class="o">=</span><span class="n">linereaderfunction</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">linereaderoutput</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linereaderoutput</span><span class="p">,(</span><span class="nb">tuple</span><span class="p">,</span><span class="nb">list</span><span class="p">))</span> <span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Linereader function has to return a list/tuple.&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span>  <span class="nb">len</span><span class="p">(</span><span class="n">linereaderoutput</span><span class="p">)</span><span class="o">==</span><span class="mi">10</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Linereader function hast to return a list/tuple with 10 elements.&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">linereaderoutput</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span><span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Linereader function hast to return a list/tuple of numbers.&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linereaderoutput</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nb">complex</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Linereader function hast to return a real value for the energy.&quot;</span><span class="p">)</span>
+                <span class="n">energies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">linereaderoutput</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>                                                        <span class="c1">#store energies in one list</span>
+                <span class="n">formfactors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">linereaderoutput</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>                                                    <span class="c1">#store corresponding formfactors in another list</span>
+        <span class="n">formfactors</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">formfactors</span><span class="p">)</span>                                                                <span class="c1">#convert list formfactors to a numpy array for convinience</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_minE</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">energies</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_maxE</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">energies</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_energyshift</span><span class="o">=</span><span class="n">energyshift</span>                                                                       <span class="c1">#Attention: this is supposed to be an instance of &quot;Parameters.Parameter&quot;. So a value can be obtained with self._energyshift.getValue(fitparraray)</span>
+        <span class="c1">#Create an interpolation function based on the given energie-formfactor-points. The formfactors are thererfore transformed to arrays of length 18 but with real values. </span>
+        <span class="c1">#After that the array of N arrays of 18 element is transformed to an array of 18 arrays of N elements as needed by the interp1d function.</span>
+        <span class="c1">#Therefore, this function will return an array of length 18 wich has to be transformed back to 9 complex valued elements.</span>
+        <span class="c1">#Energies and formfactors don&#39;t have to be stored explicitly , because they are contained in the &quot;self._interpolator&quot; function.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interpolator</span><span class="o">=</span><span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">energies</span><span class="p">,</span><span class="n">numpy</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">formfactors</span><span class="o">.</span><span class="n">real</span><span class="p">,</span><span class="n">formfactors</span><span class="o">.</span><span class="n">imag</span><span class="p">),</span><span class="mi">1</span><span class="p">)))</span> </div>
+    
+    <span class="k">def</span> <span class="nf">_getMinE_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_minE</span>
+    
+    <span class="k">def</span> <span class="nf">_getMaxE_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maxE</span>
+    
+    
+    <span class="c1">#public methods</span>
+    
+<div class="viewcode-block" id="FFfromFile.createLinereader"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.FFfromFile.createLinereader">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">createLinereader</span><span class="p">(</span><span class="n">complex_numbers</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the standard linereader function for usage with :meth:`FFfromFile.__init__`.</span>
+<span class="sd">        </span>
+<span class="sd">        This standard linereader function reads energy and complex elements of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes \&quot;#\&quot; as comment sign.</span>
+<span class="sd">        If **complex_numbers** = *False* then the reader reads real and imaginary part of every element seperately, i.e. every line has to consist of 19 numbers seperated by whitespaces::</span>
+<span class="sd">            </span>
+<span class="sd">            energy f_xx_real ff_xx_im ... f_zy_real f_zy_im f_zz_real f_zz_im</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">commentsymbol</span><span class="o">=</span><span class="s1">&#39;#&#39;</span>
+        <span class="k">if</span> <span class="n">complex_numbers</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">linereader</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">line</span><span class="se">\&#39;</span><span class="s2"> needs to be a string.&quot;</span><span class="p">)</span>
+                <span class="n">line</span><span class="o">=</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">commentsymbol</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>                            <span class="c1">#ignore everything behind the commentsymbol  #</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">isspace</span><span class="p">():</span>                               <span class="c1">#ignore empty lines        </span>
+                    <span class="n">linearray</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">linearray</span><span class="p">)</span><span class="o">==</span><span class="mi">10</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Formfactor file has wrong format.&quot;</span><span class="p">)</span>
+                    <span class="n">linearray</span><span class="o">=</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">linearray</span><span class="p">]</span>
+                    <span class="k">return</span> <span class="n">linearray</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">complex_numbers</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">linereader</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">line</span><span class="se">\&#39;</span><span class="s2"> needs to be a string.&quot;</span><span class="p">)</span>
+                <span class="n">line</span><span class="o">=</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">commentsymbol</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>                            <span class="c1">#ignore everything behind the commentsymbol  #</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">isspace</span><span class="p">():</span>                               <span class="c1">#ignore empty lines        </span>
+                    <span class="n">linearray</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">linearray</span><span class="p">)</span><span class="o">==</span><span class="mi">19</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Formfactor file has wrong format.&quot;</span><span class="p">)</span>
+                    <span class="n">linearray</span><span class="o">=</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">linearray</span><span class="p">]</span>
+                    <span class="k">return</span> <span class="p">[</span><span class="n">linearray</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">13</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">14</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">15</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">linearray</span><span class="p">[</span><span class="mi">17</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">linearray</span><span class="p">[</span><span class="mi">18</span><span class="p">]]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">complex_numbers</span><span class="se">\&#39;</span><span class="s2"> has to be boolean.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">linereader</span>                                                               <span class="c1">#here the FUNKTION linereader is returned</span></div>
+            
+<div class="viewcode-block" id="FFfromFile.getFF"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.FFfromFile.getFF">[docs]</a>    <span class="k">def</span> <span class="nf">getFF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">energy</span><span class="p">,</span><span class="n">fitpararray</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the (energy-shifted )formfactor for **energy** as an interpolation between the stored values from file as 9-element 1-D numpy array of complex numbers.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        energy : float</span>
+<span class="sd">            Measured in units of eV.</span>
+<span class="sd">        fitpararray :</span>
+<span class="sd">            Is actually only needed when an energyshift has been defined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">energyshift</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_energyshift</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">energy</span><span class="o">+</span><span class="n">energyshift</span><span class="o">&lt;</span><span class="bp">self</span><span class="o">.</span><span class="n">minE</span> <span class="ow">or</span> <span class="n">energy</span><span class="o">+</span><span class="n">energyshift</span><span class="o">&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">maxE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">energy + energyshift = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; + &quot;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">energyshift</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; = &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">energy</span><span class="o">+</span><span class="n">energyshift</span><span class="p">)</span> <span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> is out of range (&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">minE</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;,&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxE</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;).&quot;</span><span class="p">)</span>
+        <span class="n">FFallReal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_interpolator</span><span class="p">(</span><span class="n">energy</span><span class="o">+</span><span class="n">energyshift</span><span class="p">)</span>
+        <span class="c1">#return directly the numpy array, it is usefull further Calculation</span>
+        <span class="k">return</span> <span class="n">FFallReal</span><span class="p">[:</span><span class="mi">9</span><span class="p">]</span><span class="o">+</span><span class="n">FFallReal</span><span class="p">[</span><span class="mi">9</span><span class="p">:]</span><span class="o">*</span><span class="mi">1</span><span class="n">j</span></div>
+        
+        
+        
+    <span class="c1">#properties</span>
+    <span class="n">maxE</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getMaxE_</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Upper limit of stored energy range. Read-only.&quot;&quot;&quot;</span>
+    <span class="n">minE</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getMinE_</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Lower limit of stored energy range. Read-only.&quot;&quot;&quot;</span></div>
+    
+    
+<span class="c1">#--------------------------------------------------------------------------------------------------------------------------</span>
+<span class="c1"># convenience functions</span>
+
+<div class="viewcode-block" id="plotAtomDensity"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.plotAtomDensity">[docs]</a><span class="k">def</span> <span class="nf">plotAtomDensity</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">,</span><span class="n">colormap</span><span class="o">=</span><span class="p">[],</span><span class="n">atomnames</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convenience function. Create a bar plot of the atom densities of all instances of :class:`.AtomLayerObject` contained in the :class:`.Heterostructure` object **hs** corresdonding to the **fitpararray** (see :mod:`Parameters`) and return the plotted information as dictionary.</span>
+<span class="sd">    </span>
+<span class="sd">        </span>
+<span class="sd">    You can  define the colors of the bars with **colormap**. Just give a list of matplotlib color names. They will be used in the given order.</span>
+<span class="sd">    You can define which atoms you want to plot or in which order. Give **atomnames** as a list of strings. If **atomnames** is not given, the bars will have different width, such that overlapped bars can be seen.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span><span class="n">Heterostructure</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">hs</span><span class="se">\&#39;</span><span class="s2"> has to be of type </span><span class="se">\&#39;</span><span class="s2">SampleRepresentation.Heterostructure</span><span class="se">\&#39;</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\f</span><span class="s2">itparray</span><span class="se">\&#39;</span><span class="s2"> has to be a list.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">colormap</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">colormap</span><span class="se">\&#39;</span><span class="s2"> has to be a list.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">atomnames</span><span class="p">,</span><span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="n">atomnames</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">atomnames</span><span class="se">\&#39;</span><span class="s2"> has to be a list.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">atomnames</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">atomnames</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">atomnames</span><span class="se">\&#39;</span><span class="s2"> has to be a list of strings.&quot;</span><span class="p">)</span>
+    
+    <span class="n">number_of_layers</span><span class="o">=</span><span class="n">hs</span><span class="o">.</span><span class="n">N_total</span>
+    <span class="k">if</span> <span class="n">atomnames</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">atomnames</span><span class="o">=</span><span class="n">AtomLayerObject</span><span class="o">.</span><span class="n">getAtomNames</span><span class="p">()</span>
+        <span class="n">widthstep</span><span class="o">=</span><span class="mf">0.9</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">atomnames</span><span class="p">)</span>                <span class="c1">#if no order is given plot each set of bar with smaller width to not cover the underlying bar</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">widthstep</span><span class="o">=</span><span class="mf">0.0</span>
+    <span class="k">if</span> <span class="n">atomnames</span><span class="o">==</span><span class="p">[]:</span>
+        <span class="nb">print</span> <span class="s2">&quot;No atoms registered.&quot;</span>
+        <span class="k">return</span>
+    
+    <span class="n">densitylistdict</span><span class="o">=</span><span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">atomnames</span><span class="p">:</span>
+        <span class="n">densitylistdict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">)</span>                                 <span class="c1">#create dictionary, which has an entry for every atom, with its name as key and as value a list. These lists are as long as there are numbers of layers and filled with zeros.</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hs</span><span class="o">.</span><span class="n">N</span><span class="p">):</span>                                                   
+        <span class="n">layer</span><span class="o">=</span><span class="n">hs</span><span class="o">.</span><span class="n">getLayer</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>                                                    <span class="c1">#go through all layers in the heterostructure</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span><span class="n">AtomLayerObject</span><span class="p">):</span>                                   <span class="c1">#if it is an instance of AtomLayerObject (i.e. contains information about atom densities)</span>
+            <span class="n">densitydict</span><span class="o">=</span><span class="n">layer</span><span class="o">.</span><span class="n">getDensitydict</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>           <span class="c1">#get the density dictionary from this layer with the parameters evaluated (i.e. take the value contained in fitpararray)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">atomnames</span><span class="p">:</span>                                  <span class="c1">#if atom with a certain name is contained within this layer, ad its density to the corresponding list in densitylistdict</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">densitydict</span><span class="p">:</span>
+                    <span class="n">densitylistdict</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">densitydict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        
+        
+    <span class="n">colorindex</span><span class="o">=</span><span class="mi">0</span>
+    <span class="n">w</span><span class="o">=</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">atomnames</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">colorindex</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="n">colormap</span><span class="p">):</span>
+            <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">),</span> <span class="n">densitylistdict</span><span class="p">[</span><span class="n">name</span><span class="p">],</span><span class="n">align</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">colormap</span><span class="p">[</span><span class="n">colorindex</span><span class="p">],</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+            <span class="n">colorindex</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">number_of_layers</span><span class="p">),</span> <span class="n">densitylistdict</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">align</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">-=</span><span class="n">widthstep</span>
+       
+    <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Layer number&quot;</span><span class="p">)</span>
+    <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Density in mol/cm$^3$&#39;</span><span class="p">)</span>
+    <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">number_of_layers</span><span class="p">)</span>
+    <span class="n">matplotlib</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">densitylistdict</span>                      <span class="c1">#contains a dictionary, which has an entry for every atom, with its name as key and as value a list. These lists are as long as there are numbers of layers and filled with</span></div>
+
+
+<div class="viewcode-block" id="KramersKronig"><a class="viewcode-back" href="../modules-api/samplerepresentation.html#SampleRepresentation.KramersKronig">[docs]</a><span class="k">def</span> <span class="nf">KramersKronig</span><span class="p">(</span><span class="n">energy</span><span class="p">,</span><span class="n">absorption</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convinience funtion. Performs the Kramers Kronig transformation. It is just a wrapper for :func:`Pythonreflectivity.KramersKroning` from Martins Zwieblers :mod:`Pythonreflectivity` package.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    energy : </span>
+<span class="sd">        an ordered list/array of L energies (in eV). The energies do not have to be envenly spaced, but they should be ordered.</span>
+<span class="sd">    absorption :</span>
+<span class="sd">        a list/array of real numbers and length L with absorption data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Pythonreflectivity</span><span class="o">.</span><span class="n">KramersKronig</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy</span><span class="p">),</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">absorption</span><span class="p">))</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Yannic Utz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>

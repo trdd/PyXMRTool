@@ -1,0 +1,688 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Parameters &#8212; PyXMRTool 0.9 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">todo: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">todo: Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for Parameters</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Provides an easy and transparent handling of fit parameters.</span>
+
+<span class="sd">Fitparameters can be handled as instances of :class:`.Fitparameter` which are collected and managed by an instance of :class:`.ParameterPool`.</span>
+<span class="sd">To allow for transparent modelling, :class:`.Fitparameter` is derived from :class:`.Parameter` which can hold a constant value.</span>
+<span class="sd">I.e. the code using a parameter does not have to know if it is a constant :class:`.Parameter` or a variable :class:`.Fitparameter`.</span>
+<span class="sd">The values of both are obtained in the same way with **getValue**.</span>
+
+<span class="sd">Both parameter classes support also the creation of of dependent paramters by arithmetic operations:</span>
+
+<span class="sd">.. doctest::</span>
+
+<span class="sd">    &gt;&gt;&gt; import Parameters</span>
+<span class="sd">    &gt;&gt;&gt; const=Parameters.Parameter(30.7)</span>
+<span class="sd">    &gt;&gt;&gt; const.getValue()</span>
+<span class="sd">    30.7</span>
+<span class="sd">    &gt;&gt;&gt; pp=Parameters.ParameterPool()</span>
+<span class="sd">    &gt;&gt;&gt; par_real=pp.newParameter(&#39;par_real&#39;,start_val=0,lower_lim=-10,upper_lim=10)</span>
+<span class="sd">    &gt;&gt;&gt; par_complex=pp.newParameter(&#39;par_complex&#39;,start_val=0+0j,lower_lim=-10-1j,upper_lim=100.3+20j)</span>
+<span class="sd">    &gt;&gt;&gt; par_real.getValue([1,2,3])</span>
+<span class="sd">    1</span>
+<span class="sd">    &gt;&gt;&gt; par_complex.getValue([1,2,3])</span>
+<span class="sd">    (2+3j)</span>
+<span class="sd">    &gt;&gt;&gt; dep_par = ((par_complex + 5*par_real)*0.68)**const</span>
+<span class="sd">    &gt;&gt;&gt; dep_par.getValue([1,2,3])</span>
+<span class="sd">    (8.367641368810413e+21-1.1467109965804664e+21j)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="c1">#Python Version 2.7</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Yannic Utz&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Yannic Utz and Martin Zwiebler&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s2">&quot;Yannic Utz&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;yannic.utz@tu-dresden.de&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s2">&quot;beta&quot;</span>
+
+
+
+<span class="kn">import</span> <span class="nn">os.path</span>
+
+
+
+<div class="viewcode-block" id="Parameter"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Parameter">[docs]</a><span class="k">class</span> <span class="nc">Parameter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for parameters. It contains a (complex) value which is set as instantiation and cannot be changed.</span>
+<span class="sd">    </span>
+<span class="sd">    This class (and all derived classes) supports creation of dependent parameters by arithmetic operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="Parameter.__init__"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Parameter.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize with a number as (complex) **value**.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">complex</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">value</span><span class="se">\&#39;</span><span class="s2"> has to be either of type int, float or complex.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="o">=</span><span class="n">value</span></div>
+        
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Enables nice representations by str().&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;&quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s2">&quot; object, value=&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;&gt;&quot;</span>
+        
+<div class="viewcode-block" id="Parameter.getValue"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Parameter.getValue">[docs]</a>    <span class="k">def</span> <span class="nf">getValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the **value**.</span>
+<span class="sd">        </span>
+<span class="sd">        **fitpararray** is not used and only there to make this function forward compatible with the :class:`.Fitparameter` class and with dependent parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Value is not initialized.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span></div>
+    
+    
+    <span class="c1"># overloading operators to allow to create dependent parameters from arithmetic operations</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">+</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>  
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span>  <span class="n">other</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">-</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">-</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>  
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span>  <span class="n">other</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">*</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>  
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span>  <span class="n">other</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">/</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">/</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__rdiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>  
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span>  <span class="n">other</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span><span class="o">**</span><span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span><span class="o">**</span><span class="n">other</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__rpow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">Parameter</span><span class="p">):</span>            
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="n">other</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>  
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span>  <span class="n">other</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__pos__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span>
+    <span class="k">def</span> <span class="nf">__abs__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">()</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">getValue</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fitpararray</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+    
+    
+    
+        
+<div class="viewcode-block" id="Fitparameter"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Fitparameter">[docs]</a><span class="k">class</span> <span class="nc">Fitparameter</span><span class="p">(</span><span class="n">Parameter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Contains name, starting value and limits of a fitting parameter and knows how to get the parameter value out of an array of values of fitparameters if it is attached to an instance of :class:`.ParameterPool`.&quot;&quot;&quot;</span>
+    
+    
+
+<div class="viewcode-block" id="Fitparameter.__init__"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Fitparameter.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">start_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lower_lim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upper_lim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize a fitparameter at least with a **name**.</span>
+<span class="sd">        </span>
+<span class="sd">        Usually, you (the user) should not instantiate a fitparameter directly. Instead use :meth:`.ParameterPool.newParameter`.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Name of the fit parameter. Use names without whitespaces. Otherwise there can be problems when using a parameter file.</span>
+<span class="sd">        fixed : bool</span>
+<span class="sd">            If `True`,the parameter will not be varied during a fit routine and the limits are not necessary.</span>
+<span class="sd">        start_val : number</span>
+<span class="sd">            Start value of the fit parameter.</span>
+<span class="sd">        lower_lim, upper_lim : number</span>
+<span class="sd">            Lower limit of the fit parameter.</span>
+<span class="sd">        upper_lim : number </span>
+<span class="sd">            Upper limit of the fit parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1">#check types</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">start_val</span><span class="p">,(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">complex</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="n">start_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">start_val</span><span class="se">\&#39;</span><span class="s2"> has to be either of type int, float or complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">name</span><span class="se">\&#39;</span><span class="s2"> has to be a string.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">fixed</span><span class="p">,</span><span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">fixed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">fixed</span><span class="se">\&#39;</span><span class="s2"> has to be of type bool.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">lower_lim</span><span class="p">,(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">complex</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="n">lower_lim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">lower_lim</span><span class="se">\&#39;</span><span class="s2"> has to be either of type int, float or complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">upper_lim</span><span class="p">,(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">complex</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="n">upper_lim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">upper_lim</span><span class="se">\&#39;</span><span class="s2"> has to be either of type int, float or complex.&quot;</span><span class="p">)</span>
+        
+
+        
+        <span class="c1">#assign members</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">=</span><span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">=</span><span class="n">fixed</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start_val</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lower_lim</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper_lim</span><span class="p">,</span><span class="nb">complex</span><span class="p">):</span>   <span class="c1">#if one is complex, treat all as complex</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">=</span><span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span><span class="o">=</span><span class="nb">complex</span><span class="p">(</span><span class="n">start_val</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lower_lim</span><span class="o">=</span><span class="nb">complex</span><span class="p">(</span><span class="n">lower_lim</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_upper_lim</span><span class="o">=</span><span class="nb">complex</span><span class="p">(</span><span class="n">upper_lim</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">=</span><span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span><span class="o">=</span><span class="n">start_val</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lower_lim</span><span class="o">=</span><span class="n">lower_lim</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_upper_lim</span><span class="o">=</span><span class="n">upper_lim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="o">=</span><span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">=</span><span class="kc">None</span></div>
+        
+    
+    <span class="c1">#special methods</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determines how an *object* of this class react on ``str(object)``.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&lt;&quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s2">&quot; object </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">: fixed, start value = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;&gt;&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&lt;&quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s2">&quot; object </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">: not fixed, start value = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;, lower limit = &quot;</span> <span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lower_lim</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;, upper limit = &quot;</span> <span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_upper_lim</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;&gt;&quot;</span>
+    
+    <span class="c1">#private methods</span>
+    <span class="k">def</span> <span class="nf">_getName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+    
+    <span class="k">def</span> <span class="nf">_getFixed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span>
+    
+    <span class="k">def</span> <span class="nf">_setFixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fixed</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fixed</span><span class="p">,</span><span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">fixed</span><span class="se">\&#39;</span><span class="s2"> has to be of type bool&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">==</span><span class="n">fixed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">=</span><span class="n">fixed</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">_setStartVal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">start_val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start_val</span><span class="p">,(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">complex</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">start_val</span><span class="se">\&#39;</span><span class="s2"> has to be either of type int, float or complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start_val</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>   <span class="c1">#if one is complex, treat all as complex</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span><span class="o">=</span><span class="nb">complex</span><span class="p">(</span><span class="n">start_val</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">=</span><span class="kc">True</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span><span class="o">=</span><span class="n">start_val</span>
+
+    
+    <span class="k">def</span> <span class="nf">_getStartVal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span>
+
+    <span class="k">def</span> <span class="nf">_getLowerLim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lower_lim</span>
+    
+    <span class="k">def</span> <span class="nf">_setLowerLim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">lower_lim</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lower_lim</span><span class="p">,(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">complex</span><span class="p">))</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">lower_lim</span><span class="se">\&#39;</span><span class="s2"> has to be either of type int, float or complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lower_lim</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>   <span class="c1">#if one is complex, treat all as complex</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lower_lim</span><span class="o">=</span><span class="nb">complex</span><span class="p">(</span><span class="n">lower_lim</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">=</span><span class="kc">True</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lower_lim</span><span class="o">=</span><span class="n">lower_lim</span>
+        
+    <span class="k">def</span> <span class="nf">_getUpperLim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_upper_lim</span>
+    
+    <span class="k">def</span> <span class="nf">_setUpperLim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">upper_lim</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper_lim</span><span class="p">,(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">complex</span><span class="p">))</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Property </span><span class="se">\&#39;</span><span class="s2">upper_lim</span><span class="se">\&#39;</span><span class="s2"> has to be either of type int, float or complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper_lim</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>   <span class="c1">#if one is complex, treat all as complex</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_upper_lim</span><span class="o">=</span><span class="nb">complex</span><span class="p">(</span><span class="n">upper_lim</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">=</span><span class="kc">True</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_upper_lim</span><span class="o">=</span><span class="n">upper_lim</span>
+    
+    <span class="k">def</span> <span class="nf">_setIndex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">index</span><span class="se">\&#39;</span><span class="s2"> has to be of type int or None.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">==</span><span class="kc">True</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Parameter </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> is fixed and cannot carry an index.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="o">=</span><span class="n">index</span>
+        
+    
+    <span class="k">def</span> <span class="nf">_getIndex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span>
+    
+    <span class="k">def</span> <span class="nf">_getComplex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span>
+    
+    <span class="c1">#public methods</span>
+    
+<div class="viewcode-block" id="Fitparameter.fix"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Fitparameter.fix">[docs]</a>    <span class="k">def</span> <span class="nf">fix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fix parameter during fitting.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">=</span><span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Fitparameter.unfix"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Fitparameter.unfix">[docs]</a>    <span class="k">def</span> <span class="nf">unfix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set parameter as variable during fitting.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">=</span><span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span></div>
+          
+<div class="viewcode-block" id="Fitparameter.getValue"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.Fitparameter.getValue">[docs]</a>    <span class="k">def</span> <span class="nf">getValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the value of the parameter corresponding to the given array of values.</span>
+<span class="sd">        </span>
+<span class="sd">           This method only works if the fitparameter is connected to an instance of :class:`.ParameterPool`.</span>
+<span class="sd">           Therefore, create instances of :class:`.Fitparameter` always using :meth:`.ParameterPool.newParameter`.           </span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixed</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_val</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Parameter has to be attached to a ParameterPool.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">getFitArrayLen</span><span class="p">()</span><span class="o">&lt;&gt;</span><span class="nb">len</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Given fit value array is &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot; entries long but should have a length of &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">getFitArrayLen</span><span class="p">())</span><span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complex</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">complex</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">],</span><span class="n">fitpararray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fitpararray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">]</span></div>
+  
+        
+    
+    
+    <span class="c1">#exposed properties (feel like instance variables but are protected via getter and setter methods)</span>
+    <span class="n">name</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getName</span><span class="p">)</span>             <span class="c1">#read-only</span>
+    <span class="sd">&quot;&quot;&quot;(*str*) Name of the parameter. Read-only.&quot;&quot;&quot;</span>
+    <span class="n">fixed</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getFixed</span><span class="p">,</span><span class="n">_setFixed</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;(*bool*) Determines if fitparameter is fixed (*True*) or unfixed (*False*) during fitting procedures.&quot;&quot;&quot;</span>
+    <span class="n">start_val</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getStartVal</span><span class="p">,</span><span class="n">_setStartVal</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;(*number*) Start value of the fitparameter for fitting procedures.&quot;&quot;&quot;</span>
+    <span class="n">lower_lim</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getLowerLim</span><span class="p">,</span><span class="n">_setLowerLim</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;(*number*) Lower limit of the fitparameter for fitting procedures.&quot;&quot;&quot;</span>
+    <span class="n">upper_lim</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getUpperLim</span><span class="p">,</span><span class="n">_setUpperLim</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;(*number*) Upper limit of the fitparameter for fitting procedures.&quot;&quot;&quot;</span>
+    <span class="n">index</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getIndex</span><span class="p">,</span><span class="n">_setIndex</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;(*int*) Determines which entry in the fitparameter array is interpreted as the value of this fitparameter.</span>
+<span class="sd">    Usually this property should not be changed by you (the user) but by the instance of :class:`.ParameterPool` where the fitparameter is connected to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">complex</span><span class="o">=</span><span class="nb">property</span><span class="p">(</span><span class="n">_getComplex</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;(*bool*) Signals if fitparameter is a complex number (*True*) or not (*False*). Read-only.&quot;&quot;&quot;</span></div>
+    
+
+
+<div class="viewcode-block" id="ParameterPool"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool">[docs]</a><span class="k">class</span> <span class="nc">ParameterPool</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Collects a pool of Parameter objects and connects them with a parameter file.&quot;&quot;&quot;</span>
+    
+    <span class="c1">#file format</span>
+    <span class="n">_nonesymbol</span><span class="o">=</span><span class="s1">&#39;-&#39;</span>                          <span class="c1">#if this symbol is found in the parameter file the corresponding property is set to &quot;None&quot;</span>
+    <span class="n">_commentsymbol</span><span class="o">=</span><span class="s1">&#39;#&#39;</span>                       <span class="c1">#Lines starting with this symbol in the parameter file are ignored</span>
+    <span class="n">_lineorder</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span>                 <span class="c1">#gives the order of parameter properties in a line of the parameter file. [pos of start_value, pos of fixed, pos of lower_lim, pos of upper_lim, name]</span>
+    
+    
+<div class="viewcode-block" id="ParameterPool.__init__"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">parfilename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize a new ParameterPool.</span>
+<span class="sd">        </span>
+<span class="sd">        Read parameter initialisation from file **parfilename** if given. As soon as you connect a parameter file to the pool, its initialisation values have priority </span>
+<span class="sd">        over local initialisations with :meth:`.newParameter`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>           
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">if</span> <span class="n">parfilename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">readFromFile</span><span class="p">(</span><span class="n">parfilename</span><span class="p">)</span></div>
+    
+        
+    <span class="c1">#private methods</span>
+    
+    <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Look for changes within the parameter properties and inform them about changes of their indices.</span>
+<span class="sd">        </span>
+<span class="sd">           This function should be used by the :class:`.Fitparameter` objects if they are connected to a ParameterPool.</span>
+<span class="sd">           (So in a sense it is not private to the class, but nevertheless should not be exposed to users.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="o">=</span><span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">:</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="kc">None</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">fixed</span><span class="o">==</span><span class="kc">False</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">complex</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">item</span><span class="o">.</span><span class="n">fixed</span><span class="o">==</span><span class="kc">False</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">complex</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">poolindex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="n">i</span>
+            <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">poolindex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="n">i</span>
+            <span class="n">i</span><span class="o">+=</span><span class="mi">2</span>
+            
+    <span class="nd">@classmethod</span>                                                                                       <span class="c1">#classmethod: Method is bound to the class. We dont need a reference to the instance here, but only to the class variables defining the file format</span>
+    <span class="k">def</span> <span class="nf">_convertStrToNumber</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a string to a corresponding number type or None if the corresponding symbol is found.</span>
+<span class="sd">        </span>
+<span class="sd">            This method is used to read parameters from the parameter file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">string</span><span class="o">==</span><span class="bp">cls</span><span class="o">.</span><span class="n">_nonesymbol</span><span class="p">:</span>
+             <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="s1">&#39;j&#39;</span> <span class="ow">in</span> <span class="n">string</span> <span class="ow">or</span> <span class="s1">&#39;J&#39;</span> <span class="ow">in</span> <span class="n">string</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">complex</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">string</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+    
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_convertNumberToStr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span><span class="n">number</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a **number** to a corresponding string or to *_nonesymbol* if number is None.</span>
+<span class="sd">        </span>
+<span class="sd">            This method is used to write parameters from the parameter file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">number</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_nonesymbol</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+
+        
+
+    
+    <span class="c1">#public methods</span>
+    
+<div class="viewcode-block" id="ParameterPool.newParameter"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.newParameter">[docs]</a>    <span class="k">def</span> <span class="nf">newParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">fixed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">start_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">lower_lim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">upper_lim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new :class:`.Fitparameter` inside the parameter pool and return a reference to it or</span>
+<span class="sd">        return the reference to an already existing one with the same **name**.</span>
+<span class="sd">        This is the usual way to create instances of :class:`.Fitparameter`.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Name of the fit parameter. Use names without whitespaces. Otherwise there can be problems when using a parameter file.</span>
+<span class="sd">        fixed : bool</span>
+<span class="sd">            If `True`,the parameter will not be varied during a fit routine and the limits are not necessary.</span>
+<span class="sd">        start_val : number</span>
+<span class="sd">            Start value of the fit parameter.</span>
+<span class="sd">        lower_lim, upper_lim : number</span>
+<span class="sd">            Lower limit of the fit parameter.</span>
+<span class="sd">        upper_lim : number </span>
+<span class="sd">            Upper limit of the fit parameter.        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">par</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">par</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">par</span><span class="o">=</span><span class="n">Fitparameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">fixed</span><span class="p">,</span><span class="n">start_val</span><span class="p">,</span><span class="n">lower_lim</span><span class="p">,</span><span class="n">upper_lim</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+            <span class="n">par</span><span class="o">.</span><span class="n">pool</span><span class="o">=</span><span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">par</span></div>
+        
+        
+<div class="viewcode-block" id="ParameterPool.getParameter"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.getParameter">[docs]</a>    <span class="k">def</span> <span class="nf">getParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return existing parameter with name **name** or return *None* if not existing.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">name</span><span class="se">\&#39;</span><span class="s2"> has to be a string.&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+    
+<div class="viewcode-block" id="ParameterPool.readFromFile"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.readFromFile">[docs]</a>    <span class="k">def</span> <span class="nf">readFromFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">parfilename</span><span class="p">):</span>        
+        <span class="sd">&quot;&quot;&quot;Read parameters and there initialisation values from file *parfilename**, append them to the pool or overwrite existing once.</span>
+<span class="sd">            </span>
+<span class="sd">           | Lines in the parameter file should be in the format:</span>
+<span class="sd">           | ``&lt;start_value&gt;  &lt;fixed&gt;  &lt;lower_limit&gt;  &lt;upper_limit&gt;  &lt;name&gt;  &lt;comments/other stuff&gt;``</span>
+<span class="sd">           | Lines starting with *#* are ignored.</span>
+<span class="sd">           | Values of &lt;fixed&gt; have to be either `0` or `1` (not `False` or `True`).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">parfilename</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">line</span><span class="o">=</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_commentsymbol</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>   <span class="c1">#ignore everythin behind a _commentsymbol</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">line</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">:</span>                       <span class="c1">#ignore empty lines</span>
+                    <span class="n">l</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+      
+                    <span class="c1">#the order of the parameter properties is coded here, with the help of the lineorder array</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">start_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convertStrToNumber</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                        <span class="n">fixed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convertStrToNumber</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                        <span class="n">lower_limit</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span> <span class="n">_convertStrToNumber</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+                        <span class="n">upper_limit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convertStrToNumber</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                        <span class="nb">print</span> <span class="s2">&quot;Invalid number format in line: &quot;</span><span class="o">+</span><span class="n">line</span>
+                        <span class="k">raise</span>
+                        
+                    <span class="n">name</span><span class="o">=</span><span class="n">l</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">4</span><span class="p">]]</span>
+                    
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">start_value</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="n">start_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">upper_limit</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="n">upper_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">lower_limit</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="n">lower_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">))</span>  <span class="ow">and</span> <span class="ow">not</span> <span class="p">((</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start_value</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="n">start_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">upper_limit</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="n">upper_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lower_limit</span><span class="p">,</span><span class="nb">complex</span><span class="p">)</span> <span class="ow">or</span> <span class="n">lower_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+                        <span class="nb">print</span> <span class="n">line</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Start value and limits in the parameter file should be either all complex numbers or none of them.</span><span class="se">\n</span><span class="s2"> Bad line: &quot;</span><span class="o">+</span><span class="n">line</span><span class="p">)</span>                                
+                    
+                    <span class="n">par</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">par</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">par</span><span class="o">=</span><span class="n">Fitparameter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="nb">bool</span><span class="p">(</span><span class="n">fixed</span><span class="p">),</span><span class="n">start_value</span><span class="p">,</span><span class="n">lower_limit</span><span class="p">,</span><span class="n">upper_limit</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+                        <span class="n">par</span><span class="o">.</span><span class="n">pool</span><span class="o">=</span><span class="bp">self</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">par</span><span class="o">.</span><span class="n">start_val</span><span class="o">=</span><span class="n">start_value</span>
+                        <span class="n">par</span><span class="o">.</span><span class="n">fixed</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+                        <span class="n">par</span><span class="o">.</span><span class="n">lower_lim</span><span class="o">=</span><span class="n">lower_limit</span>
+                        <span class="n">par</span><span class="o">.</span><span class="n">upper_lim</span><span class="o">=</span><span class="n">upper_limit</span></div>
+    
+<div class="viewcode-block" id="ParameterPool.writeToFile"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.writeToFile">[docs]</a>    <span class="k">def</span> <span class="nf">writeToFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">parfilename</span><span class="p">,</span><span class="n">fitpararray</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write parameters and there initialisation value to file **parfilename**. </span>
+<span class="sd">           </span>
+<span class="sd">           Can be used to create a template for a parameter initialisation file or to store parameters after fitting.</span>
+<span class="sd">           If **fitpararray** is given, these values are written as start values. Else the stored start values are used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>   
+        <span class="n">columnwidth</span><span class="o">=</span><span class="mi">25</span>
+        
+        <span class="k">if</span> <span class="n">fitpararray</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span><span class="o">&lt;&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">getFitArrayLen</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">fitpararray</span><span class="se">\&#39;</span><span class="s2"> has wrong length.&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">parfilename</span><span class="p">)</span> <span class="p">:</span>
+            <span class="c1">#ask if overwrite</span>
+            <span class="n">answer</span><span class="o">=</span><span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you realy want to overwrite </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">parfilename</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">? [y/N]&quot;</span><span class="p">)</span>
+            <span class="n">answer</span><span class="o">=</span><span class="n">answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">answer</span><span class="o">==</span><span class="s1">&#39;y&#39;</span> <span class="ow">or</span> <span class="n">answer</span><span class="o">==</span><span class="s1">&#39;yes&#39;</span> <span class="ow">or</span> <span class="n">answer</span><span class="o">==</span><span class="s1">&#39;j&#39;</span> <span class="ow">or</span> <span class="n">answer</span><span class="o">==</span><span class="s1">&#39;ja&#39;</span><span class="p">):</span>
+                <span class="k">return</span>
+        <span class="n">headerarray</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;&lt;start_value&gt;&quot;</span><span class="p">,</span><span class="s2">&quot;&lt;fixed&gt;&quot;</span><span class="p">,</span><span class="s2">&quot;&lt;lower_limit&gt;&quot;</span><span class="p">,</span><span class="s2">&quot;&lt;upper_limit&gt;&quot;</span><span class="p">,</span><span class="s2">&quot;&lt;name&gt;&quot;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">parfilename</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_commentsymbol</span><span class="o">+</span><span class="n">headerarray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">headerarray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">headerarray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">headerarray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">headerarray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">4</span><span class="p">]]</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">:</span>
+                <span class="n">entryarray</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">start_val</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">fixed</span><span class="p">),</span><span class="n">p</span><span class="o">.</span><span class="n">lower_lim</span><span class="p">,</span><span class="n">p</span><span class="o">.</span><span class="n">upper_lim</span><span class="p">,</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">fitpararray</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">entryarray</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+                <span class="n">parray</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_convertNumberToStr</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">entryarray</span><span class="p">]</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">parray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">parray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">parray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">parray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="n">parray</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_lineorder</span><span class="p">[</span><span class="mi">4</span><span class="p">]]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">columnwidth</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="ParameterPool.getStartLowerUpper"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.getStartLowerUpper">[docs]</a>    <span class="k">def</span> <span class="nf">getStartLowerUpper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a tupel of `fitpararrays` of parameter start values, lower and upper limits for usage with :meth:`.Fitparameter.getValue`.</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Each of the arrays contains the values in the order of occurence of the corresponding parameter in the pool (order of parameter creation), but only of those parameters which are not fixed. Real parameters first, then the complex ones.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+        <span class="n">start_vals</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">lower_lims</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">upper_lims</span><span class="o">=</span><span class="p">[]</span>       
+        <span class="k">for</span> <span class="n">poolindex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Parameter </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> is not properly initialized.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span><span class="o">&lt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="o">&lt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Limits of parameter </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> are not properly initialized.&quot;</span><span class="p">)</span>
+            <span class="n">start_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="p">)</span>
+            <span class="n">lower_lims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span><span class="p">)</span>
+            <span class="n">upper_lims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">poolindex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Parameter </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> is not properly initialized.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span><span class="o">.</span><span class="n">real</span><span class="o">&lt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="o">.</span><span class="n">real</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="o">.</span><span class="n">real</span><span class="o">&lt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span><span class="o">.</span><span class="n">real</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span><span class="o">.</span><span class="n">imag</span><span class="o">&lt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="o">.</span><span class="n">imag</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="o">.</span><span class="n">imag</span><span class="o">&lt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span><span class="o">.</span><span class="n">imag</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Limits of parameter </span><span class="se">\&#39;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2"> are not properly initialized.&quot;</span><span class="p">)</span>
+            <span class="n">start_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+            <span class="n">start_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">start_val</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
+            <span class="n">lower_lims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+            <span class="n">lower_lims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">lower_lim</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
+            <span class="n">upper_lims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+            <span class="n">upper_lims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">upper_lim</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">start_vals</span><span class="p">,</span><span class="n">lower_lims</span><span class="p">,</span><span class="n">upper_lims</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="ParameterPool.setStartValues"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.setStartValues">[docs]</a>    <span class="k">def</span> <span class="nf">setStartValues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the start values of all parameters which are not fixed using **fitpararray** in the order of occurence in the pool (order of parameter creation). First real and then complex ones.</span>
+<span class="sd">        </span>
+<span class="sd">           Can be used e.g. after finding goog start values with an Evolutionary fitter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lenreal</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="p">)</span>
+        <span class="n">lencomplex</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="n">lenreal</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">lencomplex</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Given fit value array is &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot; entries long but should have a length of &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">lenreal</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">lencomplex</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lenreal</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">start_val</span><span class="o">=</span><span class="n">fitpararray</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lencomplex</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">start_val</span><span class="o">=</span><span class="nb">complex</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">[</span><span class="n">lenreal</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">],</span><span class="n">fitpararray</span><span class="p">[</span><span class="n">lenreal</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span></div>
+            
+    
+<div class="viewcode-block" id="ParameterPool.getFitArrayLen"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.getFitArrayLen">[docs]</a>    <span class="k">def</span> <span class="nf">getFitArrayLen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return length of the *fitpararray* which is needed for :meth:`.setStartValues`, :meth:`.writeToFile` and :meth:`.Fitparameter.getValue` and which is given by :meth:`.getStartLowerUpper`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="ParameterPool.getNames"><a class="viewcode-back" href="../modules-api/parameters.html#Parameters.ParameterPool.getNames">[docs]</a>    <span class="k">def</span> <span class="nf">getNames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the names of all registered Fitparameters as a list in the same order they should be in the `fitpararray`.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+        <span class="n">namearray</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">poolindex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realUnfixedArray</span><span class="p">:</span>
+            <span class="n">namearray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">poolindex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complexUnfixedArray</span><span class="p">:</span>
+            <span class="n">namearray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.real&quot;</span><span class="p">)</span>
+            <span class="n">namearray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parPool</span><span class="p">[</span><span class="n">poolindex</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.imag&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">namearray</span></div></div>
+            
+        
+    
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Yannic Utz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>

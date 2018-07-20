@@ -1,5 +1,23 @@
 #!/usr/bin/env python
-"""Deals with the sample representation for simulation of the reflectivity."""
+"""Deals with the sample representation for simulation of the reflectivity.
+
+A multilayer sample is represented by a :class:`.Heterostructure` object. Its main pupose is to deliver the list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) with defined susceptibilities at certain energies via :meth.`Heterostructure.getSingleEnergyStructure`. The layers within this heterostructure are represented by instances of :class:`.LayerObject` or of derived classes, which alows for a very flexibel modelling of the sample.
+
+So far the following layer types are implemented:
+
+* :class:`.LayerObject`: Layer with a constant (over energy) but fittable electric susceptibility tensor.
+
+* :class:`.ModelChiLayerObject`: This layer type holds the electric susceptibility tensor as a user-defined function of energy.
+    
+* :class:`.AtomLayerObject`: This layer deals with compositions of atoms with different formfactors. The densities of the atoms can be varied during fitting procedures and plotted with using :func:`.plotAtomDensity`. The formfactors are represented by instances of classes which are derived from :class:`.Formfactor` (the base class is abstract and cannot be used directly).
+
+So far the following formfactor types are implemented:
+
+* :class:`.FFfromFile`: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.
+    
+
+
+"""
 
 
 #Python Version 2.7
@@ -12,7 +30,7 @@ __license__ = ""
 __version__ = ""
 __maintainer__ = "Yannic Utz"
 __email__ = "yannic.utz@tu-dresden.de"
-__status__ = "Prototype"
+__status__ = "beta"
 
 
 import os.path
@@ -24,23 +42,29 @@ import matplotlib.pyplot
 import Pythonreflectivity
 
 
-from . import Parameters
+import Parameters
 
 
 class Heterostructure(object):
-    """Represents a heterostructructure as a stack of layers.
+    """Represents a heterostructure as a stack of instances of :class:`.LayerObject` or of derived classes.
+    Its main pupose is to model the sample in a very flexibel way and to get the list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) with defined susceptibilities at certain energies.
     
-       In contrast to Martin's list of Layer-type objects, this class contains all information also for different energies.
+    
+    In contrast to Martin's list of Layer-type objects, this class contains all information also for different energies.
     """
     
     def __init__(self, number_of_layers=0, multilayer_structure=None):
         """Create heterostructructure object.
         
-           \'number_of_layers\' gives the number of different layers.
-           With \'multilayer_structure\' multilayers which contain identical layers several times can be defined.
-           This can be defined by as a list containing the indices of layer from the lowest (e.g. substrate) to the highest (top layer, hit first by the beam).
-           Default is \'[0,1,2,3, ...,number_of_layers-1]\'. Multilayer syntax is e.g. \'[0,1,2,[100,[3,4,5,6]],7,.,1,..]\' which repeats 100 times the sequence of
-           layers 3,4,5,6 in between 2 and 7 and later on layer 1 is repeated once.
+        Parameters
+        ----------
+        number_of_layers : int 
+            gives the number of different layers
+        multilayer_structure : list
+            Makes it possible to define multilayers which contain identical layers several times.
+            This can be done by passing a list containing the indices of layers from the lowest (e.g. substrate) to the highest (top layer, hit first by the beam).
+            Default is ``[0,1,2,3, ...,number_of_layers-1]``. Multilayer syntax is e.g.``[0,1,2,[100,[3,4,5,6]],7,.,1,..]`` which repeats 100 times the sequence of
+            layers 3,4,5,6 in between 2 and 7 and later on layer 1 is repeated once.
         """
         if not isinstance(number_of_layers,int):
             raise TypeError("\'number_of_layers\' must be of type int.")
@@ -51,13 +75,15 @@ class Heterostructure(object):
         elif not isinstance(multilayer_structure,list):
             raise TypeError("\'multilayer_structure\' has to be a list.")
         else:
-            self._consistency_check_(number_of_layers, multilayer_structure)
+            self._consistency_check(number_of_layers, multilayer_structure)
         self._number_of_layers=number_of_layers
         self._multilayer_structure=multilayer_structure
         self._listoflayers=[None for i in range(number_of_layers)]
-        self._updatePyReflMLString_()
+        self._updatePyReflMLString()
+        
+    #private members
     
-    def _consistency_check_(self,number_of_layers,multilayer_structure):
+    def _consistency_check(self,number_of_layers,multilayer_structure):
         index_list=[]
         for item in multilayer_structure:
             if isinstance(item, int):
@@ -83,7 +109,7 @@ class Heterostructure(object):
         return len(index_list)
     
     
-    def _updatePyReflMLString_(self):
+    def _updatePyReflMLString(self):
         self._PyReflMLstring=""
         for item in self._multilayer_structure:
             if isinstance(item, int):
@@ -100,12 +126,12 @@ class Heterostructure(object):
 
         
     
-    def _getNumberOfLayers_(self):
+    def _getNumberOfLayers(self):
         """Return number of different layers (i.e. number of different indices)."""
         return self._number_of_layers
     
     
-    def _getTotalNumberOfLayers_(self):
+    def _getTotalNumberOfLayers(self):
         """Return total number of layers (counting also multiple use of the same layer according to \'multilayer_structure\')."""
         n=0
         for item in self._multilayer_structure:
@@ -115,10 +141,7 @@ class Heterostructure(object):
                 n+=item[0]*len(item[1])
         return n
         
-    
-    def _getMultilayerStructure_(self):
-        return self._multilayer_structure
-        
+         
     def _mapTotalIndexToInternal(self,tot_ind):
         """Return the index used within \'multilayer_structure\' which corresponds to the total index of the layer counting from the bottom."""
         if tot_ind>=self.N_total:
@@ -142,7 +165,7 @@ class Heterostructure(object):
     def setLayout(self, number_of_layers, multilayer_structure=None):
         """Change the layout of the heterostructure.
         
-           See constructor for details. Only difference is: you cannot make changes which would remove layers.
+           See :meth:`.__init__` for details. Only difference is: you cannot make changes which would remove layers.
         """
         if not isinstance(number_of_layers,int):
             raise TypeError("\'number_of_layers\' must be of type int.")
@@ -154,7 +177,7 @@ class Heterostructure(object):
         elif not isinstance(multilayer_structure,list):
             raise TypeError("\'multilayer_structure\' has to be a list.")
         else:
-            numberofindices=self._consistency_check_(number_of_layers, multilayer_structure)
+            numberofindices=self._consistency_check(number_of_layers, multilayer_structure)
         if numberofindices<len(self._listoflayers):
             for item in self._listoflayers[numberofindices:]:
                 if item is not None:
@@ -164,11 +187,11 @@ class Heterostructure(object):
             self._listoflayers+=[None for i in range(numberofindices-len(self._listoflayers))]
         self._number_of_layers=number_of_layers
         self._multilayer_structure=multilayer_structure
-        self._updatePyReflMLString_()
+        self._updatePyReflMLString()
         
     def setLayer(self,index, layer):
         """
-        Place \'layer\' (instance of LayerObject) at position \'index\' (counting from 0, starting from the bottom or according to \'multilayer_structure\').
+        Place **layer** (instance of :class:`.LayerObject`) at position **index** (counting from 0, starting from the bottom or according to indices defined by **multilayer_structure**).
         """
         if not isinstance(index,int):
             raise TypeError("\'index\' must be of type int.")
@@ -182,7 +205,7 @@ class Heterostructure(object):
     
     def getLayer(self,index):
         """
-        Return the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom or according to \'multilayer_structure\').
+        Return the instance of :class:`.LayerObject` which is placed at position **index** (counting from 0, starting from the bottom or according to indices defined by **multilayer_structure**).
         """
         if not isinstance(index,int):
             raise TypeError("\'index\' must be of type int.")
@@ -194,17 +217,17 @@ class Heterostructure(object):
          
     def getTotalLayer(self,index):
         """
-        Return the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom, even if a latter sequence is repeated with help of \'multilayer_structure\').
+        Return the instance of :class:`.LayerObject` which is placed at position **index** (counting from 0, starting from the bottom, repeated layers are counted repeatedly).
         """
         return self.getLayer(self._mapTotalIndexToInternal(index))
     
     def removeLayer(self,index):
         """
-        Remove the instance of LayerObject which is placed at position \'index\' (counting from 0, starting from the bottom from the  heterostructructure or according to \'multilayer_structure\').
+        Remove the instance of :class:`.LayerObject` which is placed at position **index** (counting from 0, starting from the bottom or according to indices defined by **multilayer_structure**).
         
         
-        \'index\' can also be a list of indices.
-        BEWARE: The instance of LayerObject itself and the corresdonding Parameters are not deleted! 
+        **index** can also be a list of indices.
+        BEWARE: The instance of :class:`.LayerObject` itself and the corresdonding instances of :class:`Parameters.Fitparameter` are not deleted! So in a following fitting procedure, these parameters might still be varied even though they don't have any effect on the result.
         """
         if isinstance(index,int):
             if index<0:
@@ -228,9 +251,9 @@ class Heterostructure(object):
     
     def getSingleEnergyStructure(self,fitpararray,energy=None):
         """
-        Return list of layers (layer type from Pythonreflectivity) which can be directly used as input for \'Pythonreflectivity.Reflectivity( )\'
+        Return list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) which can be directly used as input for :func:`Pythonreflectivity.Reflectivity`.
         
-        \'energy\' in units of eV
+        **energy** in units of eV
         """
         PyReflStructure=Pythonreflectivity.Generate_structure(self._number_of_layers,self._PyReflMLstring)
         index=0
@@ -247,9 +270,10 @@ class Heterostructure(object):
             
 
     #properties
-    N=property(_getNumberOfLayers_)                                             #number of different layers
-    N_total=property(_getTotalNumberOfLayers_)                                  #total number of layers (counting also multiple use of the same layer according to \'multilayer_structure\')
-    MLstructure=property(_getMultilayerStructure_)
+    N=property(_getNumberOfLayers)                                             
+    """(*int*) Number of different layers. Read-only."""
+    N_total=property(_getTotalNumberOfLayers)                                
+    """(*int*) Total number of layers counting also multiple use of the same layer according to **multilayer_structure**. Read-only."""
     
 
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -257,21 +281,25 @@ class Heterostructure(object):
 
 class LayerObject(object):
     """Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.
-    
-       It handels the basic properties of 
     """
     
     def __init__(self, chitensor=None, d=None,  sigma=None, magdir="0"):
-        """Creates a new Layer.
-        
-        \'d\' is its thickness, \'sigma\' is the roughness of its upper surface, \'chitensor\' is its electric susceptibility tensor, and \'magdir\' gives the magnetization directrion for MOKE
-        \'d\', \'sigma\' ,and the entries of \'chitensor\' are expected to be an instances of a \"Parameter\" class (also \"Fitparamter\").
-        \'d\' and \'sigma\' are both of dimension length. You are free to choose whatever unit you want, but use the same for every length troughout the project.
-        \'chitensor\' is a list of either  1,3, 4 or 9 elements (see also documentation for Pythonreflectivity). Each of these elements is supposed to be of type Parameter or of a derived class.
-        [chi] sets chi_xx = chi_yy = chi_zz = chi
-        [chi_xx,chi_yy,chi_z] sets  chi_xx,chi_yy,chi_zz, others are zero
-        [chi_xx,chi_yy,chi_z,chi_g] sets  chi_xx,chi_yy,chi_zz and depending on 'magdir' chi_yz=-chi_zy=chi_g (if 'x'), chi_xz=-chi_zx=chi_g (if 'y') or chi_xz=-chi_zx=chi_g (if 'z')
-        [chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz] sets all the corresdonding elements
+        """        
+        Parameters
+        ----------
+        d : :class:`Parameters.Parameter`
+            Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+        sigma : :class:`Parameters.Parameter`
+            The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
+        chitensor : list of :class:`Parameters.Parameter`
+            Electric susceptibility tensor of the layer.
+            | *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
+            | *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero
+            | *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir** *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)
+            | *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements
+         
+        magdir : str
+            Gives the magnetization direction for MOKE. Possible values are *\"x\"*, *\"y\"*, *\"z\"* and *\"0\"* (no magnetization).
         """
         
         #check parameters
@@ -334,10 +362,11 @@ class LayerObject(object):
     #public methods
     def getChi(self,fitpararray,energy=None):
         """
-        Return the chitensor as a list of numbers for a certain energy.
+        Return the electric susceptibility tensor as a list of numbers for a certain **energy** corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).
     
-        For the base implementation of class \'LayerObject\' the parameter \'energy\' is not used. But it may be used by derived classes like \'AtomLayerObject\'.
-        \'energy\' in units of eV.
+        The returned list can be of length 1,3,4 or 9 (see :meth:`.__init__`).
+        For the base implementation of :class:`.LayerObject` the parameter **energy** is not used. But it may be used by derived classes like :class:`.AtomLayerObject` and therefore needed for compatibility.l
+        **energy** is measured in units of eV.
         """
         #check tensor bevor giving it to the outside
         if not (len(self._chitensor)==1 or len(self._chitensor)==3 or len(self._chitensor)==4 or len(self._chitensor)==9):
@@ -349,7 +378,7 @@ class LayerObject(object):
     
     def getD(self,fitpararray):
         """
-        Return the thickness d as a an actual number.
+        Return the thickness of the layer as a number corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).
         
         The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.
         """
@@ -360,7 +389,7 @@ class LayerObject(object):
     
     def getSigma(self,fitpararray):
         """
-        Return sigma as a an actual number.
+        Return the roughness of the upper surface of the layer as a number corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).
         
         The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.
         """
@@ -371,9 +400,9 @@ class LayerObject(object):
     
     def getMagDir(self,fitpararray=None):
         """
-        Return magdir.
+        Return magnetization direction
         
-        fitpararray is not used and just there to give a common interface. mMybe derived classes will have a benefit from it.
+        **fitpararray** is not used and just there to give a common interface. Maybe a derived classes will have a benefit from it.
         """
         return self._magdir
     
@@ -383,30 +412,43 @@ class LayerObject(object):
     #exposed properties (feel like instance variables but are protected via getter and setter methods)
     #BEWARE: theese properties contain the "Parameter" objects. E.g. to get a certain value for the thicknes do this: "layer.d.getValue(parameterarray)"
     d=property(_getd_,_setd_)
+    """Thickness of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength."""
     chitensor=property(_getChitensor_,_setChitensor_)
+    """Electric susceptibility tensor of the layer. See :meth:`.__init__` for details."""
     sigma=property(_getSigma_,_setSigma_)
+    """Roughness of the upper surface of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength."""
     magdir=property(_getMagdir_,_setMagdir_)
+    """Magnetization direction for MOKE. Possible values are *\"x\"*, *\"y\"*, *\"z\"* and *\"0\"* (no magnetization)."""
     
     
 
 class ModelChiLayerObject(LayerObject):
-    """Speciallized Layer to deal with a Suszeptibility Tensor (Chi) which is modelled as function of energy.
+    """Speciallized layer to deal with an electrical suszeptibility tensor (Chi) which is modelled as function of energy.
     
-       Beware: The property chitensor is here supposed to be a function.    
+    BEWARE: The inherited property :attr:`.chitensor` is now a function.
     """
     
     def __init__(self, chitensorfunction, d=None,  sigma=None, magdir="0"):
-        """Creates a new ModelChiLayer.
-        
-        \'d\' is its thickness, \'sigma\' is the roughness of its upper surface,  and \'magdir\' gives the magnetization directrion for MOKE
-        \'d\', \'sigma\' ,and the entries of \'chitensor\' are expected to be an instances of a \"Parameter\" class (also \"Fitparamter\").
-        \'d\' and \'sigma\' are both of dimension length. You are free to choose whatever unit you want, but use the same for every length troughout the project.
-        \'chitensorfunction\' should be a function of two parameters (fitpararray,energy) and should return a list of either  1,3, 4 or 9 elements (see also documentation for Pythonreflectivity). 
-        Each of these elements is supposed to be a number (real or imaginary).
-        [chi] sets chi_xx = chi_yy = chi_zz = chi
-        [chi_xx,chi_yy,chi_z] sets  chi_xx,chi_yy,chi_zz, others are zero
-        [chi_xx,chi_yy,chi_z,chi_g] sets  chi_xx,chi_yy,chi_zz and depending on 'magdir' chi_yz=-chi_zy=chi_g (if 'x'), chi_xz=-chi_zx=chi_g (if 'y') or chi_xz=-chi_zx=chi_g (if 'z')
-        [chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz] sets all the corresdonding elements
+        """
+        Parameters
+        ----------
+        d : :class:`Parameters.Parameter`
+            Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+        sigma : :class:`Parameters.Parameter`
+            The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
+        chitensorfunction : callable
+            Energy-dependent electric susceptibility tensor of the layer.
+            It is supposed to be a function of two parameters (**fitpararray**, **energy**) which returns a list of either 1,3,4 or 9 real or complex numbers.
+            See also documentation of :mod:`Pythonreflectivity`.
+            
+            * *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
+            * *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero
+            * *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir**
+              *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)
+            * *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements
+            
+        magdir : str
+            Gives the magnetization direction for MOKE. Possible values are *\"x\"*, *\"y\"*, *\"z\"* and *\"0\"* (no magnetization).
         """
         
         #check parameters
@@ -429,9 +471,9 @@ class ModelChiLayerObject(LayerObject):
     #public methods
     def getChi(self,fitpararray,energy):
         """
-        Return the chitensor as a list of numbers for a certain energy.
+        Return the electric susceptibility tensor as a list of numbers for a certain **energy** corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).
     
-        \'energy\' in units of eV.
+        **energy** is measured in units of eV.
         """
         #get chitensor from chitensorfunction
         chitensor=self._chitensorfunction(fitpararray, energy)
@@ -450,23 +492,38 @@ class ModelChiLayerObject(LayerObject):
         
 class AtomLayerObject(LayerObject):
     """
-    Speciallized Layer to deal with compositions of Atoms and their energy dependent formfactors (which can be obtained from absorption spectra).
+    Speciallized layer class to deal with compositions of atoms and their energy dependent formfactors (which can be obtained from absorption spectra).
     
     Especially usefull to deal with atomic layers, but can also be used for bulk.
     The atoms and their formfactors have to be registered a the class (with registerAtom) before they can be used to instantiate a new AtomLayerObject.
-    The atom density can be plotted with plotAtomDensity() (see convenience functions).
-    Density in mol/cm$^3$ (as long as no densityunitfactor is applied)
+    The atom density can be plotted with :func:`.plotAtomDensity`.
+    Density is measured in mol/cm$^3$ (as long as no **densityunitfactor** is applied)
     """
     
     def __init__(self, densitydict={}, d=None,  sigma=None, magdir="0", densityunitfactor=1.0):
         """
-        Create an AtomLayerObject.
-        
-        \'densitydict\' ist a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of the Parameter class or derived classes).
-        For the other parameters see \'LayerObject\'.
-        
-        If the densities in densitydict are measured in another unit than mol/cm^3, state the \'densityunitfactor\' which translates your generic density to the one used internally.
-        I.e.    rho_in_mol_per_cubiccm = densityunitfactor * rho_in_whateverunityouwant
+        Parameters
+        ----------
+        densitydict :
+            a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of :class:`Parameters.Parameter` or of a derived class).
+        d : :class:`Parameters.Parameter`
+            Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+        sigma : :class:`Parameters.Parameter`
+            The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
+        chitensor : list of :class:`Parameters.Parameter`
+            Electric susceptibility tensor of the layer.
+            | *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
+            | *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero
+            | *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir** *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)
+            | *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements
+         
+        magdir : str
+            Gives the magnetization direction for MOKE. Possible values are *\"x\"*, *\"y\"*, *\"z\"* and *\"0\"* (no magnetization).
+        densityunitfactor : float
+            If the densities in densitydict are measured in another unit than mol/cm^3, state this value which translates your generic density to the one used internally.
+            I.e.::
+            
+                rho_in_mol_per_cubiccm = densityunitfactor * rho_in_whateverunityouwant
         """
         if not isinstance(densitydict,dict):
             raise TypeError("\'densitydict\' has to be a dictionary.")
@@ -485,7 +542,7 @@ class AtomLayerObject(LayerObject):
         
            
     def getDensitydict(self,fitpararray=None):
-        """Return the density dictionary either with evaluated paramters (needs fitpararray) or with the raw '\Parameter\' objects (use fitparraray=None)."""
+        """Return the density dictionary either with evaluated paramters (needs **fitpararray**) or with the raw :class:`Parameters.Parameter` objects (use **fitparraray** = *None*)."""
         if fitpararray==None:
             return self._densitydict.copy()
         elif not isinstance(fitpararray,list):
@@ -495,9 +552,9 @@ class AtomLayerObject(LayerObject):
        
     def getChi(self,fitpararray,energy):
         """
-        Return the chitensor as a list numbers of  for a certain energy.
+        Return the electric susceptibility tensor as a list of numbers for a certain **energy** corresponding to the parameter values in **fitpararray** (see :mod:`Parameters`).
     
-        \'energy\' in units of eV.
+        **energy** is measured in units of eV.
         """
         #gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
         ffsum=sum([item[1].getValue(fitpararray)*(type(self)._atomdict[item[0]]).getFF(energy,fitpararray) for item in self._densitydict.items()])
@@ -523,9 +580,9 @@ class AtomLayerObject(LayerObject):
     @classmethod
     def registerAtom(cls, name,formfactor):
         """
-        Register an atom for later use to instantiate an AtomLayerObject.
+        Register an atom called **name** for later use to instantiate an AtomLayerObject.
         
-        \'formfactor\' as to be an instance of \'Formfactor\' or of a derived class.
+        **formfactor** as to be an instance of :class:`.Formfactor` or of a derived class.
         """        
         if not isinstance(name,str):
             raise TypeError("The atom \'name\' has to be a string.")
@@ -537,7 +594,7 @@ class AtomLayerObject(LayerObject):
     
     @classmethod
     def getAtom(cls, name):
-        """Return the Formfactor object registered for Atom \'name\'."""
+        """Return the :class:`.Formfactor` object registered for atom **name**."""
         if not isinstance(name,str):
             raise TypeError("The atom \'name\' has to be a string.")
         if name not in cls._atomdict:
@@ -567,9 +624,9 @@ class Formfactor(object):
     
     def getFF(self,energy,fitpararray=None):
         """
-        Return the formfactor for \'energy\' corresponding to fitpararray (if it depends on it).
+        Return the formfactor for **energy** corresponding to **fitpararray** (if it depends on it) as 9-element list of complex numbers.
         
-        \'energy\' in units of eV.
+        **energy** is measured in units of eV.
         """
         raise NotImplementedError
 
@@ -579,25 +636,29 @@ class FFfromFile(Formfactor):
     Class to deal with energy-dependent atomic form-factors which are tabulated in files.
     """
   
-    def __init__(self, filename, linereaderfctn=None, energyshift=Parameters.Parameter(0)):
-        """Initializes the FFfromFile object with the data from filename.
+    def __init__(self, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0)):
+        """Initializes the FFfromFile object with an energy-dependent formfactor given as file.
         
-           The \'linereaderfctn\' is used to convert one line from the text file to data.
-           It should be a function which takes a string and returns a tuple or list of 10 values: (energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz) 
-           \'energy\' in units of eV, formfactors in units of "e/atom" (dimensionless)
-           It can also return \'None\' if it detects a comment line.
-           You can use FFfromFile.createLinereader to get a standard function, which just reads this array as whitespace seperated from the line.
-           
-           \'energyshift\' has to be an instance of \'Paramater\' or of a derived class. It can be used to specify a fittable energyshift between
-           the energy-dependent formfactor from filename and the \'real\' one in the reflectivity measurement. So the formfactor delivered from getFF() 
-           will not be formfactor_from_file(E) but formfactor_from_file(E+energyshift).
+        Parameters
+        ----------
+        filename : str
+            Path to the text file which contains the formfactor.       
+        linereaderfunction : callable
+            This function is used to convert one line from the text file to data.
+            It should be a function which takes a string and returns a tuple or list of 10 values: ``(energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz)``,
+            where `energy` is measured in units of `eV` and formfactors in units of `e/atom` (dimensionless).
+            It can also return `None` if it detects a comment line.
+            You can use :meth:`FFfromFile.createLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.
+        energyshift : :class:`Parameters.Parameter`
+            Species a fittable energyshift between the energy-dependent formfactor from **filename** and the `real` one in the reflectivity measurement.
+            So the formfactor delivered from :meth:`FFfromFile.getFF` will not be `formfactor_from_file(E)` but `formfactor_from_file(E+energyshift)`.
         """
         if not isinstance(filename,str):
             raise TypeError("\'filename\' needs to be a string.")
-        if linereaderfctn is None:
-            linereaderfctn=self.createLinereader()
-        if not callable(linereaderfctn):
-            raise TypeError("\'linereaderfctn\' needs to be a callable object.")
+        if linereaderfunction is None:
+            linereaderfunction=self.createLinereader()
+        if not callable(linereaderfunction):
+            raise TypeError("\'linereaderfunction\' needs to be a callable object.")
         if not os.path.isfile(filename):
             raise Exception("File \'"+filename+"\' does not exist.")
         if not isinstance(energyshift,Parameters.Parameter):
@@ -606,7 +667,7 @@ class FFfromFile(Formfactor):
         formfactors=[]
         with open(filename,'r') as f:
             for line in f:
-                linereaderoutput=linereaderfctn(line)
+                linereaderoutput=linereaderfunction(line)
                 if linereaderoutput is None:
                     break
                 if not isinstance(linereaderoutput,(tuple,list)) :
@@ -642,10 +703,12 @@ class FFfromFile(Formfactor):
     @staticmethod
     def createLinereader(complex_numbers=True):
         """
-        Return the standard linereader function.
+        Return the standard linereader function for usage with :meth:`FFfromFile.__init__`.
         
-        This standard linereader function reads energy and complex elements of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes \'#\' as comment sign.
-        If complex_numbers==0 then the reader reads real and imaginary part of every element sepeately, i.e. every line has to consist of 19 numbers seperated by whitespaces.
+        This standard linereader function reads energy and complex elements of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes \"#\" as comment sign.
+        If **complex_numbers** = *False* then the reader reads real and imaginary part of every element seperately, i.e. every line has to consist of 19 numbers seperated by whitespaces::
+            
+            energy f_xx_real ff_xx_im ... f_zy_real f_zy_im f_zz_real f_zz_im
         """
         commentsymbol='#'
         if complex_numbers==True:
@@ -680,10 +743,14 @@ class FFfromFile(Formfactor):
             
     def getFF(self,energy,fitpararray=None):
         """
-        Return the (energy-shifted )formfactor for \'energy\' as an interpolation between the stored values from file as 1-D numpy array.
+        Return the (energy-shifted )formfactor for **energy** as an interpolation between the stored values from file as 9-element 1-D numpy array of complex numbers.
         
-        \'energy\' in units of eV.
-        \'fitpararray\' is actually only needed when an energyshift has been defined.
+        Parameters
+        ----------
+        energy : float
+            Measured in units of eV.
+        fitpararray :
+            Is actually only needed when an energyshift has been defined.
         """
         energyshift=self._energyshift.getValue(fitpararray)
         
@@ -697,18 +764,20 @@ class FFfromFile(Formfactor):
         
     #properties
     maxE=property(_getMaxE_)
+    """Upper limit of stored energy range. Read-only."""
     minE=property(_getMinE_)
+    """Lower limit of stored energy range. Read-only."""
     
     
 #--------------------------------------------------------------------------------------------------------------------------
 # convenience functions
 
 def plotAtomDensity(hs,fitpararray,colormap=[],atomnames=None):
-    """Make a plot of the atom densities of all AtomLayerObjects contained in the \'Heterostructure\' \'hs\' corresdonding to the \'fitpararray\' and return the plotted information.
+    """Convenience function. Create a bar plot of the atom densities of all instances of :class:`.AtomLayerObject` contained in the :class:`.Heterostructure` object **hs** corresdonding to the **fitpararray** (see :mod:`Parameters`) and return the plotted information as dictionary.
     
         
-        You can  define the colors of the bars. Just give a list of matplotlib color names. They will be used in the given order.
-        You can define which atoms you want to plot or in which order. Give \'atomnames\' as a list of strings. If atomnames is not given, the bars will have different width, such that overlapped bars can be seen.
+    You can  define the colors of the bars with **colormap**. Just give a list of matplotlib color names. They will be used in the given order.
+    You can define which atoms you want to plot or in which order. Give **atomnames** as a list of strings. If **atomnames** is not given, the bars will have different width, such that overlapped bars can be seen.
     """
     if not isinstance(hs,Heterostructure):
         raise TypeError("\'hs\' has to be of type \'SampleRepresentation.Heterostructure\'.")
@@ -767,10 +836,13 @@ def plotAtomDensity(hs,fitpararray,colormap=[],atomnames=None):
 
 def KramersKronig(energy,absorption):
     """
-    Perform the Kramers Kronig transformation. Just a wrapper for the function Pythonreflectivity.KramersKroning(energy,absorption) from Martins Pythonreflectivity package.
+    Convinience funtion. Performs the Kramers Kronig transformation. It is just a wrapper for :func:`Pythonreflectivity.KramersKroning` from Martins Zwieblers :mod:`Pythonreflectivity` package.
     
-    \'energy\': an ordered list/array of L energies (in eV). The energies do not have to be envenly spaced, but they should be ordererd.
-    \'absorption\': a list/array of real numbers and length L with absorption data. 
+    Parameters
+    ----------
+    energy : 
+        an ordered list/array of L energies (in eV). The energies do not have to be envenly spaced, but they should be ordered.
+    absorption :
+        a list/array of real numbers and length L with absorption data
     """
-    
     return Pythonreflectivity.KramersKronig(numpy.array(energy),numpy.array(absorption))

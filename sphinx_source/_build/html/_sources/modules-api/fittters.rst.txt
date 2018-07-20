@@ -1,0 +1,6 @@
+================
+Module `Fitters`
+================
+
+.. automodule:: Fitters
+    :members:

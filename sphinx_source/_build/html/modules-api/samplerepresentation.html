@@ -1,0 +1,539 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Module SampleRepresentation &#8212; PyXMRTool 0.9 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Module Experiment" href="experiment.html" />
+    <link rel="prev" title="Module Parameters" href="parameters.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="experiment.html" title="Module Experiment"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="parameters.html" title="Module Parameters"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../api.html" accesskey="U">API</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">todo: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">todo: Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="parameters.html">Module <cite>Parameters</cite></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Module <cite>SampleRepresentation</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Module <cite>Experiment</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fitters.html">Module <cite>Fitters</cite></a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parameters.html"
+                        title="previous chapter">Module <cite>Parameters</cite></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="experiment.html"
+                        title="next chapter">Module <cite>Experiment</cite></a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules-api/samplerepresentation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-SampleRepresentation">
+<span id="module-samplerepresentation"></span><h1>Module <cite>SampleRepresentation</cite><a class="headerlink" href="#module-SampleRepresentation" title="Permalink to this headline">¶</a></h1>
+<p>Deals with the sample representation for simulation of the reflectivity.</p>
+<p>A multilayer sample is represented by a <a class="reference internal" href="#SampleRepresentation.Heterostructure" title="SampleRepresentation.Heterostructure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Heterostructure</span></code></a> object. Its main pupose is to deliver the list of layers (Layer type of the <code class="xref py py-mod docutils literal notranslate"><span class="pre">Pythonreflectivity</span></code> package from Martin Zwiebler) with defined susceptibilities at certain energies via :meth.`Heterostructure.getSingleEnergyStructure`. The layers within this heterostructure are represented by instances of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> or of derived classes, which alows for a very flexibel modelling of the sample.</p>
+<p>So far the following layer types are implemented:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a>: Layer with a constant (over energy) but fittable electric susceptibility tensor.</li>
+<li><a class="reference internal" href="#SampleRepresentation.ModelChiLayerObject" title="SampleRepresentation.ModelChiLayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelChiLayerObject</span></code></a>: This layer type holds the electric susceptibility tensor as a user-defined function of energy.</li>
+<li><a class="reference internal" href="#SampleRepresentation.AtomLayerObject" title="SampleRepresentation.AtomLayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">AtomLayerObject</span></code></a>: This layer deals with compositions of atoms with different formfactors. The densities of the atoms can be varied during fitting procedures and plotted with using <a class="reference internal" href="#SampleRepresentation.plotAtomDensity" title="SampleRepresentation.plotAtomDensity"><code class="xref py py-func docutils literal notranslate"><span class="pre">plotAtomDensity()</span></code></a>. The formfactors are represented by instances of classes which are derived from <a class="reference internal" href="#SampleRepresentation.Formfactor" title="SampleRepresentation.Formfactor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Formfactor</span></code></a> (the base class is abstract and cannot be used directly).</li>
+</ul>
+<p>So far the following formfactor types are implemented:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#SampleRepresentation.FFfromFile" title="SampleRepresentation.FFfromFile"><code class="xref py py-class docutils literal notranslate"><span class="pre">FFfromFile</span></code></a>: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.</li>
+</ul>
+<dl class="class">
+<dt id="SampleRepresentation.Heterostructure">
+<em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">Heterostructure</code><span class="sig-paren">(</span><em>number_of_layers=0</em>, <em>multilayer_structure=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a heterostructure as a stack of instances of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> or of derived classes.
+Its main pupose is to model the sample in a very flexibel way and to get the list of layers (Layer type of the <code class="xref py py-mod docutils literal notranslate"><span class="pre">Pythonreflectivity</span></code> package from Martin Zwiebler) with defined susceptibilities at certain energies.</p>
+<p>In contrast to Martin’s list of Layer-type objects, this class contains all information also for different energies.</p>
+<dl class="method">
+<dt id="SampleRepresentation.Heterostructure.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>number_of_layers=0</em>, <em>multilayer_structure=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create heterostructructure object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>number_of_layers</strong> (<em>int</em>) – gives the number of different layers</li>
+<li><strong>multilayer_structure</strong> (<em>list</em>) – Makes it possible to define multilayers which contain identical layers several times.
+This can be done by passing a list containing the indices of layers from the lowest (e.g. substrate) to the highest (top layer, hit first by the beam).
+Default is <code class="docutils literal notranslate"><span class="pre">[0,1,2,3,</span> <span class="pre">...,number_of_layers-1]</span></code>. Multilayer syntax is e.g.``[0,1,2,[100,[3,4,5,6]],7,.,1,..]`` which repeats 100 times the sequence of
+layers 3,4,5,6 in between 2 and 7 and later on layer 1 is repeated once.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.Heterostructure.setLayout">
+<code class="descname">setLayout</code><span class="sig-paren">(</span><em>number_of_layers</em>, <em>multilayer_structure=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure.setLayout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure.setLayout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the layout of the heterostructure.</p>
+<p>See <a class="reference internal" href="#SampleRepresentation.Heterostructure.__init__" title="SampleRepresentation.Heterostructure.__init__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__init__()</span></code></a> for details. Only difference is: you cannot make changes which would remove layers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.Heterostructure.setLayer">
+<code class="descname">setLayer</code><span class="sig-paren">(</span><em>index</em>, <em>layer</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure.setLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure.setLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Place <strong>layer</strong> (instance of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a>) at position <strong>index</strong> (counting from 0, starting from the bottom or according to indices defined by <strong>multilayer_structure</strong>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.Heterostructure.getLayer">
+<code class="descname">getLayer</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure.getLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure.getLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the instance of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> which is placed at position <strong>index</strong> (counting from 0, starting from the bottom or according to indices defined by <strong>multilayer_structure</strong>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.Heterostructure.getTotalLayer">
+<code class="descname">getTotalLayer</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure.getTotalLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure.getTotalLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the instance of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> which is placed at position <strong>index</strong> (counting from 0, starting from the bottom, repeated layers are counted repeatedly).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.Heterostructure.removeLayer">
+<code class="descname">removeLayer</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure.removeLayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure.removeLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the instance of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> which is placed at position <strong>index</strong> (counting from 0, starting from the bottom or according to indices defined by <strong>multilayer_structure</strong>).</p>
+<p><strong>index</strong> can also be a list of indices.
+BEWARE: The instance of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> itself and the corresdonding instances of <a class="reference internal" href="parameters.html#Parameters.Fitparameter" title="Parameters.Fitparameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Fitparameter</span></code></a> are not deleted! So in a following fitting procedure, these parameters might still be varied even though they don’t have any effect on the result.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.Heterostructure.getSingleEnergyStructure">
+<code class="descname">getSingleEnergyStructure</code><span class="sig-paren">(</span><em>fitpararray</em>, <em>energy=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure.getSingleEnergyStructure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure.getSingleEnergyStructure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of layers (Layer type of the <code class="xref py py-mod docutils literal notranslate"><span class="pre">Pythonreflectivity</span></code> package from Martin Zwiebler) which can be directly used as input for <code class="xref py py-func docutils literal notranslate"><span class="pre">Pythonreflectivity.Reflectivity()</span></code>.</p>
+<p><strong>energy</strong> in units of eV</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.Heterostructure.N">
+<code class="descname">N</code><a class="headerlink" href="#SampleRepresentation.Heterostructure.N" title="Permalink to this definition">¶</a></dt>
+<dd><p>(<em>int</em>) Number of different layers. Read-only.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.Heterostructure.N_total">
+<code class="descname">N_total</code><a class="headerlink" href="#SampleRepresentation.Heterostructure.N_total" title="Permalink to this definition">¶</a></dt>
+<dd><p>(<em>int</em>) Total number of layers counting also multiple use of the same layer according to <strong>multilayer_structure</strong>. Read-only.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="SampleRepresentation.LayerObject">
+<em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">LayerObject</code><span class="sig-paren">(</span><em>chitensor=None</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.</p>
+<dl class="method">
+<dt id="SampleRepresentation.LayerObject.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>chitensor=None</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>d</strong> (<a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</li>
+<li><strong>sigma</strong> (<a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – The roughness of the upper surface of the layer. Has dimension of length. Unit: see <strong>d</strong>.</li>
+<li><strong>chitensor</strong> (list of <a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – Electric susceptibility tensor of the layer.
+| <em>[chi]</em> sets <em>chi_xx = chi_yy = chi_zz = chi</em>
+| <em>[chi_xx,chi_yy,chi_z]</em> sets <em>chi_xx,chi_yy,chi_zz</em>, others are zero
+| <em>[chi_xx,chi_yy,chi_z,chi_g]</em> sets  <em>chi_xx,chi_yy,chi_zz</em> and depending on <strong>magdir</strong> <em>chi_yz=-chi_zy=chi_g</em> (if <em>x</em>), <em>chi_xz=-chi_zx=chi_g</em> (if <em>y</em>) or <em>chi_xz=-chi_zx=chi_g</em> (if <em>z</em>)
+| <em>[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]</em> sets all the corresdonding elements</li>
+<li><strong>magdir</strong> (<em>str</em>) – Gives the magnetization direction for MOKE. Possible values are <em>“x”</em>, <em>“y”</em>, <em>“z”</em> and <em>“0”</em> (no magnetization).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.LayerObject.getChi">
+<code class="descname">getChi</code><span class="sig-paren">(</span><em>fitpararray</em>, <em>energy=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject.getChi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject.getChi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the electric susceptibility tensor as a list of numbers for a certain <strong>energy</strong> corresponding to the parameter values in <strong>fitpararray</strong> (see <a class="reference internal" href="parameters.html#module-Parameters" title="Parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>).</p>
+<p>The returned list can be of length 1,3,4 or 9 (see <a class="reference internal" href="#SampleRepresentation.LayerObject.__init__" title="SampleRepresentation.LayerObject.__init__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__init__()</span></code></a>).
+For the base implementation of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> the parameter <strong>energy</strong> is not used. But it may be used by derived classes like <a class="reference internal" href="#SampleRepresentation.AtomLayerObject" title="SampleRepresentation.AtomLayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">AtomLayerObject</span></code></a> and therefore needed for compatibility.l
+<strong>energy</strong> is measured in units of eV.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.LayerObject.getD">
+<code class="descname">getD</code><span class="sig-paren">(</span><em>fitpararray</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject.getD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject.getD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the thickness of the layer as a number corresponding to the parameter values in <strong>fitpararray</strong> (see <a class="reference internal" href="parameters.html#module-Parameters" title="Parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>).</p>
+<p>The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.LayerObject.getSigma">
+<code class="descname">getSigma</code><span class="sig-paren">(</span><em>fitpararray</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject.getSigma"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject.getSigma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the roughness of the upper surface of the layer as a number corresponding to the parameter values in <strong>fitpararray</strong> (see <a class="reference internal" href="parameters.html#module-Parameters" title="Parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>).</p>
+<p>The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.LayerObject.getMagDir">
+<code class="descname">getMagDir</code><span class="sig-paren">(</span><em>fitpararray=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject.getMagDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject.getMagDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return magnetization direction</p>
+<p><strong>fitpararray</strong> is not used and just there to give a common interface. Maybe a derived classes will have a benefit from it.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.LayerObject.d">
+<code class="descname">d</code><a class="headerlink" href="#SampleRepresentation.LayerObject.d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thickness of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.LayerObject.chitensor">
+<code class="descname">chitensor</code><a class="headerlink" href="#SampleRepresentation.LayerObject.chitensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Electric susceptibility tensor of the layer. See <a class="reference internal" href="#SampleRepresentation.LayerObject.__init__" title="SampleRepresentation.LayerObject.__init__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__init__()</span></code></a> for details.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.LayerObject.sigma">
+<code class="descname">sigma</code><a class="headerlink" href="#SampleRepresentation.LayerObject.sigma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Roughness of the upper surface of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.LayerObject.magdir">
+<code class="descname">magdir</code><a class="headerlink" href="#SampleRepresentation.LayerObject.magdir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Magnetization direction for MOKE. Possible values are <em>“x”</em>, <em>“y”</em>, <em>“z”</em> and <em>“0”</em> (no magnetization).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="SampleRepresentation.ModelChiLayerObject">
+<em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">ModelChiLayerObject</code><span class="sig-paren">(</span><em>chitensorfunction</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#ModelChiLayerObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.ModelChiLayerObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRepresentation.LayerObject</span></code></a></p>
+<p>Speciallized layer to deal with an electrical suszeptibility tensor (Chi) which is modelled as function of energy.</p>
+<p>BEWARE: The inherited property <a class="reference internal" href="#SampleRepresentation.LayerObject.chitensor" title="SampleRepresentation.LayerObject.chitensor"><code class="xref py py-attr docutils literal notranslate"><span class="pre">chitensor</span></code></a> is now a function.</p>
+<dl class="method">
+<dt id="SampleRepresentation.ModelChiLayerObject.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>chitensorfunction</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#ModelChiLayerObject.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.ModelChiLayerObject.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>d</strong> (<a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</li>
+<li><strong>sigma</strong> (<a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – The roughness of the upper surface of the layer. Has dimension of length. Unit: see <strong>d</strong>.</li>
+<li><strong>chitensorfunction</strong> (<em>callable</em>) – <p>Energy-dependent electric susceptibility tensor of the layer.
+It is supposed to be a function of two parameters (<strong>fitpararray</strong>, <strong>energy</strong>) which returns a list of either 1,3,4 or 9 real or complex numbers.
+See also documentation of <code class="xref py py-mod docutils literal notranslate"><span class="pre">Pythonreflectivity</span></code>.</p>
+<ul>
+<li><em>[chi]</em> sets <em>chi_xx = chi_yy = chi_zz = chi</em></li>
+<li><em>[chi_xx,chi_yy,chi_z]</em> sets <em>chi_xx,chi_yy,chi_zz</em>, others are zero</li>
+<li><em>[chi_xx,chi_yy,chi_z,chi_g]</em> sets  <em>chi_xx,chi_yy,chi_zz</em> and depending on <strong>magdir</strong>
+<em>chi_yz=-chi_zy=chi_g</em> (if <em>x</em>), <em>chi_xz=-chi_zx=chi_g</em> (if <em>y</em>) or <em>chi_xz=-chi_zx=chi_g</em> (if <em>z</em>)</li>
+<li><em>[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]</em> sets all the corresdonding elements</li>
+</ul>
+</li>
+<li><strong>magdir</strong> (<em>str</em>) – Gives the magnetization direction for MOKE. Possible values are <em>“x”</em>, <em>“y”</em>, <em>“z”</em> and <em>“0”</em> (no magnetization).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.ModelChiLayerObject.getChi">
+<code class="descname">getChi</code><span class="sig-paren">(</span><em>fitpararray</em>, <em>energy</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#ModelChiLayerObject.getChi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.ModelChiLayerObject.getChi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the electric susceptibility tensor as a list of numbers for a certain <strong>energy</strong> corresponding to the parameter values in <strong>fitpararray</strong> (see <a class="reference internal" href="parameters.html#module-Parameters" title="Parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>).</p>
+<p><strong>energy</strong> is measured in units of eV.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="SampleRepresentation.AtomLayerObject">
+<em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">AtomLayerObject</code><span class="sig-paren">(</span><em>densitydict={}</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em>, <em>densityunitfactor=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#AtomLayerObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.AtomLayerObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRepresentation.LayerObject</span></code></a></p>
+<p>Speciallized layer class to deal with compositions of atoms and their energy dependent formfactors (which can be obtained from absorption spectra).</p>
+<p>Especially usefull to deal with atomic layers, but can also be used for bulk.
+The atoms and their formfactors have to be registered a the class (with registerAtom) before they can be used to instantiate a new AtomLayerObject.
+The atom density can be plotted with <a class="reference internal" href="#SampleRepresentation.plotAtomDensity" title="SampleRepresentation.plotAtomDensity"><code class="xref py py-func docutils literal notranslate"><span class="pre">plotAtomDensity()</span></code></a>.
+Density is measured in mol/cm$^3$ (as long as no <strong>densityunitfactor</strong> is applied)</p>
+<dl class="method">
+<dt id="SampleRepresentation.AtomLayerObject.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>densitydict={}</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em>, <em>densityunitfactor=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#AtomLayerObject.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.AtomLayerObject.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>densitydict</strong> – a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of <a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a> or of a derived class).</li>
+<li><strong>d</strong> (<a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.</li>
+<li><strong>sigma</strong> (<a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – The roughness of the upper surface of the layer. Has dimension of length. Unit: see <strong>d</strong>.</li>
+<li><strong>chitensor</strong> (list of <a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – Electric susceptibility tensor of the layer.
+| <em>[chi]</em> sets <em>chi_xx = chi_yy = chi_zz = chi</em>
+| <em>[chi_xx,chi_yy,chi_z]</em> sets <em>chi_xx,chi_yy,chi_zz</em>, others are zero
+| <em>[chi_xx,chi_yy,chi_z,chi_g]</em> sets  <em>chi_xx,chi_yy,chi_zz</em> and depending on <strong>magdir</strong> <em>chi_yz=-chi_zy=chi_g</em> (if <em>x</em>), <em>chi_xz=-chi_zx=chi_g</em> (if <em>y</em>) or <em>chi_xz=-chi_zx=chi_g</em> (if <em>z</em>)
+| <em>[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]</em> sets all the corresdonding elements</li>
+<li><strong>magdir</strong> (<em>str</em>) – Gives the magnetization direction for MOKE. Possible values are <em>“x”</em>, <em>“y”</em>, <em>“z”</em> and <em>“0”</em> (no magnetization).</li>
+<li><strong>densityunitfactor</strong> (<em>float</em>) – <p>If the densities in densitydict are measured in another unit than mol/cm^3, state this value which translates your generic density to the one used internally.
+I.e.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rho_in_mol_per_cubiccm</span> <span class="o">=</span> <span class="n">densityunitfactor</span> <span class="o">*</span> <span class="n">rho_in_whateverunityouwant</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.AtomLayerObject.getDensitydict">
+<code class="descname">getDensitydict</code><span class="sig-paren">(</span><em>fitpararray=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#AtomLayerObject.getDensitydict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.AtomLayerObject.getDensitydict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the density dictionary either with evaluated paramters (needs <strong>fitpararray</strong>) or with the raw <a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a> objects (use <strong>fitparraray</strong> = <em>None</em>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.AtomLayerObject.getChi">
+<code class="descname">getChi</code><span class="sig-paren">(</span><em>fitpararray</em>, <em>energy</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#AtomLayerObject.getChi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.AtomLayerObject.getChi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the electric susceptibility tensor as a list of numbers for a certain <strong>energy</strong> corresponding to the parameter values in <strong>fitpararray</strong> (see <a class="reference internal" href="parameters.html#module-Parameters" title="Parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>).</p>
+<p><strong>energy</strong> is measured in units of eV.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="SampleRepresentation.AtomLayerObject.registerAtom">
+<em class="property">classmethod </em><code class="descname">registerAtom</code><span class="sig-paren">(</span><em>name</em>, <em>formfactor</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#AtomLayerObject.registerAtom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.AtomLayerObject.registerAtom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register an atom called <strong>name</strong> for later use to instantiate an AtomLayerObject.</p>
+<p><strong>formfactor</strong> as to be an instance of <a class="reference internal" href="#SampleRepresentation.Formfactor" title="SampleRepresentation.Formfactor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Formfactor</span></code></a> or of a derived class.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="SampleRepresentation.AtomLayerObject.getAtom">
+<em class="property">classmethod </em><code class="descname">getAtom</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#AtomLayerObject.getAtom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.AtomLayerObject.getAtom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the <a class="reference internal" href="#SampleRepresentation.Formfactor" title="SampleRepresentation.Formfactor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Formfactor</span></code></a> object registered for atom <strong>name</strong>.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="SampleRepresentation.AtomLayerObject.getAtomNames">
+<em class="property">classmethod </em><code class="descname">getAtomNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#AtomLayerObject.getAtomNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.AtomLayerObject.getAtomNames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of names of registered atoms.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="SampleRepresentation.Formfactor">
+<em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">Formfactor</code><a class="reference internal" href="../_modules/SampleRepresentation.html#Formfactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Formfactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class to deal with energy-dependent atomic form-factors.</p>
+<p>This base class is an abstract class an cannot be used directly.
+The user should derive from this class if he wants to build his own models.</p>
+<dl class="method">
+<dt id="SampleRepresentation.Formfactor.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Formfactor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Formfactor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>x.__init__(…) initializes x; see help(type(x)) for signature</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.Formfactor.getFF">
+<code class="descname">getFF</code><span class="sig-paren">(</span><em>energy</em>, <em>fitpararray=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Formfactor.getFF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Formfactor.getFF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the formfactor for <strong>energy</strong> corresponding to <strong>fitpararray</strong> (if it depends on it) as 9-element list of complex numbers.</p>
+<p><strong>energy</strong> is measured in units of eV.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="SampleRepresentation.FFfromFile">
+<em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">FFfromFile</code><span class="sig-paren">(</span><em>filename</em>, <em>linereaderfunction=None</em>, <em>energyshift=&lt;Parameters.Parameter object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#FFfromFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.FFfromFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#SampleRepresentation.Formfactor" title="SampleRepresentation.Formfactor"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRepresentation.Formfactor</span></code></a></p>
+<p>Class to deal with energy-dependent atomic form-factors which are tabulated in files.</p>
+<dl class="method">
+<dt id="SampleRepresentation.FFfromFile.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em>, <em>linereaderfunction=None</em>, <em>energyshift=&lt;Parameters.Parameter object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#FFfromFile.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.FFfromFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the FFfromFile object with an energy-dependent formfactor given as file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> (<em>str</em>) – Path to the text file which contains the formfactor.</li>
+<li><strong>linereaderfunction</strong> (<em>callable</em>) – This function is used to convert one line from the text file to data.
+It should be a function which takes a string and returns a tuple or list of 10 values: <code class="docutils literal notranslate"><span class="pre">(energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz)</span></code>,
+where <cite>energy</cite> is measured in units of <cite>eV</cite> and formfactors in units of <cite>e/atom</cite> (dimensionless).
+It can also return <cite>None</cite> if it detects a comment line.
+You can use <a class="reference internal" href="#SampleRepresentation.FFfromFile.createLinereader" title="SampleRepresentation.FFfromFile.createLinereader"><code class="xref py py-meth docutils literal notranslate"><span class="pre">FFfromFile.createLinereader()</span></code></a> to get a standard function, which just reads this array as whitespace seperated from the line.</li>
+<li><strong>energyshift</strong> (<a class="reference internal" href="parameters.html#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameter</span></code></a>) – Species a fittable energyshift between the energy-dependent formfactor from <strong>filename</strong> and the <cite>real</cite> one in the reflectivity measurement.
+So the formfactor delivered from <a class="reference internal" href="#SampleRepresentation.FFfromFile.getFF" title="SampleRepresentation.FFfromFile.getFF"><code class="xref py py-meth docutils literal notranslate"><span class="pre">FFfromFile.getFF()</span></code></a> will not be <cite>formfactor_from_file(E)</cite> but <cite>formfactor_from_file(E+energyshift)</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="SampleRepresentation.FFfromFile.createLinereader">
+<em class="property">static </em><code class="descname">createLinereader</code><span class="sig-paren">(</span><em>complex_numbers=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#FFfromFile.createLinereader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.FFfromFile.createLinereader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the standard linereader function for usage with <a class="reference internal" href="#SampleRepresentation.FFfromFile.__init__" title="SampleRepresentation.FFfromFile.__init__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">FFfromFile.__init__()</span></code></a>.</p>
+<p>This standard linereader function reads energy and complex elements of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes “#” as comment sign.
+If <strong>complex_numbers</strong> = <em>False</em> then the reader reads real and imaginary part of every element seperately, i.e. every line has to consist of 19 numbers seperated by whitespaces:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">energy</span> <span class="n">f_xx_real</span> <span class="n">ff_xx_im</span> <span class="o">...</span> <span class="n">f_zy_real</span> <span class="n">f_zy_im</span> <span class="n">f_zz_real</span> <span class="n">f_zz_im</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="SampleRepresentation.FFfromFile.getFF">
+<code class="descname">getFF</code><span class="sig-paren">(</span><em>energy</em>, <em>fitpararray=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#FFfromFile.getFF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.FFfromFile.getFF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the (energy-shifted )formfactor for <strong>energy</strong> as an interpolation between the stored values from file as 9-element 1-D numpy array of complex numbers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>energy</strong> (<em>float</em>) – Measured in units of eV.</li>
+<li><strong>fitpararray</strong> – Is actually only needed when an energyshift has been defined.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.FFfromFile.maxE">
+<code class="descname">maxE</code><a class="headerlink" href="#SampleRepresentation.FFfromFile.maxE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upper limit of stored energy range. Read-only.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleRepresentation.FFfromFile.minE">
+<code class="descname">minE</code><a class="headerlink" href="#SampleRepresentation.FFfromFile.minE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lower limit of stored energy range. Read-only.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="SampleRepresentation.plotAtomDensity">
+<code class="descclassname">SampleRepresentation.</code><code class="descname">plotAtomDensity</code><span class="sig-paren">(</span><em>hs</em>, <em>fitpararray</em>, <em>colormap=[]</em>, <em>atomnames=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#plotAtomDensity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.plotAtomDensity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience function. Create a bar plot of the atom densities of all instances of <a class="reference internal" href="#SampleRepresentation.AtomLayerObject" title="SampleRepresentation.AtomLayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">AtomLayerObject</span></code></a> contained in the <a class="reference internal" href="#SampleRepresentation.Heterostructure" title="SampleRepresentation.Heterostructure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Heterostructure</span></code></a> object <strong>hs</strong> corresdonding to the <strong>fitpararray</strong> (see <a class="reference internal" href="parameters.html#module-Parameters" title="Parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>) and return the plotted information as dictionary.</p>
+<p>You can  define the colors of the bars with <strong>colormap</strong>. Just give a list of matplotlib color names. They will be used in the given order.
+You can define which atoms you want to plot or in which order. Give <strong>atomnames</strong> as a list of strings. If <strong>atomnames</strong> is not given, the bars will have different width, such that overlapped bars can be seen.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="SampleRepresentation.KramersKronig">
+<code class="descclassname">SampleRepresentation.</code><code class="descname">KramersKronig</code><span class="sig-paren">(</span><em>energy</em>, <em>absorption</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#KramersKronig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.KramersKronig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convinience funtion. Performs the Kramers Kronig transformation. It is just a wrapper for <code class="xref py py-func docutils literal notranslate"><span class="pre">Pythonreflectivity.KramersKroning()</span></code> from Martins Zwieblers <code class="xref py py-mod docutils literal notranslate"><span class="pre">Pythonreflectivity</span></code> package.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>energy</strong> – an ordered list/array of L energies (in eV). The energies do not have to be envenly spaced, but they should be ordered.</li>
+<li><strong>absorption</strong> – a list/array of real numbers and length L with absorption data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="experiment.html" title="Module Experiment"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="parameters.html" title="Module Parameters"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../api.html" >API</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Yannic Utz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>

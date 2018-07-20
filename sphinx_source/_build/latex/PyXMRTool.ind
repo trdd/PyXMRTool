@@ -1,0 +1,132 @@
+\begin{sphinxtheindex}
+\def\bigletter#1{{\Large\sffamily#1}\nopagebreak\vspace{1mm}}
+
+  \bigletter {Symbols}
+  \item \_\_init\_\_() (Experiment.ReflDataSimulator method), \hyperpage{12}
+  \item \_\_init\_\_() (Parameters.Fitparameter method), \hyperpage{7}
+  \item \_\_init\_\_() (Parameters.Parameter method), \hyperpage{7}
+  \item \_\_init\_\_() (Parameters.ParameterPool method), \hyperpage{8}
+  \item \_\_init\_\_() (SampleRepresentation.AtomLayerObject method), \hyperpage{10}
+  \item \_\_init\_\_() (SampleRepresentation.FFfromFile method), \hyperpage{11}
+  \item \_\_init\_\_() (SampleRepresentation.Formfactor method), \hyperpage{11}
+  \item \_\_init\_\_() (SampleRepresentation.Heterostructure method), \hyperpage{8}
+  \item \_\_init\_\_() (SampleRepresentation.LayerObject method), \hyperpage{9}
+  \item \_\_init\_\_() (SampleRepresentation.ModelChiLayerObject method), \hyperpage{10}
+
+  \indexspace
+  \bigletter A
+  \item AtomLayerObject (class in SampleRepresentation), \hyperpage{10}
+
+  \indexspace
+  \bigletter C
+  \item complex (Parameters.Fitparameter attribute), \hyperpage{7}
+  \item createLinereader() (Experiment.ReflDataSimulator static method), \hyperpage{14}
+  \item createLinereader() (SampleRepresentation.FFfromFile static method), \hyperpage{11}
+
+  \indexspace
+  \bigletter E
+  \item Evolution() (in module Fitters), \hyperpage{14}
+  \item Experiment (module), \hyperpage{12}
+
+  \indexspace
+  \bigletter F
+  \item FFfromFile (class in SampleRepresentation), \hyperpage{11}
+  \item Fitparameter (class in Parameters), \hyperpage{7}
+  \item Fitters (module), \hyperpage{14}
+  \item fix() (Parameters.Fitparameter method), \hyperpage{7}
+  \item fixed (Parameters.Fitparameter attribute), \hyperpage{7}
+  \item Formfactor (class in SampleRepresentation), \hyperpage{11}
+
+  \indexspace
+  \bigletter G
+  \item getAtom() (SampleRepresentation.AtomLayerObject class method), \hyperpage{11}
+  \item getAtomNames() (SampleRepresentation.AtomLayerObject class method), \hyperpage{11}
+  \item getChi() (SampleRepresentation.AtomLayerObject method), \hyperpage{11}
+  \item getChi() (SampleRepresentation.LayerObject method), \hyperpage{9}
+  \item getChi() (SampleRepresentation.ModelChiLayerObject method), \hyperpage{10}
+  \item getD() (SampleRepresentation.LayerObject method), \hyperpage{10}
+  \item getDensitydict() (SampleRepresentation.AtomLayerObject method), \hyperpage{11}
+  \item getExpData() (Experiment.ReflDataSimulator method), \hyperpage{14}
+  \item getFF() (SampleRepresentation.FFfromFile method), \hyperpage{12}
+  \item getFF() (SampleRepresentation.Formfactor method), \hyperpage{11}
+  \item getFitArrayLen() (Parameters.ParameterPool method), \hyperpage{8}
+  \item getLayer() (SampleRepresentation.Heterostructure method), \hyperpage{9}
+  \item getLenDataFlat() (Experiment.ReflDataSimulator method), \hyperpage{13}
+  \item getMagDir() (SampleRepresentation.LayerObject method), \hyperpage{10}
+  \item getNames() (Parameters.ParameterPool method), \hyperpage{8}
+  \item getParameter() (Parameters.ParameterPool method), \hyperpage{8}
+  \item getResidualsSSR() (Experiment.ReflDataSimulator method), \hyperpage{14}
+  \item getSigma() (SampleRepresentation.LayerObject method), \hyperpage{10}
+  \item getSimData() (Experiment.ReflDataSimulator method), \hyperpage{14}
+  \item getSingleEnergyStructure() (SampleRepresentation.Heterostructure method), \hyperpage{9}
+  \item getSSR() (Experiment.ReflDataSimulator method), \hyperpage{14}
+  \item getStartLowerUpper() (Parameters.ParameterPool method), \hyperpage{8}
+  \item getTotalLayer() (SampleRepresentation.Heterostructure method), \hyperpage{9}
+  \item getValue() (Parameters.Fitparameter method), \hyperpage{7}
+  \item getValue() (Parameters.Parameter method), \hyperpage{7}
+
+  \indexspace
+  \bigletter H
+  \item Heterostructure (class in SampleRepresentation), \hyperpage{8}
+
+  \indexspace
+  \bigletter I
+  \item index (Parameters.Fitparameter attribute), \hyperpage{7}
+
+  \indexspace
+  \bigletter K
+  \item KramersKronig() (in module SampleRepresentation), \hyperpage{12}
+
+  \indexspace
+  \bigletter L
+  \item LayerObject (class in SampleRepresentation), \hyperpage{9}
+  \item Levenberg\_Marquardt\_Fitter() (in module Fitters), \hyperpage{15}
+  \item lower\_lim (Parameters.Fitparameter attribute), \hyperpage{7}
+
+  \indexspace
+  \bigletter M
+  \item ModelChiLayerObject (class in SampleRepresentation), \hyperpage{10}
+
+  \indexspace
+  \bigletter N
+  \item N (SampleRepresentation.Heterostructure attribute), \hyperpage{9}
+  \item N\_total (SampleRepresentation.Heterostructure attribute), \hyperpage{9}
+  \item name (Parameters.Fitparameter attribute), \hyperpage{7}
+  \item newParameter() (Parameters.ParameterPool method), \hyperpage{8}
+
+  \indexspace
+  \bigletter P
+  \item Parameter (class in Parameters), \hyperpage{7}
+  \item ParameterPool (class in Parameters), \hyperpage{8}
+  \item Parameters (module), \hyperpage{7}
+  \item plotAtomDensity() (in module SampleRepresentation), \hyperpage{12}
+  \item plotData() (Experiment.ReflDataSimulator method), \hyperpage{14}
+
+  \indexspace
+  \bigletter R
+  \item ReadData() (Experiment.ReflDataSimulator method), \hyperpage{12}
+  \item readFromFile() (Parameters.ParameterPool method), \hyperpage{8}
+  \item ReflDataSimulator (class in Experiment), \hyperpage{12}
+  \item registerAtom() (SampleRepresentation.AtomLayerObject class method), \hyperpage{11}
+  \item removeLayer() (SampleRepresentation.Heterostructure method), \hyperpage{9}
+
+  \indexspace
+  \bigletter S
+  \item SampleRepresentation (module), \hyperpage{8}
+  \item setLayer() (SampleRepresentation.Heterostructure method), \hyperpage{9}
+  \item setLayout() (SampleRepresentation.Heterostructure method), \hyperpage{9}
+  \item setMode() (Experiment.ReflDataSimulator method), \hyperpage{14}
+  \item setModel() (Experiment.ReflDataSimulator method), \hyperpage{13}
+  \item setStartValues() (Parameters.ParameterPool method), \hyperpage{8}
+  \item start\_val (Parameters.Fitparameter attribute), \hyperpage{7}
+
+  \indexspace
+  \bigletter U
+  \item unfix() (Parameters.Fitparameter method), \hyperpage{7}
+  \item upper\_lim (Parameters.Fitparameter attribute), \hyperpage{7}
+
+  \indexspace
+  \bigletter W
+  \item writeToFile() (Parameters.ParameterPool method), \hyperpage{8}
+
+\end{sphinxtheindex}

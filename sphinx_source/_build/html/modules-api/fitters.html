@@ -1,0 +1,193 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Module Fitters &#8212; PyXMRTool 0.9 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Module Experiment" href="experiment.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="experiment.html" title="Module Experiment"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../api.html" accesskey="U">API</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">todo: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">todo: Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="parameters.html">Module <cite>Parameters</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="samplerepresentation.html">Module <cite>SampleRepresentation</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Module <cite>Experiment</cite></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Module <cite>Fitters</cite></a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="experiment.html"
+                        title="previous chapter">Module <cite>Experiment</cite></a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules-api/fitters.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-Fitters">
+<span id="module-fitters"></span><h1>Module <cite>Fitters</cite><a class="headerlink" href="#module-Fitters" title="Permalink to this headline">¶</a></h1>
+<p>Contains different optimization algorithms designed to fit reflectivity data.
+They take advantage of parallelization to be used on multiprocessor system.</p>
+<p>The algorithms are developed by Martin Zwiebel and I just adopted them with slight changes to PyXMRTool.
+More information can be found in the PhD thesis of Martin Zwiebler.</p>
+<dl class="function">
+<dt id="Fitters.Evolution">
+<code class="descclassname">Fitters.</code><code class="descname">Evolution</code><span class="sig-paren">(</span><em>costfunction</em>, <em>parameter_settings</em>, <em>iterations</em>, <em>number_of_cores=1</em>, <em>generation_size=300</em>, <em>mutation_strength=0.01</em>, <em>elite=2</em>, <em>parent_percentage=0.25</em>, <em>control_file=None</em>, <em>plotfunction=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Fitters.html#Evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Fitters.Evolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evolutionary fit algorithm. Slow but good in finding the global minimum.
+Return the optimized parameter set and the coresponding value of the costfunction.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>costfunction</strong> (<em>callable</em>) – <p>A function which returns a measure (cost) for the difference between measurement and simulated data according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">SampleRepresentation.ReflDataSimulator.getSSR()</span></code> of an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRepresentation.ReflDataSimulator</span></code> wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.
+Example for the wrapping:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">simu</span> <span class="o">=</span> <span class="n">SampleRepresentation</span><span class="o">.</span><span class="n">ReflDataSimulator</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">)</span>
+<span class="o">...</span>
+<span class="k">def</span> <span class="nf">cost</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">simu</span><span class="o">.</span><span class="n">getSSR</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass then the function <em>cost</em> as <strong>costfunction</strong>. It can also be any other function which takes the array of fit parameters and returns one real value which should be minimized by <code class="xref py py-meth docutils literal notranslate"><span class="pre">Evolution()</span></code>.</p>
+</li>
+<li><strong>parameter_settings</strong> (<em>tuple of lists of floats</em>) – Sets start values, lower and upper limit of the parameters as <em>(startfitparameters, lower_limits, upper_limits )</em>, where each of the entries is an list/array of values of same length.</li>
+<li><strong>iterations</strong> (<em>int</em>) – number of iterations/generations</li>
+<li><strong>number_of_cores</strong> (<em>int</em>) – Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.</li>
+<li><strong>generation_size</strong> (<em>int</em>) – Generate this many individual fit parameter sets in each generation.</li>
+<li><strong>mutation_strength</strong> (<em>float</em>) – Mutates children by adding this factor times (upper_limit - lower_limit)  –&gt; use rather small values</li>
+<li><strong>elite</strong> (<em>int</em>) – Remember the best individuals for the next generation.</li>
+<li><strong>parent_percentage</strong> (<em>flota</em>) – Use this fraction of a gereneration (the best) for reproduction.</li>
+<li><strong>control_file</strong> (<em>str</em>) – Filename of a control file. If it is given, you can abort the optimization routine by writing “terminate 1” to the beginning of its first line.</li>
+<li><strong>plotfunction</strong> (<em>callable</em>) – Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This Evolutionary algorithm is mainly the same as Martins. Only the rule for mutation has changed:</p>
+<div class="line-block">
+<div class="line">Martin: <code class="docutils literal notranslate"><span class="pre">children[i]=children[i]</span> <span class="pre">*</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">s</span> <span class="pre">*</span> <span class="pre">random</span> <span class="pre">float(-1,1))</span></code></div>
+<div class="line">I:      <code class="docutils literal notranslate"><span class="pre">children[i]=children[i]</span> <span class="pre">+</span> <span class="pre">s</span> <span class="pre">*</span> <span class="pre">random</span> <span class="pre">float(-1,1)*(upper_limits-lower_limits)</span></code></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="Fitters.Levenberg_Marquardt_Fitter">
+<code class="descclassname">Fitters.</code><code class="descname">Levenberg_Marquardt_Fitter</code><span class="sig-paren">(</span><em>residualandcostfunction</em>, <em>parameter_settings</em>, <em>parallel_points</em>, <em>number_of_cores=1</em>, <em>strict=True</em>, <em>control_file=None</em>, <em>plotfunction=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Fitters.html#Levenberg_Marquardt_Fitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Fitters.Levenberg_Marquardt_Fitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modified Levenberg-Marquard algorithm (see PhD thesis of Martin Zwiebler). Good convergence, but might end up in a local mininum.
+Return the optimized parameter set and the coresponding value of the costfunction.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>residualandcostfunction</strong> (<em>callable</em>) – <p>A function which returns the differences between simulated and measured data points (residuals) as list and a scalar measure (cost) for these differences in total according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">SampleRepresentation.ReflDataSimulator.getResidualsSSR()</span></code> of an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRepresentation.ReflDataSimulator</span></code> wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.
+Example for the wrapping:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">simu</span> <span class="o">=</span> <span class="n">SampleRepresentation</span><span class="o">.</span><span class="n">ReflDataSimulator</span><span class="p">(</span><span class="s2">&quot;l&quot;</span><span class="p">)</span>
+<span class="o">...</span>
+<span class="k">def</span> <span class="nf">rescost</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">simu</span><span class="o">.</span><span class="n">getResidualsSSR</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass then the function <em>rescost</em> as <strong>costfunction</strong>. It can also be any other function which takes the array of fit parameters and returns a tuple of
+1.) a list of residuals (will be used to determine derivatives) 2.) a value of the costfunction which should be minimized by <code class="xref py py-meth docutils literal notranslate"><span class="pre">Levenberg_Marquardt_Fitter()</span></code>.</p>
+</li>
+<li><strong>parameter_settings</strong> (<em>tuple of lists of floats</em>) – Sets start values, lower and upper limit of the parameters as <em>(startfitparameters, lower_limits, upper_limits )</em>, where each of the entries is an list/array of values of same length.</li>
+<li><strong>parallel_points</strong> (<em>int</em>) – This should be something like the number of threads that can run in parallel/number of cores. The algorithm will first find a direction for a good descent and then check this number of points on the line. The best one will yield the new fit parameter set.</li>
+<li><strong>number_of_cores</strong> (<em>int</em>) – Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.</li>
+<li><strong>strict</strong> (<em>bool</em>) – Usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set <strong>stict</strong> = <em>False</em> this parameter will be neglected locally.</li>
+<li><strong>control_file</strong> (<em>str</em>) – Filename of a control file. If it is given, you can abort the optimization routine by writing “terminate 1” to the beginning of its first line.</li>
+<li><strong>plotfunction</strong> (<em>callable</em>) – Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="experiment.html" title="Module Experiment"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../api.html" >API</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Yannic Utz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>

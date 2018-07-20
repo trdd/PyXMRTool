@@ -40,7 +40,6 @@
 \usepackage{hypcap}% it must be loaded after hyperref.
 % Set up styles of URL: it should be placed after hyperref.
 \urlstyle{same}
-\addto\captionsenglish{\renewcommand{\contentsname}{Contents:}}
 
 \addto\captionsenglish{\renewcommand{\figurename}{Fig.}}
 \addto\captionsenglish{\renewcommand{\tablename}{Table}}
@@ -56,7 +55,7 @@
 
 
 \title{PyXMRTool Documentation}
-\date{Jul 17, 2018}
+\date{Jul 20, 2018}
 \release{0.9}
 \author{Yannic Utz}
 \newcommand{\sphinxlogo}{\vbox{}}
@@ -91,19 +90,46 @@ to be written
 
 \section{Module \sphinxtitleref{Parameters}}
 \label{\detokenize{modules-api/parameters:module-Parameters}}\label{\detokenize{modules-api/parameters:module-parameters}}\label{\detokenize{modules-api/parameters::doc}}\index{Parameters (module)}
-Provide an easy and transparent handling of fit parameters
+Provides an easy and transparent handling of fit parameters.
+
+Fitparameters can be handled as instances of {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter}}}}} which are collected and managed by an instance of {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ParameterPool}}}}}.
+To allow for transparent modelling, {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter}}}}} is derived from {\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameter}}}}} which can hold a constant value.
+I.e. the code using a parameter does not have to know if it is a constant {\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameter}}}}} or a variable {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter}}}}}.
+The values of both are obtained in the same way with \sphinxstylestrong{getValue}.
+
+Both parameter classes support also the creation of of dependent paramters by arithmetic operations:
+
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{k+kn}{import} \PYG{n+nn}{Parameters}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{const}\PYG{o}{=}\PYG{n}{Parameters}\PYG{o}{.}\PYG{n}{Parameter}\PYG{p}{(}\PYG{l+m+mf}{30.7}\PYG{p}{)}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{const}\PYG{o}{.}\PYG{n}{getValue}\PYG{p}{(}\PYG{p}{)}
+\PYG{g+go}{30.7}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{pp}\PYG{o}{=}\PYG{n}{Parameters}\PYG{o}{.}\PYG{n}{ParameterPool}\PYG{p}{(}\PYG{p}{)}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{par\PYGZus{}real}\PYG{o}{=}\PYG{n}{pp}\PYG{o}{.}\PYG{n}{newParameter}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{par\PYGZus{}real}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{n}{start\PYGZus{}val}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n}{lower\PYGZus{}lim}\PYG{o}{=}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{10}\PYG{p}{,}\PYG{n}{upper\PYGZus{}lim}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{par\PYGZus{}complex}\PYG{o}{=}\PYG{n}{pp}\PYG{o}{.}\PYG{n}{newParameter}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{par\PYGZus{}complex}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{n}{start\PYGZus{}val}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{o}{+}\PYG{l+m+mi}{0j}\PYG{p}{,}\PYG{n}{lower\PYGZus{}lim}\PYG{o}{=}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{10}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1j}\PYG{p}{,}\PYG{n}{upper\PYGZus{}lim}\PYG{o}{=}\PYG{l+m+mf}{100.3}\PYG{o}{+}\PYG{l+m+mi}{20j}\PYG{p}{)}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{par\PYGZus{}real}\PYG{o}{.}\PYG{n}{getValue}\PYG{p}{(}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{]}\PYG{p}{)}
+\PYG{g+go}{1}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{par\PYGZus{}complex}\PYG{o}{.}\PYG{n}{getValue}\PYG{p}{(}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{]}\PYG{p}{)}
+\PYG{g+go}{(2+3j)}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{dep\PYGZus{}par} \PYG{o}{=} \PYG{p}{(}\PYG{p}{(}\PYG{n}{par\PYGZus{}complex} \PYG{o}{+} \PYG{l+m+mi}{5}\PYG{o}{*}\PYG{n}{par\PYGZus{}real}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mf}{0.68}\PYG{p}{)}\PYG{o}{*}\PYG{o}{*}\PYG{n}{const}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{dep\PYGZus{}par}\PYG{o}{.}\PYG{n}{getValue}\PYG{p}{(}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{]}\PYG{p}{)}
+\PYG{g+go}{(8.367641368810413e+21\PYGZhy{}1.1467109965804664e+21j)}
+\end{sphinxVerbatim}
 \index{Parameter (class in Parameters)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Parameter}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{Parameters.}}\sphinxbfcode{\sphinxupquote{Parameter}}}{\emph{value=None}}{}
 Bases: \sphinxcode{\sphinxupquote{object}}
 
-Base class for parameter. Contains read-only property ‘value’. Supports creation of dependent parameters by arithmetic operations.
+Base class for parameters. It contains a (complex) value which is set as instantiation and cannot be changed.
+
+This class (and all derived classes) supports creation of dependent parameters by arithmetic operations.
 \index{\_\_init\_\_() (Parameters.Parameter method)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Parameter.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{value=None}}{}
-Initialize and check if numeric type.
+Initialize with a number as (complex) \sphinxstylestrong{value}.
 
 \end{fulllineitems}
 
@@ -111,7 +137,9 @@ Initialize and check if numeric type.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Parameter.getValue}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getValue}}}{\emph{fitpararray=None}}{}
-Returns the value. fitpararray is not used and only there to make this function forward compatible with the Fitparameter class and with dependent parameters.
+Returns the \sphinxstylestrong{value}.
+
+\sphinxstylestrong{fitpararray} is not used and only there to make this function forward compatible with the {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter}}}}} class and with dependent parameters.
 
 \end{fulllineitems}
 
@@ -121,17 +149,37 @@ Returns the value. fitpararray is not used and only there to make this function 
 \index{Fitparameter (class in Parameters)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{Parameters.}}\sphinxbfcode{\sphinxupquote{Fitparameter}}}{\emph{name}, \emph{fixed=0}, \emph{start\_val=None}, \emph{lower\_lim=None}, \emph{upper\_lim=None}}{}
+\phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{Parameters.}}\sphinxbfcode{\sphinxupquote{Fitparameter}}}{\emph{name}, \emph{fixed=False}, \emph{start\_val=None}, \emph{lower\_lim=None}, \emph{upper\_lim=None}}{}
 Bases: {\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}
 
-Contains name, starting value and limits of a parameter and knows how to make the parameter value out of an array of fitparameters if it is attached to a ParameterPool.
+Contains name, starting value and limits of a fitting parameter and knows how to get the parameter value out of an array of values of fitparameters if it is attached to an instance of {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ParameterPool}}}}}.
 \index{\_\_init\_\_() (Parameters.Fitparameter method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{name}, \emph{fixed=0}, \emph{start\_val=None}, \emph{lower\_lim=None}, \emph{upper\_lim=None}}{}
-Initialize a fitparameter at least with a name.
+\phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{name}, \emph{fixed=False}, \emph{start\_val=None}, \emph{lower\_lim=None}, \emph{upper\_lim=None}}{}
+Initialize a fitparameter at least with a \sphinxstylestrong{name}.
 
-If ‘fixed=1’,the parameter will not be varied during a fit routine and the limits are not necessary.
+Usually, you (the user) should not instantiate a fitparameter directly. Instead use {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool.newParameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ParameterPool.newParameter()}}}}}.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{name}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Name of the fit parameter. Use names without whitespaces. Otherwise there can be problems when using a parameter file.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{fixed}} (\sphinxstyleliteralemphasis{\sphinxupquote{bool}}) \textendash{} If \sphinxtitleref{True},the parameter will not be varied during a fit routine and the limits are not necessary.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{start\_val}} (\sphinxstyleliteralemphasis{\sphinxupquote{number}}) \textendash{} Start value of the fit parameter.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{upper\_lim}} (\sphinxstyleliteralemphasis{\sphinxupquote{number}}) \textendash{} Lower limit of the fit parameter.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{upper\_lim}} \textendash{} Upper limit of the fit parameter.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -157,48 +205,66 @@ Set parameter as variable during fitting.
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.getValue}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getValue}}}{\emph{fitpararray}}{}
 Return the value of the parameter corresponding to the given array of values.
 
+This method only works if the fitparameter is connected to an instance of {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ParameterPool}}}}}.
+Therefore, create instances of {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter}}}}} always using {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool.newParameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ParameterPool.newParameter()}}}}}.
+
 \end{fulllineitems}
 
 \index{name (Parameters.Fitparameter attribute)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.name}}\pysigline{\sphinxbfcode{\sphinxupquote{name}}}
+(\sphinxstyleemphasis{str}) Name of the parameter. Read-only.
+
 \end{fulllineitems}
 
 \index{fixed (Parameters.Fitparameter attribute)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.fixed}}\pysigline{\sphinxbfcode{\sphinxupquote{fixed}}}
+(\sphinxstyleemphasis{bool}) Determines if fitparameter is fixed (\sphinxstyleemphasis{True}) or unfixed (\sphinxstyleemphasis{False}) during fitting procedures.
+
 \end{fulllineitems}
 
 \index{start\_val (Parameters.Fitparameter attribute)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.start_val}}\pysigline{\sphinxbfcode{\sphinxupquote{start\_val}}}
+(\sphinxstyleemphasis{number}) Start value of the fitparameter for fitting procedures.
+
 \end{fulllineitems}
 
 \index{lower\_lim (Parameters.Fitparameter attribute)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.lower_lim}}\pysigline{\sphinxbfcode{\sphinxupquote{lower\_lim}}}
+(\sphinxstyleemphasis{number}) Lower limit of the fitparameter for fitting procedures.
+
 \end{fulllineitems}
 
 \index{upper\_lim (Parameters.Fitparameter attribute)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.upper_lim}}\pysigline{\sphinxbfcode{\sphinxupquote{upper\_lim}}}
+(\sphinxstyleemphasis{number}) Upper limit of the fitparameter for fitting procedures.
+
 \end{fulllineitems}
 
 \index{index (Parameters.Fitparameter attribute)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.index}}\pysigline{\sphinxbfcode{\sphinxupquote{index}}}
+(\sphinxstyleemphasis{int}) Determines which entry in the fitparameter array is interpreted as the value of this fitparameter.
+Usually this property should not be changed by you (the user) but by the instance of {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ParameterPool}}}}} where the fitparameter is connected to.
+
 \end{fulllineitems}
 
 \index{complex (Parameters.Fitparameter attribute)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.Fitparameter.complex}}\pysigline{\sphinxbfcode{\sphinxupquote{complex}}}
+(\sphinxstyleemphasis{bool}) Signals if fitparameter is a complex number (\sphinxstyleemphasis{True}) or not (\sphinxstyleemphasis{False}). Read-only.
+
 \end{fulllineitems}
 
 
@@ -215,18 +281,40 @@ Collects a pool of Parameter objects and connects them with a parameter file.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{parfilename=None}}{}
-Initialize a new ParameterPool. Read parameter initialisation from file ‘parfilename’.
+Initialize a new ParameterPool.
 
-As soon as you connect a parameter file to the pool, its initialisation values have priority 
-over local initialisations with self.newParameter(“name”,fixed,start\_value, lower\_lim, upper\_lim).
+Read parameter initialisation from file \sphinxstylestrong{parfilename} if given. As soon as you connect a parameter file to the pool, its initialisation values have priority
+over local initialisations with {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool.newParameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{newParameter()}}}}}.
 
 \end{fulllineitems}
 
 \index{newParameter() (Parameters.ParameterPool method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.newParameter}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{newParameter}}}{\emph{name}, \emph{fixed=0}, \emph{start\_val=None}, \emph{lower\_lim=None}, \emph{upper\_lim=None}}{}
-Create a New Parameter and return a reference to it or return the reference to an existing one.
+\phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.newParameter}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{newParameter}}}{\emph{name}, \emph{fixed=False}, \emph{start\_val=None}, \emph{lower\_lim=None}, \emph{upper\_lim=None}}{}
+Create a new {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter}}}}} inside the parameter pool and return a reference to it or
+return the reference to an already existing one with the same \sphinxstylestrong{name}.
+This is the usual way to create instances of {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter}}}}}.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{name}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Name of the fit parameter. Use names without whitespaces. Otherwise there can be problems when using a parameter file.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{fixed}} (\sphinxstyleliteralemphasis{\sphinxupquote{bool}}) \textendash{} If \sphinxtitleref{True},the parameter will not be varied during a fit routine and the limits are not necessary.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{start\_val}} (\sphinxstyleliteralemphasis{\sphinxupquote{number}}) \textendash{} Start value of the fit parameter.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{upper\_lim}} (\sphinxstyleliteralemphasis{\sphinxupquote{number}}) \textendash{} Lower limit of the fit parameter.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{upper\_lim}} \textendash{} Upper limit of the fit parameter.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -234,7 +322,7 @@ Create a New Parameter and return a reference to it or return the reference to a
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.getParameter}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getParameter}}}{\emph{name}}{}
-Return existing parameter with name ‘name’ or return ‘None’ if not existing.
+Return existing parameter with name \sphinxstylestrong{name} or return \sphinxstyleemphasis{None} if not existing.
 
 \end{fulllineitems}
 
@@ -242,10 +330,14 @@ Return existing parameter with name ‘name’ or return ‘None’ if not exist
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.readFromFile}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{readFromFile}}}{\emph{parfilename}}{}
-Read parameters from file, append them to the pool or overwrite existing once.
+Read parameters and there initialisation values from file \sphinxstyleemphasis{parfilename*}, append them to the pool or overwrite existing once.
 
-Lines in the parameter file should be in the format: \textless{}start\_value\textgreater{}  \textless{}fixed\textgreater{} \textless{}lower\_limit\textgreater{} \textless{}upper\_limit\textgreater{} \textless{}name\textgreater{}
-Lines starting with ‘\#’ are ignored.
+\begin{DUlineblock}{0em}
+\item[] Lines in the parameter file should be in the format:
+\item[] \sphinxcode{\sphinxupquote{\textless{}start\_value\textgreater{}  \textless{}fixed\textgreater{}  \textless{}lower\_limit\textgreater{}  \textless{}upper\_limit\textgreater{}  \textless{}name\textgreater{}  \textless{}comments/other stuff\textgreater{}}}
+\item[] Lines starting with \sphinxstyleemphasis{\#} are ignored.
+\item[] Values of \textless{}fixed\textgreater{} have to be either \sphinxtitleref{0} or \sphinxtitleref{1} (not \sphinxtitleref{False} or \sphinxtitleref{True}).
+\end{DUlineblock}
 
 \end{fulllineitems}
 
@@ -253,10 +345,10 @@ Lines starting with ‘\#’ are ignored.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.writeToFile}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{writeToFile}}}{\emph{parfilename}, \emph{fitpararray=None}}{}
-Write parameters to file.
+Write parameters and there initialisation value to file \sphinxstylestrong{parfilename}.
 
 Can be used to create a template for a parameter initialisation file or to store parameters after fitting.
-If ‘fitpararray is’ is given, these values are used as start\_values. Else the stored start\_values are used
+If \sphinxstylestrong{fitpararray} is given, these values are written as start values. Else the stored start values are used.
 
 \end{fulllineitems}
 
@@ -264,17 +356,19 @@ If ‘fitpararray is’ is given, these values are used as start\_values. Else t
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.getStartLowerUpper}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getStartLowerUpper}}}{}{}
-Return a tupel of arrays of parameter start values and limits in the order of occurence in the pool (order of parameter creation) of parameters which are not fixed. Real parameters first, then the complex ones.
+Return a tupel of \sphinxtitleref{fitpararrays} of parameter start values, lower and upper limits for usage with {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter.getValue}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter.getValue()}}}}}.
+
+Each of the arrays contains the values in the order of occurence of the corresponding parameter in the pool (order of parameter creation), but only of those parameters which are not fixed. Real parameters first, then the complex ones.
 
 \end{fulllineitems}
 
 \index{setStartValues() (Parameters.ParameterPool method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.setStartValues}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{setStartValues}}}{\emph{fitvalues}}{}
-Set the start values of all parameters which are not fixed in the order of occurence in the pool (order of parameter creation). First real and then complex ones.
+\phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.setStartValues}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{setStartValues}}}{\emph{fitpararray}}{}
+Set the start values of all parameters which are not fixed using \sphinxstylestrong{fitpararray} in the order of occurence in the pool (order of parameter creation). First real and then complex ones.
 
-Can be used befor writeToFile() if you want to write out results of a fit to a file.
+Can be used e.g. after finding goog start values with an Evolutionary fitter.
 
 \end{fulllineitems}
 
@@ -282,13 +376,15 @@ Can be used befor writeToFile() if you want to write out results of a fit to a f
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.getFitArrayLen}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getFitArrayLen}}}{}{}
+Return length of the \sphinxstyleemphasis{fitpararray} which is needed for {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool.setStartValues}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{setStartValues()}}}}}, {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool.writeToFile}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{writeToFile()}}}}} and {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter.getValue}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Fitparameter.getValue()}}}}} and which is given by {\hyperref[\detokenize{modules-api/parameters:Parameters.ParameterPool.getStartLowerUpper}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{getStartLowerUpper()}}}}}.
+
 \end{fulllineitems}
 
 \index{getNames() (Parameters.ParameterPool method)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/parameters:Parameters.ParameterPool.getNames}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getNames}}}{}{}
-Return the names of all registered Fitparameters as a list in the same order they should be in the fitpararrays.
+Return the names of all registered Fitparameters as a list in the same order they should be in the \sphinxtitleref{fitpararray}.
 
 \end{fulllineitems}
 
@@ -300,11 +396,36 @@ Return the names of all registered Fitparameters as a list in the same order the
 \section{Module \sphinxtitleref{SampleRepresentation}}
 \label{\detokenize{modules-api/samplerepresentation:module-SampleRepresentation}}\label{\detokenize{modules-api/samplerepresentation:module-samplerepresentation}}\label{\detokenize{modules-api/samplerepresentation::doc}}\index{SampleRepresentation (module)}
 Deals with the sample representation for simulation of the reflectivity.
+
+A multilayer sample is represented by a {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Heterostructure}}}}} object. Its main pupose is to deliver the list of layers (Layer type of the \sphinxcode{\sphinxupquote{Pythonreflectivity}} package from Martin Zwiebler) with defined susceptibilities at certain energies via :meth.{}`Heterostructure.getSingleEnergyStructure{}`. The layers within this heterostructure are represented by instances of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}} or of derived classes, which alows for a very flexibel modelling of the sample.
+
+So far the following layer types are implemented:
+\begin{itemize}
+\item {} 
+{\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}}: Layer with a constant (over energy) but fittable electric susceptibility tensor.
+
+\item {} 
+{\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.ModelChiLayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ModelChiLayerObject}}}}}: This layer type holds the electric susceptibility tensor as a user-defined function of energy.
+
+\item {} 
+{\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{AtomLayerObject}}}}}: This layer deals with compositions of atoms with different formfactors. The densities of the atoms can be varied during fitting procedures and plotted with using {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.plotAtomDensity}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{plotAtomDensity()}}}}}. The formfactors are represented by instances of classes which are derived from {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Formfactor}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Formfactor}}}}} (the base class is abstract and cannot be used directly).
+
+\end{itemize}
+
+So far the following formfactor types are implemented:
+\begin{itemize}
+\item {} 
+{\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{FFfromFile}}}}}: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.
+
+\end{itemize}
 \index{Heterostructure (class in SampleRepresentation)}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{Heterostructure}}}{\emph{number\_of\_layers=0}, \emph{multilayer\_structure=None}}{}
-Represents a heterostructructure as a stack of layers.
+Bases: \sphinxcode{\sphinxupquote{object}}
+
+Represents a heterostructure as a stack of instances of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}} or of derived classes.
+Its main pupose is to model the sample in a very flexibel way and to get the list of layers (Layer type of the \sphinxcode{\sphinxupquote{Pythonreflectivity}} package from Martin Zwiebler) with defined susceptibilities at certain energies.
 
 In contrast to Martin’s list of Layer-type objects, this class contains all information also for different energies.
 \index{\_\_init\_\_() (SampleRepresentation.Heterostructure method)}
@@ -312,12 +433,20 @@ In contrast to Martin’s list of Layer-type objects, this class contains all in
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{number\_of\_layers=0}, \emph{multilayer\_structure=None}}{}
 Create heterostructructure object.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{number\_of\_layers}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} gives the number of different layers
 
-‘number\_of\_layers’ gives the number of different layers.
-With ‘multilayer\_structure’ multilayers which contain identical layers several times can be defined.
-This can be defined by as a list containing the indices of layer from the lowest (e.g. substrate) to the highest (top layer, hit first by the beam).
-Default is ‘{[}0,1,2,3, …,number\_of\_layers-1{]}’. Multilayer syntax is e.g. ‘{[}0,1,2,{[}100,{[}3,4,5,6{]}{]},7,.,1,..{]}’ which repeats 100 times the sequence of
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{multilayer\_structure}} (\sphinxstyleliteralemphasis{\sphinxupquote{list}}) \textendash{} Makes it possible to define multilayers which contain identical layers several times.
+This can be done by passing a list containing the indices of layers from the lowest (e.g. substrate) to the highest (top layer, hit first by the beam).
+Default is \sphinxcode{\sphinxupquote{{[}0,1,2,3, ...,number\_of\_layers-1{]}}}. Multilayer syntax is e.g.{}`{}`{[}0,1,2,{[}100,{[}3,4,5,6{]}{]},7,.,1,..{]}{}`{}` which repeats 100 times the sequence of
 layers 3,4,5,6 in between 2 and 7 and later on layer 1 is repeated once.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -327,7 +456,7 @@ layers 3,4,5,6 in between 2 and 7 and later on layer 1 is repeated once.
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.setLayout}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{setLayout}}}{\emph{number\_of\_layers}, \emph{multilayer\_structure=None}}{}
 Change the layout of the heterostructure.
 
-See constructor for details. Only difference is: you cannot make changes which would remove layers.
+See {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.__init__}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{\_\_init\_\_()}}}}} for details. Only difference is: you cannot make changes which would remove layers.
 
 \end{fulllineitems}
 
@@ -335,7 +464,7 @@ See constructor for details. Only difference is: you cannot make changes which w
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.setLayer}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{setLayer}}}{\emph{index}, \emph{layer}}{}
-Place ‘layer’ (instance of LayerObject) at position ‘index’ (counting from 0, starting from the bottom or according to ‘multilayer\_structure’).
+Place \sphinxstylestrong{layer} (instance of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}}) at position \sphinxstylestrong{index} (counting from 0, starting from the bottom or according to indices defined by \sphinxstylestrong{multilayer\_structure}).
 
 \end{fulllineitems}
 
@@ -343,7 +472,7 @@ Place ‘layer’ (instance of LayerObject) at position ‘index’ (counting fr
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.getLayer}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getLayer}}}{\emph{index}}{}
-Return the instance of LayerObject which is placed at position ‘index’ (counting from 0, starting from the bottom or according to ‘multilayer\_structure’).
+Return the instance of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}} which is placed at position \sphinxstylestrong{index} (counting from 0, starting from the bottom or according to indices defined by \sphinxstylestrong{multilayer\_structure}).
 
 \end{fulllineitems}
 
@@ -351,7 +480,7 @@ Return the instance of LayerObject which is placed at position ‘index’ (coun
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.getTotalLayer}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getTotalLayer}}}{\emph{index}}{}
-Return the instance of LayerObject which is placed at position ‘index’ (counting from 0, starting from the bottom, even if a latter sequence is repeated with help of ‘multilayer\_structure’).
+Return the instance of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}} which is placed at position \sphinxstylestrong{index} (counting from 0, starting from the bottom, repeated layers are counted repeatedly).
 
 \end{fulllineitems}
 
@@ -359,10 +488,10 @@ Return the instance of LayerObject which is placed at position ‘index’ (coun
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.removeLayer}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{removeLayer}}}{\emph{index}}{}
-Remove the instance of LayerObject which is placed at position ‘index’ (counting from 0, starting from the bottom from the  heterostructructure or according to ‘multilayer\_structure’).
+Remove the instance of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}} which is placed at position \sphinxstylestrong{index} (counting from 0, starting from the bottom or according to indices defined by \sphinxstylestrong{multilayer\_structure}).
 
-‘index’ can also be a list of indices.
-BEWARE: The instance of LayerObject itself and the corresdonding Parameters are not deleted!
+\sphinxstylestrong{index} can also be a list of indices.
+BEWARE: The instance of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}} itself and the corresdonding instances of {\hyperref[\detokenize{modules-api/parameters:Parameters.Fitparameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Fitparameter}}}}} are not deleted! So in a following fitting procedure, these parameters might still be varied even though they don’t have any effect on the result.
 
 \end{fulllineitems}
 
@@ -370,9 +499,9 @@ BEWARE: The instance of LayerObject itself and the corresdonding Parameters are 
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.getSingleEnergyStructure}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getSingleEnergyStructure}}}{\emph{fitpararray}, \emph{energy=None}}{}
-Return list of layers (layer type from Pythonreflectivity) which can be directly used as input for ‘Pythonreflectivity.Reflectivity( )’
+Return list of layers (Layer type of the \sphinxcode{\sphinxupquote{Pythonreflectivity}} package from Martin Zwiebler) which can be directly used as input for \sphinxcode{\sphinxupquote{Pythonreflectivity.Reflectivity()}}.
 
-‘energy’ in units of eV
+\sphinxstylestrong{energy} in units of eV
 
 \end{fulllineitems}
 
@@ -380,7 +509,7 @@ Return list of layers (layer type from Pythonreflectivity) which can be directly
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.N}}\pysigline{\sphinxbfcode{\sphinxupquote{N}}}
-Return number of different layers (i.e. number of different indices).
+(\sphinxstyleemphasis{int}) Number of different layers. Read-only.
 
 \end{fulllineitems}
 
@@ -388,7 +517,7 @@ Return number of different layers (i.e. number of different indices).
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure.N_total}}\pysigline{\sphinxbfcode{\sphinxupquote{N\_total}}}
-Return total number of layers (counting also multiple use of the same layer according to ‘multilayer\_structure’).
+(\sphinxstyleemphasis{int}) Total number of layers counting also multiple use of the same layer according to \sphinxstylestrong{multilayer\_structure}. Read-only.
 
 \end{fulllineitems}
 
@@ -399,23 +528,33 @@ Return total number of layers (counting also multiple use of the same layer acco
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{LayerObject}}}{\emph{chitensor=None}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}}{}
-Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.
+Bases: \sphinxcode{\sphinxupquote{object}}
 
-It handels the basic properties of
+Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.
 \index{\_\_init\_\_() (SampleRepresentation.LayerObject method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{chitensor=None}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}}{}
-Creates a new Layer.
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{chitensor=None}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}}{}~\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{d}} ({\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
 
-‘d’ is its thickness, ‘sigma’ is the roughness of its upper surface, ‘chitensor’ is its electric susceptibility tensor, and ‘magdir’ gives the magnetization directrion for MOKE
-‘d’, ‘sigma’ ,and the entries of ‘chitensor’ are expected to be an instances of a “Parameter” class (also “Fitparamter”).
-‘d’ and ‘sigma’ are both of dimension length. You are free to choose whatever unit you want, but use the same for every length troughout the project.
-‘chitensor’ is a list of either  1,3, 4 or 9 elements (see also documentation for Pythonreflectivity). Each of these elements is supposed to be of type Parameter or of a derived class.
-{[}chi{]} sets chi\_xx = chi\_yy = chi\_zz = chi
-{[}chi\_xx,chi\_yy,chi\_z{]} sets  chi\_xx,chi\_yy,chi\_zz, others are zero
-{[}chi\_xx,chi\_yy,chi\_z,chi\_g{]} sets  chi\_xx,chi\_yy,chi\_zz and depending on ‘magdir’ chi\_yz=-chi\_zy=chi\_g (if ‘x’), chi\_xz=-chi\_zx=chi\_g (if ‘y’) or chi\_xz=-chi\_zx=chi\_g (if ‘z’)
-{[}chi\_xx,chi\_xy,chi\_xz,chi\_yx,chi\_yy,chi\_yz,chi\_zx,chi\_zy,chi\_zz{]} sets all the corresdonding elements
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{sigma}} ({\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} The roughness of the upper surface of the layer. Has dimension of length. Unit: see \sphinxstylestrong{d}.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{chitensor}} (list of {\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} Electric susceptibility tensor of the layer.
+\textbar{} \sphinxstyleemphasis{{[}chi{]}} sets \sphinxstyleemphasis{chi\_xx = chi\_yy = chi\_zz = chi}
+\textbar{} \sphinxstyleemphasis{{[}chi\_xx,chi\_yy,chi\_z{]}} sets \sphinxstyleemphasis{chi\_xx,chi\_yy,chi\_zz}, others are zero
+\textbar{} \sphinxstyleemphasis{{[}chi\_xx,chi\_yy,chi\_z,chi\_g{]}} sets  \sphinxstyleemphasis{chi\_xx,chi\_yy,chi\_zz} and depending on \sphinxstylestrong{magdir} \sphinxstyleemphasis{chi\_yz=-chi\_zy=chi\_g} (if \sphinxstyleemphasis{x}), \sphinxstyleemphasis{chi\_xz=-chi\_zx=chi\_g} (if \sphinxstyleemphasis{y}) or \sphinxstyleemphasis{chi\_xz=-chi\_zx=chi\_g} (if \sphinxstyleemphasis{z})
+\textbar{} \sphinxstyleemphasis{{[}chi\_xx,chi\_xy,chi\_xz,chi\_yx,chi\_yy,chi\_yz,chi\_zx,chi\_zy,chi\_zz{]}} sets all the corresdonding elements
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{magdir}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Gives the magnetization direction for MOKE. Possible values are \sphinxstyleemphasis{“x”}, \sphinxstyleemphasis{“y”}, \sphinxstyleemphasis{“z”} and \sphinxstyleemphasis{“0”} (no magnetization).
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -423,10 +562,11 @@ Creates a new Layer.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.getChi}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getChi}}}{\emph{fitpararray}, \emph{energy=None}}{}
-Return the chitensor as a list of numbers for a certain energy.
+Return the electric susceptibility tensor as a list of numbers for a certain \sphinxstylestrong{energy} corresponding to the parameter values in \sphinxstylestrong{fitpararray} (see {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
 
-For the base implementation of class ‘LayerObject’ the parameter ‘energy’ is not used. But it may be used by derived classes like ‘AtomLayerObject’.
-‘energy’ in units of eV.
+The returned list can be of length 1,3,4 or 9 (see {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.__init__}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{\_\_init\_\_()}}}}}).
+For the base implementation of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{LayerObject}}}}} the parameter \sphinxstylestrong{energy} is not used. But it may be used by derived classes like {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{AtomLayerObject}}}}} and therefore needed for compatibility.l
+\sphinxstylestrong{energy} is measured in units of eV.
 
 \end{fulllineitems}
 
@@ -434,7 +574,7 @@ For the base implementation of class ‘LayerObject’ the parameter ‘energy�
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.getD}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getD}}}{\emph{fitpararray}}{}
-Return the thickness d as a an actual number.
+Return the thickness of the layer as a number corresponding to the parameter values in \sphinxstylestrong{fitpararray} (see {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
 
 The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.
 
@@ -444,7 +584,7 @@ The thickness is given in the unit of length you chose. You are free to choose w
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.getSigma}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getSigma}}}{\emph{fitpararray}}{}
-Return sigma as a an actual number.
+Return the roughness of the upper surface of the layer as a number corresponding to the parameter values in \sphinxstylestrong{fitpararray} (see {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
 
 The thickness is given in the unit of length you chose. You are free to choose whatever unit you want, but use the same for every length troughout the project.
 
@@ -454,9 +594,41 @@ The thickness is given in the unit of length you chose. You are free to choose w
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.getMagDir}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getMagDir}}}{\emph{fitpararray=None}}{}
-Return magdir.
+Return magnetization direction
 
-fitpararray is not used and just there to give a common interface. mMybe derived classes will have a benefit from it.
+\sphinxstylestrong{fitpararray} is not used and just there to give a common interface. Maybe a derived classes will have a benefit from it.
+
+\end{fulllineitems}
+
+\index{d (SampleRepresentation.LayerObject attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.d}}\pysigline{\sphinxbfcode{\sphinxupquote{d}}}
+Thickness of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+
+\end{fulllineitems}
+
+\index{chitensor (SampleRepresentation.LayerObject attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.chitensor}}\pysigline{\sphinxbfcode{\sphinxupquote{chitensor}}}
+Electric susceptibility tensor of the layer. See {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.__init__}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{\_\_init\_\_()}}}}} for details.
+
+\end{fulllineitems}
+
+\index{sigma (SampleRepresentation.LayerObject attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.sigma}}\pysigline{\sphinxbfcode{\sphinxupquote{sigma}}}
+Roughness of the upper surface of the layer. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+
+\end{fulllineitems}
+
+\index{magdir (SampleRepresentation.LayerObject attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.magdir}}\pysigline{\sphinxbfcode{\sphinxupquote{magdir}}}
+Magnetization direction for MOKE. Possible values are \sphinxstyleemphasis{“x”}, \sphinxstyleemphasis{“y”}, \sphinxstyleemphasis{“z”} and \sphinxstyleemphasis{“0”} (no magnetization).
 
 \end{fulllineitems}
 
@@ -467,24 +639,50 @@ fitpararray is not used and just there to give a common interface. mMybe derived
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.ModelChiLayerObject}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{ModelChiLayerObject}}}{\emph{chitensorfunction}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}}{}
-Speciallized Layer to deal with a Suszeptibility Tensor (Chi) which is modelled as function of energy.
+Bases: {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{SampleRepresentation.LayerObject}}}}}
 
-Beware: The property chitensor is here supposed to be a function.
+Speciallized layer to deal with an electrical suszeptibility tensor (Chi) which is modelled as function of energy.
+
+BEWARE: The inherited property {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject.chitensor}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{chitensor}}}}} is now a function.
 \index{\_\_init\_\_() (SampleRepresentation.ModelChiLayerObject method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.ModelChiLayerObject.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{chitensorfunction}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}}{}
-Creates a new ModelChiLayer.
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.ModelChiLayerObject.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{chitensorfunction}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}}{}~\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{d}} ({\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
 
-‘d’ is its thickness, ‘sigma’ is the roughness of its upper surface,  and ‘magdir’ gives the magnetization directrion for MOKE
-‘d’, ‘sigma’ ,and the entries of ‘chitensor’ are expected to be an instances of a “Parameter” class (also “Fitparamter”).
-‘d’ and ‘sigma’ are both of dimension length. You are free to choose whatever unit you want, but use the same for every length troughout the project.
-‘chitensorfunction’ should be a function of two parameters (fitpararray,energy) and should return a list of either  1,3, 4 or 9 elements (see also documentation for Pythonreflectivity). 
-Each of these elements is supposed to be a number (real or imaginary).
-{[}chi{]} sets chi\_xx = chi\_yy = chi\_zz = chi
-{[}chi\_xx,chi\_yy,chi\_z{]} sets  chi\_xx,chi\_yy,chi\_zz, others are zero
-{[}chi\_xx,chi\_yy,chi\_z,chi\_g{]} sets  chi\_xx,chi\_yy,chi\_zz and depending on ‘magdir’ chi\_yz=-chi\_zy=chi\_g (if ‘x’), chi\_xz=-chi\_zx=chi\_g (if ‘y’) or chi\_xz=-chi\_zx=chi\_g (if ‘z’)
-{[}chi\_xx,chi\_xy,chi\_xz,chi\_yx,chi\_yy,chi\_yz,chi\_zx,chi\_zy,chi\_zz{]} sets all the corresdonding elements
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{sigma}} ({\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} The roughness of the upper surface of the layer. Has dimension of length. Unit: see \sphinxstylestrong{d}.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{chitensorfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} 
+Energy-dependent electric susceptibility tensor of the layer.
+It is supposed to be a function of two parameters (\sphinxstylestrong{fitpararray}, \sphinxstylestrong{energy}) which returns a list of either 1,3,4 or 9 real or complex numbers.
+See also documentation of \sphinxcode{\sphinxupquote{Pythonreflectivity}}.
+\begin{itemize}
+\item {} 
+\sphinxstyleemphasis{{[}chi{]}} sets \sphinxstyleemphasis{chi\_xx = chi\_yy = chi\_zz = chi}
+
+\item {} 
+\sphinxstyleemphasis{{[}chi\_xx,chi\_yy,chi\_z{]}} sets \sphinxstyleemphasis{chi\_xx,chi\_yy,chi\_zz}, others are zero
+
+\item {} 
+\sphinxstyleemphasis{{[}chi\_xx,chi\_yy,chi\_z,chi\_g{]}} sets  \sphinxstyleemphasis{chi\_xx,chi\_yy,chi\_zz} and depending on \sphinxstylestrong{magdir}
+\sphinxstyleemphasis{chi\_yz=-chi\_zy=chi\_g} (if \sphinxstyleemphasis{x}), \sphinxstyleemphasis{chi\_xz=-chi\_zx=chi\_g} (if \sphinxstyleemphasis{y}) or \sphinxstyleemphasis{chi\_xz=-chi\_zx=chi\_g} (if \sphinxstyleemphasis{z})
+
+\item {} 
+\sphinxstyleemphasis{{[}chi\_xx,chi\_xy,chi\_xz,chi\_yx,chi\_yy,chi\_yz,chi\_zx,chi\_zy,chi\_zz{]}} sets all the corresdonding elements
+
+\end{itemize}
+
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{magdir}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Gives the magnetization direction for MOKE. Possible values are \sphinxstyleemphasis{“x”}, \sphinxstyleemphasis{“y”}, \sphinxstyleemphasis{“z”} and \sphinxstyleemphasis{“0”} (no magnetization).
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -492,9 +690,9 @@ Each of these elements is supposed to be a number (real or imaginary).
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.ModelChiLayerObject.getChi}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getChi}}}{\emph{fitpararray}, \emph{energy}}{}
-Return the chitensor as a list of numbers for a certain energy.
+Return the electric susceptibility tensor as a list of numbers for a certain \sphinxstylestrong{energy} corresponding to the parameter values in \sphinxstylestrong{fitpararray} (see {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
 
-‘energy’ in units of eV.
+\sphinxstylestrong{energy} is measured in units of eV.
 
 \end{fulllineitems}
 
@@ -505,23 +703,52 @@ Return the chitensor as a list of numbers for a certain energy.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{AtomLayerObject}}}{\emph{densitydict=\{\}}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}, \emph{densityunitfactor=1.0}}{}
-Speciallized Layer to deal with compositions of Atoms and their energy dependent formfactors (which can be obtained from absorption spectra).
+Bases: {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.LayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{SampleRepresentation.LayerObject}}}}}
+
+Speciallized layer class to deal with compositions of atoms and their energy dependent formfactors (which can be obtained from absorption spectra).
 
 Especially usefull to deal with atomic layers, but can also be used for bulk.
 The atoms and their formfactors have to be registered a the class (with registerAtom) before they can be used to instantiate a new AtomLayerObject.
-The atom density can be plotted with plotAtomDensity() (see convenience functions).
-Density in mol/cm\$\textasciicircum{}3\$ (as long as no densityunitfactor is applied)
+The atom density can be plotted with {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.plotAtomDensity}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{plotAtomDensity()}}}}}.
+Density is measured in mol/cm\$\textasciicircum{}3\$ (as long as no \sphinxstylestrong{densityunitfactor} is applied)
 \index{\_\_init\_\_() (SampleRepresentation.AtomLayerObject method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{densitydict=\{\}}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}, \emph{densityunitfactor=1.0}}{}
-Create an AtomLayerObject.
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{densitydict=\{\}}, \emph{d=None}, \emph{sigma=None}, \emph{magdir='0'}, \emph{densityunitfactor=1.0}}{}~\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{densitydict}} \textendash{} a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of {\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}} or of a derived class).
 
-‘densitydict’ ist a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of the Parameter class or derived classes).
-For the other parameters see ‘LayerObject’.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{d}} ({\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
 
-If the densities in densitydict are measured in another unit than mol/cm\textasciicircum{}3, state the ‘densityunitfactor’ which translates your generic density to the one used internally.
-I.e.    rho\_in\_mol\_per\_cubiccm = densityunitfactor * rho\_in\_whateverunityouwant
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{sigma}} ({\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} The roughness of the upper surface of the layer. Has dimension of length. Unit: see \sphinxstylestrong{d}.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{chitensor}} (list of {\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} Electric susceptibility tensor of the layer.
+\textbar{} \sphinxstyleemphasis{{[}chi{]}} sets \sphinxstyleemphasis{chi\_xx = chi\_yy = chi\_zz = chi}
+\textbar{} \sphinxstyleemphasis{{[}chi\_xx,chi\_yy,chi\_z{]}} sets \sphinxstyleemphasis{chi\_xx,chi\_yy,chi\_zz}, others are zero
+\textbar{} \sphinxstyleemphasis{{[}chi\_xx,chi\_yy,chi\_z,chi\_g{]}} sets  \sphinxstyleemphasis{chi\_xx,chi\_yy,chi\_zz} and depending on \sphinxstylestrong{magdir} \sphinxstyleemphasis{chi\_yz=-chi\_zy=chi\_g} (if \sphinxstyleemphasis{x}), \sphinxstyleemphasis{chi\_xz=-chi\_zx=chi\_g} (if \sphinxstyleemphasis{y}) or \sphinxstyleemphasis{chi\_xz=-chi\_zx=chi\_g} (if \sphinxstyleemphasis{z})
+\textbar{} \sphinxstyleemphasis{{[}chi\_xx,chi\_xy,chi\_xz,chi\_yx,chi\_yy,chi\_yz,chi\_zx,chi\_zy,chi\_zz{]}} sets all the corresdonding elements
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{magdir}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Gives the magnetization direction for MOKE. Possible values are \sphinxstyleemphasis{“x”}, \sphinxstyleemphasis{“y”}, \sphinxstyleemphasis{“z”} and \sphinxstyleemphasis{“0”} (no magnetization).
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{densityunitfactor}} (\sphinxstyleliteralemphasis{\sphinxupquote{float}}) \textendash{} 
+If the densities in densitydict are measured in another unit than mol/cm\textasciicircum{}3, state this value which translates your generic density to the one used internally.
+I.e.:
+
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{rho\PYGZus{}in\PYGZus{}mol\PYGZus{}per\PYGZus{}cubiccm} \PYG{o}{=} \PYG{n}{densityunitfactor} \PYG{o}{*} \PYG{n}{rho\PYGZus{}in\PYGZus{}whateverunityouwant}
+\end{sphinxVerbatim}
+
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -529,7 +756,7 @@ I.e.    rho\_in\_mol\_per\_cubiccm = densityunitfactor * rho\_in\_whateverunityo
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject.getDensitydict}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getDensitydict}}}{\emph{fitpararray=None}}{}
-Return the density dictionary either with evaluated paramters (needs fitpararray) or with the raw ‘Parameter’ objects (use fitparraray=None).
+Return the density dictionary either with evaluated paramters (needs \sphinxstylestrong{fitpararray}) or with the raw {\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}} objects (use \sphinxstylestrong{fitparraray} = \sphinxstyleemphasis{None}).
 
 \end{fulllineitems}
 
@@ -537,9 +764,9 @@ Return the density dictionary either with evaluated paramters (needs fitpararray
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject.getChi}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getChi}}}{\emph{fitpararray}, \emph{energy}}{}
-Return the chitensor as a list numbers of  for a certain energy.
+Return the electric susceptibility tensor as a list of numbers for a certain \sphinxstylestrong{energy} corresponding to the parameter values in \sphinxstylestrong{fitpararray} (see {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
 
-‘energy’ in units of eV.
+\sphinxstylestrong{energy} is measured in units of eV.
 
 \end{fulllineitems}
 
@@ -547,9 +774,9 @@ Return the chitensor as a list numbers of  for a certain energy.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject.registerAtom}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{classmethod }}\sphinxbfcode{\sphinxupquote{registerAtom}}}{\emph{name}, \emph{formfactor}}{}
-Register an atom for later use to instantiate an AtomLayerObject.
+Register an atom called \sphinxstylestrong{name} for later use to instantiate an AtomLayerObject.
 
-‘formfactor’ as to be an instance of ‘Formfactor’ or of a derived class.
+\sphinxstylestrong{formfactor} as to be an instance of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Formfactor}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Formfactor}}}}} or of a derived class.
 
 \end{fulllineitems}
 
@@ -557,7 +784,7 @@ Register an atom for later use to instantiate an AtomLayerObject.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject.getAtom}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{classmethod }}\sphinxbfcode{\sphinxupquote{getAtom}}}{\emph{name}}{}
-Return the Formfactor object registered for Atom ‘name’.
+Return the {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Formfactor}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Formfactor}}}}} object registered for atom \sphinxstylestrong{name}.
 
 \end{fulllineitems}
 
@@ -576,6 +803,8 @@ Return a list of names of registered atoms.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Formfactor}}\pysigline{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{Formfactor}}}
+Bases: \sphinxcode{\sphinxupquote{object}}
+
 Base class to deal with energy-dependent atomic form-factors.
 
 This base class is an abstract class an cannot be used directly.
@@ -592,9 +821,9 @@ x.\_\_init\_\_(…) initializes x; see help(type(x)) for signature
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.Formfactor.getFF}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getFF}}}{\emph{energy}, \emph{fitpararray=None}}{}
-Return the formfactor for ‘energy’ corresponding to fitpararray (if it depends on it).
+Return the formfactor for \sphinxstylestrong{energy} corresponding to \sphinxstylestrong{fitpararray} (if it depends on it) as 9-element list of complex numbers.
 
-‘energy’ in units of eV.
+\sphinxstylestrong{energy} is measured in units of eV.
 
 \end{fulllineitems}
 
@@ -604,23 +833,34 @@ Return the formfactor for ‘energy’ corresponding to fitpararray (if it depen
 \index{FFfromFile (class in SampleRepresentation)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{FFfromFile}}}{\emph{filename}, \emph{linereaderfctn=None}, \emph{energyshift=\textless{}Parameters.Parameter object\textgreater{}}}{}
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{FFfromFile}}}{\emph{filename}, \emph{linereaderfunction=None}, \emph{energyshift=\textless{}Parameters.Parameter object\textgreater{}}}{}
+Bases: {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Formfactor}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{SampleRepresentation.Formfactor}}}}}
+
 Class to deal with energy-dependent atomic form-factors which are tabulated in files.
 \index{\_\_init\_\_() (SampleRepresentation.FFfromFile method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{filename}, \emph{linereaderfctn=None}, \emph{energyshift=\textless{}Parameters.Parameter object\textgreater{}}}{}
-Initializes the FFfromFile object with the data from filename.
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{filename}, \emph{linereaderfunction=None}, \emph{energyshift=\textless{}Parameters.Parameter object\textgreater{}}}{}
+Initializes the FFfromFile object with an energy-dependent formfactor given as file.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{filename}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Path to the text file which contains the formfactor.
 
-The ‘linereaderfctn’ is used to convert one line from the text file to data.
-It should be a function which takes a string and returns a tuple or list of 10 values: (energy,f\_xx,f\_xy,f\_xz,f\_yx,f\_yy,f\_yz,f\_zx,f\_zy,f\_zz) 
-‘energy’ in units of eV, formfactors in units of “e/atom” (dimensionless)
-It can also return ‘None’ if it detects a comment line.
-You can use FFfromFile.createLinereader to get a standard function, which just reads this array as whitespace seperated from the line.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{linereaderfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} This function is used to convert one line from the text file to data.
+It should be a function which takes a string and returns a tuple or list of 10 values: \sphinxcode{\sphinxupquote{(energy,f\_xx,f\_xy,f\_xz,f\_yx,f\_yy,f\_yz,f\_zx,f\_zy,f\_zz)}},
+where \sphinxtitleref{energy} is measured in units of \sphinxtitleref{eV} and formfactors in units of \sphinxtitleref{e/atom} (dimensionless).
+It can also return \sphinxtitleref{None} if it detects a comment line.
+You can use {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.createLinereader}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{FFfromFile.createLinereader()}}}}} to get a standard function, which just reads this array as whitespace seperated from the line.
 
-‘energyshift’ has to be an instance of ‘Paramater’ or of a derived class. It can be used to specify a fittable energyshift between
-the energy-dependent formfactor from filename and the ‘real’ one in the reflectivity measurement. So the formfactor delivered from getFF() 
-will not be formfactor\_from\_file(E) but formfactor\_from\_file(E+energyshift).
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{energyshift}} ({\hyperref[\detokenize{modules-api/parameters:Parameters.Parameter}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters.Parameter}}}}}) \textendash{} Species a fittable energyshift between the energy-dependent formfactor from \sphinxstylestrong{filename} and the \sphinxtitleref{real} one in the reflectivity measurement.
+So the formfactor delivered from {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.getFF}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{FFfromFile.getFF()}}}}} will not be \sphinxtitleref{formfactor\_from\_file(E)} but \sphinxtitleref{formfactor\_from\_file(E+energyshift)}.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -628,10 +868,15 @@ will not be formfactor\_from\_file(E) but formfactor\_from\_file(E+energyshift).
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.createLinereader}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{static }}\sphinxbfcode{\sphinxupquote{createLinereader}}}{\emph{complex\_numbers=True}}{}
-Return the standard linereader function.
+Return the standard linereader function for usage with {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.__init__}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{FFfromFile.\_\_init\_\_()}}}}}.
 
-This standard linereader function reads energy and complex elements of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes ‘\#’ as comment sign.
-If complex\_numbers==0 then the reader reads real and imaginary part of every element sepeately, i.e. every line has to consist of 19 numbers seperated by whitespaces.
+This standard linereader function reads energy and complex elements of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes “\#” as comment sign.
+If \sphinxstylestrong{complex\_numbers} = \sphinxstyleemphasis{False} then the reader reads real and imaginary part of every element seperately, i.e. every line has to consist of 19 numbers seperated by whitespaces:
+
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{energy} \PYG{n}{f\PYGZus{}xx\PYGZus{}real} \PYG{n}{ff\PYGZus{}xx\PYGZus{}im} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{f\PYGZus{}zy\PYGZus{}real} \PYG{n}{f\PYGZus{}zy\PYGZus{}im} \PYG{n}{f\PYGZus{}zz\PYGZus{}real} \PYG{n}{f\PYGZus{}zz\PYGZus{}im}
+\end{sphinxVerbatim}
 
 \end{fulllineitems}
 
@@ -639,10 +884,34 @@ If complex\_numbers==0 then the reader reads real and imaginary part of every el
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.getFF}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getFF}}}{\emph{energy}, \emph{fitpararray=None}}{}
-Return the (energy-shifted )formfactor for ‘energy’ as an interpolation between the stored values from file as 1-D numpy array.
+Return the (energy-shifted )formfactor for \sphinxstylestrong{energy} as an interpolation between the stored values from file as 9-element 1-D numpy array of complex numbers.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{energy}} (\sphinxstyleliteralemphasis{\sphinxupquote{float}}) \textendash{} Measured in units of eV.
 
-‘energy’ in units of eV.
-‘fitpararray’ is actually only needed when an energyshift has been defined.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{fitpararray}} \textendash{} Is actually only needed when an energyshift has been defined.
+
+\end{itemize}
+
+\end{description}\end{quote}
+
+\end{fulllineitems}
+
+\index{maxE (SampleRepresentation.FFfromFile attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.maxE}}\pysigline{\sphinxbfcode{\sphinxupquote{maxE}}}
+Upper limit of stored energy range. Read-only.
+
+\end{fulllineitems}
+
+\index{minE (SampleRepresentation.FFfromFile attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.FFfromFile.minE}}\pysigline{\sphinxbfcode{\sphinxupquote{minE}}}
+Lower limit of stored energy range. Read-only.
 
 \end{fulllineitems}
 
@@ -653,10 +922,10 @@ Return the (energy-shifted )formfactor for ‘energy’ as an interpolation betw
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.plotAtomDensity}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{plotAtomDensity}}}{\emph{hs}, \emph{fitpararray}, \emph{colormap={[}{]}}, \emph{atomnames=None}}{}
-Make a plot of the atom densities of all AtomLayerObjects contained in the ‘Heterostructure’ ‘hs’ corresdonding to the ‘fitpararray’ and return the plotted information.
+Convenience function. Create a bar plot of the atom densities of all instances of {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.AtomLayerObject}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{AtomLayerObject}}}}} contained in the {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Heterostructure}}}}} object \sphinxstylestrong{hs} corresdonding to the \sphinxstylestrong{fitpararray} (see {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}) and return the plotted information as dictionary.
 
-You can  define the colors of the bars. Just give a list of matplotlib color names. They will be used in the given order.
-You can define which atoms you want to plot or in which order. Give ‘atomnames’ as a list of strings. If atomnames is not given, the bars will have different width, such that overlapped bars can be seen.
+You can  define the colors of the bars with \sphinxstylestrong{colormap}. Just give a list of matplotlib color names. They will be used in the given order.
+You can define which atoms you want to plot or in which order. Give \sphinxstylestrong{atomnames} as a list of strings. If \sphinxstylestrong{atomnames} is not given, the bars will have different width, such that overlapped bars can be seen.
 
 \end{fulllineitems}
 
@@ -664,10 +933,18 @@ You can define which atoms you want to plot or in which order. Give ‘atomnames
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/samplerepresentation:SampleRepresentation.KramersKronig}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{SampleRepresentation.}}\sphinxbfcode{\sphinxupquote{KramersKronig}}}{\emph{energy}, \emph{absorption}}{}
-Perform the Kramers Kronig transformation. Just a wrapper for the function Pythonreflectivity.KramersKroning(energy,absorption) from Martins Pythonreflectivity package.
+Convinience funtion. Performs the Kramers Kronig transformation. It is just a wrapper for \sphinxcode{\sphinxupquote{Pythonreflectivity.KramersKroning()}} from Martins Zwieblers \sphinxcode{\sphinxupquote{Pythonreflectivity}} package.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{energy}} \textendash{} an ordered list/array of L energies (in eV). The energies do not have to be envenly spaced, but they should be ordered.
 
-‘energy’: an ordered list/array of L energies (in eV). The energies do not have to be envenly spaced, but they should be ordererd.
-‘absorption’: a list/array of real numbers and length L with absorption data.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{absorption}} \textendash{} a list/array of real numbers and length L with absorption data
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -675,36 +952,50 @@ Perform the Kramers Kronig transformation. Just a wrapper for the function Pytho
 
 \section{Module \sphinxtitleref{Experiment}}
 \label{\detokenize{modules-api/experiment:module-Experiment}}\label{\detokenize{modules-api/experiment:module-experiment}}\label{\detokenize{modules-api/experiment::doc}}\index{Experiment (module)}
-Deals the description of the experiment and brings experimental and simulated data together.
+Deals with the description of the experiment and brings experimental and simulated data together.
+It contains currently only the class {\hyperref[\detokenize{modules-api/experiment:Experiment.ReflDataSimulator}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ReflDataSimulator}}}}}, which does this job.
 \index{ReflDataSimulator (class in Experiment)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{Experiment.}}\sphinxbfcode{\sphinxupquote{ReflDataSimulator}}}{\emph{mode}, \emph{length\_scale=1e-08}}{}
-Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver chi\_square (which measures the difference between the data and the simulation with a certain parameter set.
+\phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{class }}\sphinxcode{\sphinxupquote{Experiment.}}\sphinxbfcode{\sphinxupquote{ReflDataSimulator}}}{\emph{mode}, \emph{length\_scale=1e-09}}{}
+Bases: \sphinxcode{\sphinxupquote{object}}
+
+Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver the sum of squared residuals ({\hyperref[\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.getSimData}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{getSimData()}}}}}) and the residuals themselfs ({\hyperref[\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.getResidualsSSR}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{getResidualsSSR()}}}}}), which both describe the difference between data and simulation at a certain parameter set. It can be in different modes which determins which data or which derived data is stored and simulated.
 \index{\_\_init\_\_() (Experiment.ReflDataSimulator method)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{mode}, \emph{length\_scale=1e-08}}{}
+\phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{mode}, \emph{length\_scale=1e-09}}{}
 Initialize the ReflDataSimulator with a certain mode.
-\begin{description}
-\item[{‘mode’ can be:    ‘l’             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated}] \leavevmode
-‘c’             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
-‘x’             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
-‘cx\textless{}xfactor\textgreater{}’   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously
-\begin{quote}
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{mode}} (\sphinxstyleliteralemphasis{\sphinxupquote{string}}) \textendash{} 
+The following modes are implemented so far:
+\begin{itemize}
+\item {} 
+’l’             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
 
-‘\textless{}xfactor\textgreater{}’ is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting
-e.g.   ‘cx20’ or ‘cx0.1’
-\end{quote}
+\item {} 
+’c’             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
 
-‘lL’,’cL’,
-‘xL’,
-‘cLx\textless{}xfactor\textgreater{}’, - as before, but instead of the corresponding reflectivities themselfs there logarithms are stored and simulated.
+\item {} 
+’x’             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
 
-\end{description}
+\item {} 
+’cx\textless{}xfactor\textgreater{}’   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously ‘\textless{}xfactor\textgreater{}’ is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.’cx20’ or ‘cx0.1’
 
-Define with ‘length\_scale’ in which units lengths are measured in your script. The unit is then ‘length\_scale’{\color{red}\bfseries{}*}meters. Standard is ‘length\_scale=10e-9’ which means nm.
-It is important to define it here due to conversion between energies and wavelength.
+\item {} 
+’lL’, ‘cL’, ‘xL’, ‘cLx\textless{}xfactor\textgreater{}’, - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated.
+
+\end{itemize}
+
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{length\_scale}} (\sphinxstyleliteralemphasis{\sphinxupquote{float}}) \textendash{} Defines in which unit lengths are measured in your script. The unit is then \sphinxstylestrong{length\_scale} * meters. Default is \sphinxstylestrong{length\_scale} = \sphinxstyleemphasis{1e-9} which means \sphinxstyleemphasis{nm}. It is important to define it here due to conversion between energies and wavelength.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -712,28 +1003,38 @@ It is important to define it here due to conversion between energies and wavelen
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.ReadData}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{ReadData}}}{\emph{files}, \emph{linereaderfunction}, \emph{energies=None}, \emph{angles=None}, \emph{filenamereaderfunction=None}, \emph{pointmodifierfunction=None}, \emph{headerlines=0}}{}
-Read the data files and store the data corresponding to the ‘mode’ specified with instanciation.
+Read the data files and store the data corresponding to the \sphinxstylestrong{mode} specified with instanciation (see {\hyperref[\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.__init__}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{ReflDataSimulator.\_\_init\_\_()}}}}})
 
 This function enables a very flexible reading of the data files.
-Logically this function uses data point which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd).
+Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd).
 So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
-Where this information comes from can differ.
+Where the values for the independent variables comes from can differ: either from lists (\sphinxstylestrong{energies},**angles**), from the filenames (\sphinxstylestrong{filenamereaderfunction}) or from the lines in the data file (\sphinxstylestrong{linereaderfunction}).
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{files}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}\sphinxstyleliteralemphasis{\sphinxupquote{ or }}\sphinxstyleliteralemphasis{\sphinxupquote{list of str}}) \textendash{} Specifies the set of data files. Either a list of filenames or one foldername of a folder containing all the data files (and only them!).
 
-At first, there are two different ways to specify the data files: Either a list of filenames (strings) or one foldername (string) of a folder containing all the data files (and only them!).
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{linereaderfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers \sphinxstyleemphasis{(energy,angle,rsigma,rpi,rleft,rright,xmcd)}. Entries can also be ‘None’. Exceptions will only be trown if the needed information for the specified \sphinxstylestrong{mode} is not delivered. An easy way to create such a function is to use the method {\hyperref[\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.createLinereader}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{createLinereader()}}}}}.
 
-One possibility is that all information comes from the ‘linereaderfunction’. This function can be defined by the user (or created with createLinereader()).
-It takes one line as a string and returns a list/tuple of real numbers (energy,angle,rsigma,rpi,rleft,rright,xmcd). Entries can also be ‘None’. The function will complain only if the needed information for the specified ‘mode’ is not delivered.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{energies}} (\sphinxstyleliteralemphasis{\sphinxupquote{list of floats}}) \textendash{} Only possible to be different from \sphinxstyleemphasis{None} if \sphinxstylestrong{files} is a list of filenames and \sphinxstylestrong{angles} is \sphinxtitleref{None}. Gives the energies which belong to the corresponding files (same order) as floats.
 
-Sometimes, not all the information on independent variables can be obtained from single lines of the file. To specify an independent variable which is valid for complete files there are 3 different possibilities, which cannot be mixed:
-Set the list ‘energies’: Only possible if ‘files’ is a list of filenames. Gives the energies which belong to the corresponding files (same order) as floats.
-Set the list ‘angles’: Only possible if ‘files’ is a list of filenames. Gives the angles which belong to the corresponding files (same order) as floats.
-Set ‘filenamereaderfunction’: Give a user-specified function to the function ‘ReadData()’. It should take a string (a filename without path), extract energy and/or angle out of it and return this as a tuple/list (energy,angle). Both entries can also be set to ‘None’, but their will be an exception if the information for the data points can also not be obtained from the linereaderfunction.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{angles}} (\sphinxstyleliteralemphasis{\sphinxupquote{list of floats}}) \textendash{} Only possible to be different from \sphinxstyleemphasis{None} if \sphinxstylestrong{files} is a list of filenames and \sphinxstylestrong{energies} is \sphinxtitleref{None}. Gives the angles which belong to the corresponding files (same order) as floats.
 
-With the parameter ‘pointmodifierfunction’ you can hand over a functions which takes the list of independent and dependent variables of a single data point and returns a modified one.
-Can be used e.g. if the data file contains qz values instead of angles. The ‘pointmodifierfunction’ can calculate the angles.
-Of course you can also use a adopted linereaderfunction for this (if all necessary information can be found in one line of the data files).
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{filenamereaderfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} A user-defined function which reads energies and/or angles from the filenames of the data files. This function should take a string (a filename without path), extract energy and/or angle out of it and return this as a tuple/list \sphinxstyleemphasis{(energy,angle)}. Both entries can also be set to \sphinxstyleemphasis{None}, but their will be an exception if the needed information for the data points can also not be obtained from the \sphinxstylestrong{linereaderfunction}.
 
-‘headerlines’ specifies the number of lines which should be ignored in each file.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{pointmodifierfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} A user-definde function which is used to modify the obtained information. It takes the tuple/list of independent and dependent variables of a single data point and returns a modified one. It can be used for example if the data file contains qz values instead of angles. In this case you can read the qz values first as angles and replace them afterwards with the angles calculated out of it with the \sphinxstylestrong{pointmodifierfunction}. Of course you can also use a adopted \sphinxstylestrong{linereaderfunction} for this purpose (if all necessary information can be found in one line of the data files).
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{headerlines}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} specifies the number of lines which should be ignored at the top of each file.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -743,27 +1044,29 @@ Of course you can also use a adopted linereaderfunction for this (if all necessa
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.setModel}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{setModel}}}{\emph{heterostructure}, \emph{reflmodifierfunction=None}, \emph{MultipleScattering=True}, \emph{MagneticCutoff=1e-50}}{}
 Set up the model for the simulation of the reflectivity data.
 
-The simulation of the reflectivities is in prinicple done by using the information about the sample stored in heterostructure (of type SampleRepresentation.Heterostructure).
-The reflectivities calculated by this are then given to the ‘reflmodifierfunction’ (takes one number or numpy array and the fitpararray; returns one number or numpy array). This funktion has to be defined 
-by the user and can be used e.g. to multiply the reflectivity by a global number and/or to add a common background. To make these numbers fittable, use the fitparameters registerd at the ParamterPool
-e.g
-\begin{quote}
+The simulation of the reflectivities is in prinicple done by using the information about the sample stored in \sphinxstylestrong{heterostructure} (of type {\hyperref[\detokenize{modules-api/samplerepresentation:SampleRepresentation.Heterostructure}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{SampleRepresentation.Heterostructure}}}}}).
+The calculated reflectivities are then given to the \sphinxstylestrong{reflmodifierfunction} (takes one number or numpy array and the fitpararray; returns one number or a numpy array). This function has to be defined
+by the user and can be used for example to multiply the reflectivity by a global number and/or to add a common background. To make these numbers fittable, use the fitparameters registerd at an instance of \sphinxcode{\sphinxupquote{Paramters.ParamterPool}}.
+Example:
 
-pp=Paramters.ParameterPool(“any\_parameterfile”)
-…
-b=pp.NewParameter(“background”)
-m=pp.NewParameter(“multiplier”)
-reflmodifierfunction=lambda r, fitpararray: b.getValue(fitpararra) + r * m.getValue(fitpararray)
-\end{quote}
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{pp}\PYG{o}{=}\PYG{n}{Paramters}\PYG{o}{.}\PYG{n}{ParameterPool}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{any\PYGZus{}parameterfile}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}
+\PYG{n}{b}\PYG{o}{=}\PYG{n}{pp}\PYG{o}{.}\PYG{n}{NewParameter}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{background}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{m}\PYG{o}{=}\PYG{n}{pp}\PYG{o}{.}\PYG{n}{NewParameter}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{multiplier}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{reflmodifierfunction}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{r}\PYG{p}{,} \PYG{n}{fitpararray}\PYG{p}{:} \PYG{n}{b}\PYG{o}{.}\PYG{n}{getValue}\PYG{p}{(}\PYG{n}{fitpararray}\PYG{p}{)} \PYG{o}{+} \PYG{n}{r} \PYG{o}{*} \PYG{n}{m}\PYG{o}{.}\PYG{n}{getValue}\PYG{p}{(}\PYG{n}{fitpararray}\PYG{p}{)}
+\end{sphinxVerbatim}
 
-and give this function to ‘setModel’.
+and give this function to {\hyperref[\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.setModel}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{setModel()}}}}}.
+
 BEWARE: The reflmodifierfunction is called very often during fitting procedures. Make it performant!
 
-With ‘MultipleScattering’ you can switch on (True) and off (False) the simulation of multiple scattering. False is 20 percent faster. Default is True. Has no effect on calculations that require the full matrix.
+With \sphinxstylestrong{MultipleScattering} you can switch on (\sphinxstyleemphasis{True}) and off (\sphinxstyleemphasis{False}) the simulation of multiple scattering. \sphinxstyleemphasis{False} is 20 percent faster. Default is \sphinxstyleemphasis{True}. Has no effect on calculations that require the full matrix.
 
-MagneticCutoff: If an off-diagonal element of chi (chi\_g) fulfills abs(chi\_g)\textless{}MagneticCutoff, it is set to zero. It defaults to 10e-50.
+\sphinxstylestrong{MagneticCutoff}: If an off-diagonal element of chi (chi\_g) fulfills abs(chi\_g)\textless{}MagneticCutoff, it is set to zero. It defaults to 10e-50.
 
-The last to parameters are directly passed to Pythonreflectivity.Reflectivity. See also the Documentation of Pythonreflectivity.
+The last two parameters are directly passed to \sphinxcode{\sphinxupquote{Pythonreflectivity.Reflectivity()}}. See also the Documentation of \sphinxcode{\sphinxupquote{Pythonreflectivity}}.
 
 \end{fulllineitems}
 
@@ -773,7 +1076,7 @@ The last to parameters are directly passed to Pythonreflectivity.Reflectivity. S
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.getLenDataFlat}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getLenDataFlat}}}{}{}
 Return length of the flat data representation.
 
-It will be the number of measured data points times 2 for mode “l” and “c”, only the number of measured data points for mode “x and the number of measured data points times 3 for mode cx”
+It will be the number of measured data points times 2 for mode “l” and “c”, only the number of measured data points for mode “x” and the number of measured data points times 3 for mode “cx”
 
 \end{fulllineitems}
 
@@ -781,7 +1084,17 @@ It will be the number of measured data points times 2 for mode “l” and “c�
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.getSimData}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getSimData}}}{\emph{fitpararray}}{}
-Return simulated data according to the bevor set-up model and the parameter values given with fitpararray.
+Return simulated data according to the bevor set-up model and the parameter values given with \sphinxstylestrong{fitpararray} (see also {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
+
+The retured data is a list and has on of the following or similar shapes:
+
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rsigma1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rsigmaN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rpi1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rpiN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rsigma1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rsigmaK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rpi1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rpiK}\PYG{p}{]}\PYG{p}{]}
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightK}\PYG{p}{]}\PYG{p}{]}
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdK}\PYG{p}{]}\PYG{p}{]}
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightK}\PYG{p}{]}\PYG{p}{,}\PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdK}\PYG{p}{]}\PYG{p}{]}
+\end{sphinxVerbatim}
 
 \end{fulllineitems}
 
@@ -789,7 +1102,17 @@ Return simulated data according to the bevor set-up model and the parameter valu
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.getExpData}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getExpData}}}{}{}
-Return experimental data in the shape in which it is stored internally.
+Return stored experimental data.
+
+The retured data is a list and has on of the following or similar shapes:
+
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rsigma1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rsigmaN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rpi1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rpiN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rsigma1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rsigmaK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rpi1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rpiK}\PYG{p}{]}\PYG{p}{]}
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightK}\PYG{p}{]}\PYG{p}{]}
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdK}\PYG{p}{]}\PYG{p}{]}
+\PYG{p}{[}\PYG{p}{[}\PYG{n}{energy1}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightN}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdN}\PYG{p}{]}\PYG{p}{]}\PYG{p}{]}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{p}{[}\PYG{n}{energyL}\PYG{p}{,}\PYG{p}{[}\PYG{n}{angle1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{angleK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rleft1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{rleftK}\PYG{p}{]}\PYG{p}{,} \PYG{p}{[}\PYG{n}{rright1}\PYG{p}{,}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{n}{rrightK}\PYG{p}{]}\PYG{p}{,}\PYG{p}{[}\PYG{n}{xmcd1}\PYG{p}{,} \PYG{o}{.}\PYG{o}{.}\PYG{o}{.}\PYG{o}{.} \PYG{n}{xmcdK}\PYG{p}{]}\PYG{p}{]}
+\end{sphinxVerbatim}
 
 \end{fulllineitems}
 
@@ -797,7 +1120,7 @@ Return experimental data in the shape in which it is stored internally.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.getSSR}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getSSR}}}{\emph{fitpararray}}{}
-Return sum of squared residuals.
+Return sum of squared residuals as float according to the parameterset given by \sphinxstylestrong{fitpararray} (see also {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
 
 \end{fulllineitems}
 
@@ -805,7 +1128,9 @@ Return sum of squared residuals.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.getResidualsSSR}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{getResidualsSSR}}}{\emph{fitpararray}}{}
-Return tuple: array of differences between simulated and measured data, sum of squared residuals.
+Return the residuals and the sum of squared residuals according to the parameterset given by \sphinxstylestrong{fitpararray} (see also {\hyperref[\detokenize{modules-api/parameters:module-Parameters}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{Parameters}}}}}).
+
+The information is returned as tuple: array of differences between simulated and measured data, sum of squared residuals.
 
 \end{fulllineitems}
 
@@ -813,13 +1138,26 @@ Return tuple: array of differences between simulated and measured data, sum of s
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.plotData}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{plotData}}}{\emph{fitpararray}, \emph{simcolor='r'}, \emph{expcolor='b'}, \emph{simlabel='simulated'}, \emph{explabel='experimental'}}{}
-Plot simulated and experimental Data.
+Plot simulated and experimental data.
 
 This function generates a plot at the first call and refreshes it if called again.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{simcolor}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Specifies the color of the simulated data for the plotting with pyplot (see \sphinxurl{https://matplotlib.org/users/colors.html}). Default is red.
 
-‘simcolor’ and ‘expcolor’ are supposed to be strings which specify a color for the plotting with pyplot (see \sphinxurl{https://matplotlib.org/users/colors.html}).
-Defaults are red and blue.
-‘simlabel’ and ‘explabel’ are the labels shown in the legend of the plot.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{expcolor}} (str  are supposed to be strings which specify a color for the plotting with pyplot (see \sphinxurl{https://matplotlib.org/users/colors.html}).) \textendash{} Specifies the color of the experimental data for the plotting with pyplot (see \sphinxurl{https://matplotlib.org/users/colors.html}). Default is blue.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{simlabel}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Label shown in the legend of the plot for the simulated data. Default is \sphinxstyleemphasis{“simulated”}.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{explabel}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Label shown in the legend of the plot for the experimental data. Default is \sphinxstyleemphasis{“experimental”}.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -827,25 +1165,33 @@ Defaults are red and blue.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.setMode}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{setMode}}}{\emph{mode}}{}
-Change the mode after instanciation.
+Change the mode after instantiation.
 
 Be carefull with this function. Errors can occur if the mode does not fit to the available information in the data files.
-\begin{description}
-\item[{‘mode’ can be:    ‘l’             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated}] \leavevmode
-‘c’             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
-‘x’             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
-‘cx\textless{}xfactor\textgreater{}’   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously
-\begin{quote}
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode
+\sphinxstyleliteralstrong{\sphinxupquote{mode}} (\sphinxstyleliteralemphasis{\sphinxupquote{string}}) \textendash{} 
+The following modes are implemented so far:
+\begin{itemize}
+\item {} 
+’l’             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
 
-‘\textless{}xfactor\textgreater{}’ is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting
-e.g.   ‘cx20’ or ‘cx0.1’
-\end{quote}
+\item {} 
+’c’             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
 
-‘lL’,’cL’,
-‘xL’,
-‘cLx\textless{}xfactor\textgreater{}’, - as before, but instead of the corresponding reflectivities themselfs there logarithms are stored and simulated.
+\item {} 
+’x’             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
 
-\end{description}
+\item {} 
+’cx\textless{}xfactor\textgreater{}’   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously ‘\textless{}xfactor\textgreater{}’ is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.’cx20’ or ‘cx0.1’
+
+\item {} 
+’lL’, ‘cL’, ‘xL’, ‘cLx\textless{}xfactor\textgreater{}’, - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated.
+
+\end{itemize}
+
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -853,10 +1199,26 @@ e.g.   ‘cx20’ or ‘cx0.1’
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.createLinereader}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{static }}\sphinxbfcode{\sphinxupquote{createLinereader}}}{\emph{energy\_column=None}, \emph{angle\_column=None}, \emph{rsigma\_column=None}, \emph{rpi\_column=None}, \emph{rleft\_column=None}, \emph{rright\_column=None}, \emph{xmcd\_column=None}, \emph{commentsymbol='\#'}}{}
-Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers {[}energy,angle,rsigma,rpi,rleft,rright,xmcd{]} (or None).
+Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers \sphinxstyleemphasis{{[}energy,angle,rsigma,rpi,rleft,rright,xmcd{]}} (or \sphinxstyleemphasis{None} for a uncommented line).
 
-With the parameters ‘…\_column’ you can determin wich column is interpreted how.
+With the parameters \sphinxstyleemphasis{…\_column} you can determin wich column is interpreted how.
 Column numbers are starting from 0.
+
+\end{fulllineitems}
+
+\index{mode (Experiment.ReflDataSimulator attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.mode}}\pysigline{\sphinxbfcode{\sphinxupquote{mode}}}
+The current mode. See :meth:{\color{red}\bfseries{}{}`}.\_\_init\_\_{}`for possible modes. Read-only.
+
+\end{fulllineitems}
+
+\index{hcfactor (Experiment.ReflDataSimulator attribute)}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.hcfactor}}\pysigline{\sphinxbfcode{\sphinxupquote{hcfactor}}}
+Planck constant times the speed of light in units of \sphinxstyleemphasis{eV} times the unit of length which was defined by \sphinxstylestrong{length\_scale} with {\hyperref[\detokenize{modules-api/experiment:Experiment.ReflDataSimulator.__init__}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{\_\_init\_\_()}}}}}. Read-only.
 
 \end{fulllineitems}
 
@@ -867,66 +1229,126 @@ Column numbers are starting from 0.
 
 \section{Module \sphinxtitleref{Fitters}}
 \label{\detokenize{modules-api/fitters:module-Fitters}}\label{\detokenize{modules-api/fitters:module-fitters}}\label{\detokenize{modules-api/fitters::doc}}\index{Fitters (module)}
-Contains different optimization algorithms designed for to fit reflectivity data.
+Contains different optimization algorithms designed to fit reflectivity data.
 They take advantage of parallelization to be used on multiprocessor system.
 
-The algorithms are developed by Martin Zwiebel and I just adopted them to PyXMRTool.
+The algorithms are developed by Martin Zwiebel and I just adopted them with slight changes to PyXMRTool.
 More information can be found in the PhD thesis of Martin Zwiebler.
 \index{Evolution() (in module Fitters)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/fitters:Fitters.Evolution}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{Fitters.}}\sphinxbfcode{\sphinxupquote{Evolution}}}{}{}
+\phantomsection\label{\detokenize{modules-api/fitters:Fitters.Evolution}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{Fitters.}}\sphinxbfcode{\sphinxupquote{Evolution}}}{\emph{costfunction}, \emph{parameter\_settings}, \emph{iterations}, \emph{number\_of\_cores=1}, \emph{generation\_size=300}, \emph{mutation\_strength=0.01}, \emph{elite=2}, \emph{parent\_percentage=0.25}, \emph{control\_file=None}, \emph{plotfunction=None}}{}
 Evolutionary fit algorithm. Slow but good in finding the global minimum.
 Return the optimized parameter set and the coresponding value of the costfunction.
-\begin{description}
-\item[{‘costfunction’ should usally be the method ‘getSSR’ of an instance of ‘ReflDataSimulator’ (returns the sum of squared residuals of i.e. the reflectivities or logarithms of reflectivities).}] \leavevmode
-Can also be any other function which takes the array of fit parameters and returns one real value should be minimized by ‘Evolution’.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{costfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} 
+A function which returns a measure (cost) for the difference between measurement and simulated data according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method \sphinxcode{\sphinxupquote{SampleRepresentation.ReflDataSimulator.getSSR()}} of an instance of \sphinxcode{\sphinxupquote{SampleRepresentation.ReflDataSimulator}} wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.
+Example for the wrapping:
 
-\end{description}
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{simu} \PYG{o}{=} \PYG{n}{SampleRepresentation}\PYG{o}{.}\PYG{n}{ReflDataSimulator}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{l}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}
+\PYG{k}{def} \PYG{n+nf}{cost}\PYG{p}{(}\PYG{n}{fitpararray}\PYG{p}{)}\PYG{p}{:}
+    \PYG{k}{return} \PYG{n}{simu}\PYG{o}{.}\PYG{n}{getSSR}\PYG{p}{(}\PYG{n}{fitpararray}\PYG{p}{)}
+\end{sphinxVerbatim}
 
-(‘startfitparameters’,’lower\_limits’,’upper\_limits): tuple/list of arrays/lists of start values/lower limits/upper limits for the fit parameters.
-‘iterations’: number of iterations
-‘number\_of\_cores’: number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
-‘generation\_size’:    Use this many individual fit parameter sets in each step
-‘mutation\_strength’ Mutates by adding this factor times (upper\_limit - lower\_limit)  \textendash{}\textgreater{} use rather small values 
-‘elite’ Remember the best individuals for the next generation
-‘parent\_percentage’ \#Take this subset for reproduction
+Pass then the function \sphinxstyleemphasis{cost} as \sphinxstylestrong{costfunction}. It can also be any other function which takes the array of fit parameters and returns one real value which should be minimized by \sphinxcode{\sphinxupquote{Evolution()}}.
 
-If ‘control\_file’ is given, you can abort the optimization routine by writing “terminate 1” to the beginning of its first line.
 
-If ‘plotfunction’ is given, it will be used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration. It should take only one parameter: the array of fitparameters.
-\begin{description}
-\item[{This Evolutionary algorithm is mainly the same as Martins. Only the rule for mutation has changed:}] \leavevmode
-Martin: children{[}i{]}=children{[}i{]} * (1 + s * random float(-1,1))
-I:      children{[}i{]}=children{[}i{]} + s * random float(-1,1)*(upper\_limits-lower\_limits)
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{parameter\_settings}} (\sphinxstyleliteralemphasis{\sphinxupquote{tuple of lists of floats}}) \textendash{} Sets start values, lower and upper limit of the parameters as \sphinxstyleemphasis{(startfitparameters, lower\_limits, upper\_limits )}, where each of the entries is an list/array of values of same length.
 
-\end{description}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{iterations}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} number of iterations/generations
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{number\_of\_cores}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{generation\_size}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} Generate this many individual fit parameter sets in each generation.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{mutation\_strength}} (\sphinxstyleliteralemphasis{\sphinxupquote{float}}) \textendash{} Mutates children by adding this factor times (upper\_limit - lower\_limit)  \textendash{}\textgreater{} use rather small values
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{elite}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} Remember the best individuals for the next generation.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{parent\_percentage}} (\sphinxstyleliteralemphasis{\sphinxupquote{flota}}) \textendash{} Use this fraction of a gereneration (the best) for reproduction.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{control\_file}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Filename of a control file. If it is given, you can abort the optimization routine by writing “terminate 1” to the beginning of its first line.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{plotfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.
+
+\end{itemize}
+
+\end{description}\end{quote}
+
+This Evolutionary algorithm is mainly the same as Martins. Only the rule for mutation has changed:
+
+\begin{DUlineblock}{0em}
+\item[] Martin: \sphinxcode{\sphinxupquote{children{[}i{]}=children{[}i{]} * (1 + s * random float(-1,1))}}
+\item[] I:      \sphinxcode{\sphinxupquote{children{[}i{]}=children{[}i{]} + s * random float(-1,1)*(upper\_limits-lower\_limits)}}
+\end{DUlineblock}
 
 \end{fulllineitems}
 
 \index{Levenberg\_Marquardt\_Fitter() (in module Fitters)}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{modules-api/fitters:Fitters.Levenberg_Marquardt_Fitter}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{Fitters.}}\sphinxbfcode{\sphinxupquote{Levenberg\_Marquardt\_Fitter}}}{}{}
+\phantomsection\label{\detokenize{modules-api/fitters:Fitters.Levenberg_Marquardt_Fitter}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{Fitters.}}\sphinxbfcode{\sphinxupquote{Levenberg\_Marquardt\_Fitter}}}{\emph{residualandcostfunction}, \emph{parameter\_settings}, \emph{parallel\_points}, \emph{number\_of\_cores=1}, \emph{strict=True}, \emph{control\_file=None}, \emph{plotfunction=None}}{}
 Modified Levenberg-Marquard algorithm (see PhD thesis of Martin Zwiebler). Good convergence, but might end up in a local mininum.
 Return the optimized parameter set and the coresponding value of the costfunction.
-\begin{description}
-\item[{‘residualandcostfunction’ should usally be the method ‘getResidualsSSR’ of an instance of ‘ReflDataSimulator’. Can also be any other function which takes the array of fit parameters and returns a tuple of }] \leavevmode
-1.) a list of residuals (will be used to determine derivatives) 2.) a value of the costfunction which should be minimized (usually the sum of squared residuals)
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{itemize}
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{residualandcostfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} 
+A function which returns the differences between simulated and measured data points (residuals) as list and a scalar measure (cost) for these differences in total according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method \sphinxcode{\sphinxupquote{SampleRepresentation.ReflDataSimulator.getResidualsSSR()}} of an instance of \sphinxcode{\sphinxupquote{SampleRepresentation.ReflDataSimulator}} wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.
+Example for the wrapping:
 
-\end{description}
+\fvset{hllines={, ,}}%
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{simu} \PYG{o}{=} \PYG{n}{SampleRepresentation}\PYG{o}{.}\PYG{n}{ReflDataSimulator}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{l}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}
+\PYG{k}{def} \PYG{n+nf}{rescost}\PYG{p}{(}\PYG{n}{fitpararray}\PYG{p}{)}\PYG{p}{:}
+    \PYG{k}{return} \PYG{n}{simu}\PYG{o}{.}\PYG{n}{getResidualsSSR}\PYG{p}{(}\PYG{n}{fitpararray}\PYG{p}{)}
+\end{sphinxVerbatim}
 
-(‘startfitparameters’,’lower\_limits’,’upper\_limits): tuple/list of arrays/lists of start values/lower limits/upper limits for the fit parameters.
-‘parallel\_points’: This should be something like the number of threads that can run in parallel/number of cores. The algorithm will first find a direction for a good descent and then check this number of points on the line. The best one will yield the new fit parameter set
-‘number\_of\_cores’: number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
-‘strict’: usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set ‘stict=False’ this parameter will be neglected locally.
+Pass then the function \sphinxstyleemphasis{rescost} as \sphinxstylestrong{costfunction}. It can also be any other function which takes the array of fit parameters and returns a tuple of
+1.) a list of residuals (will be used to determine derivatives) 2.) a value of the costfunction which should be minimized by \sphinxcode{\sphinxupquote{Levenberg\_Marquardt\_Fitter()}}.
 
-If ‘control\_file’ is given, you can abort the optimization routine by writing “terminate 1” to the beginning of its first line.
 
-If ‘plotfunction’ is given, it will be used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration. It should take only one parameter: the array of fitparameters.
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{parameter\_settings}} (\sphinxstyleliteralemphasis{\sphinxupquote{tuple of lists of floats}}) \textendash{} Sets start values, lower and upper limit of the parameters as \sphinxstyleemphasis{(startfitparameters, lower\_limits, upper\_limits )}, where each of the entries is an list/array of values of same length.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{parallel\_points}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} This should be something like the number of threads that can run in parallel/number of cores. The algorithm will first find a direction for a good descent and then check this number of points on the line. The best one will yield the new fit parameter set.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{number\_of\_cores}} (\sphinxstyleliteralemphasis{\sphinxupquote{int}}) \textendash{} Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{strict}} (\sphinxstyleliteralemphasis{\sphinxupquote{bool}}) \textendash{} Usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set \sphinxstylestrong{stict} = \sphinxstyleemphasis{False} this parameter will be neglected locally.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{control\_file}} (\sphinxstyleliteralemphasis{\sphinxupquote{str}}) \textendash{} Filename of a control file. If it is given, you can abort the optimization routine by writing “terminate 1” to the beginning of its first line.
+
+\item {} 
+\sphinxstyleliteralstrong{\sphinxupquote{plotfunction}} (\sphinxstyleliteralemphasis{\sphinxupquote{callable}}) \textendash{} Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.
+
+\end{itemize}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
+
+Hint for API documentation: Inherited members are not repeated in the documentaion of derived classes.
 
 
 \chapter{Indices and tables}

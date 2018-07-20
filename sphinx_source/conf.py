@@ -197,12 +197,12 @@ todo_include_todos = True
 
 # -- needed to avoid problems regarding numpy imports with Readthedocs
 import sys
-from from mock import Mock as MagicMock
+from mock import Mock as MagicMock
 
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = [''numpy']
+MOCK_MODULES = ['numpy','Pythonreflectivity']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

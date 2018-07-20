@@ -1,6 +1,6 @@
 \select@language {english}
 \contentsline {chapter}{\numberline {1}todo: Introduction}{1}{chapter.1}
-\contentsline {chapter}{\numberline {2}todo: Installation}{3}{chapter.2}
+\contentsline {chapter}{\numberline {2}Installation}{3}{chapter.2}
 \contentsline {chapter}{\numberline {3}todo: Usage}{5}{chapter.3}
 \contentsline {chapter}{\numberline {4}API}{7}{chapter.4}
 \contentsline {section}{\numberline {4.1}Module \sphinxtitleref {Parameters}}{7}{section.4.1}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2018.4.11)  20 JUL 2018 11:06
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2018.4.11)  20 JUL 2018 15:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1158,121 +1158,121 @@ Chapter 3.
 ]
 Chapter 4.
 LaTeX Font Info:    Font shape `T1/phv/bx/it' in size <14.4> not available
-(Font)              Font shape `T1/phv/b/it' tried instead on input line 91.
+(Font)              Font shape `T1/phv/b/it' tried instead on input line 98.
 LaTeX Font Info:    Font shape `T1/phv/b/it' in size <14.4> not available
-(Font)              Font shape `T1/phv/b/sl' tried instead on input line 91.
+(Font)              Font shape `T1/phv/b/sl' tried instead on input line 98.
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sphinxtitleref' on input line 91.
+(hyperref)                removing `\sphinxtitleref' on input line 98.
 
-LaTeX Font Info:    Try loading font information for T1+pcr on input line 95.
+LaTeX Font Info:    Try loading font information for T1+pcr on input line 102.
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
 LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <10> not available
-(Font)              Font shape `T1/pcr/m/sl' tried instead on input line 95.
+(Font)              Font shape `T1/pcr/m/sl' tried instead on input line 102.
 LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <9> not available
-(Font)              Font shape `T1/pcr/b/n' tried instead on input line 104.
-LaTeX Font Info:    Try loading font information for TS1+pcr on input line 109.
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 111.
+LaTeX Font Info:    Try loading font information for TS1+pcr on input line 116.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ts1pcr.fd
 File: ts1pcr.fd 2001/06/04 font definitions for TS1/pcr.
 )
 LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <10> not available
-(Font)              Font shape `T1/pcr/b/n' tried instead on input line 122.
+(Font)              Font shape `T1/pcr/b/n' tried instead on input line 129.
 
-Underfull \hbox (badness 6927) in paragraph at lines 152--152
+Underfull \hbox (badness 6927) in paragraph at lines 159--159
 []\T1/ptm/m/it/10 name\T1/ptm/m/n/10 , \T1/ptm/m/it/10 fixed=False\T1/ptm/m/n/1
 0 , \T1/ptm/m/it/10 start_val=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 lower_lim=No
 ne\T1/ptm/m/n/10 , \T1/ptm/m/it/10 up-
  []
 
 [7]
-LaTeX Font Info:    Try loading font information for TS1+ptm on input line 165.
+LaTeX Font Info:    Try loading font information for TS1+ptm on input line 172.
 
  (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
 ) [8] [9]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sphinxtitleref' on input line 396.
+(hyperref)                removing `\sphinxtitleref' on input line 403.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 424--424
+Underfull \hbox (badness 10000) in paragraph at lines 431--431
 []\T1/ptm/m/it/10 number_of_layers=0\T1/ptm/m/n/10 , \T1/ptm/m/it/10 mul-ti-
  []
 
 [10]
-Underfull \hbox (badness 10000) in paragraph at lines 530--530
+Underfull \hbox (badness 10000) in paragraph at lines 537--537
 []\T1/ptm/m/it/10 chitensor=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 d=None\T1/ptm/
 m/n/10 , \T1/ptm/m/it/10 sigma=None\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 546--551
+Underfull \hbox (badness 10000) in paragraph at lines 553--558
 []\T1/pcr/b/n/10 chitensor \T1/ptm/m/n/10 (list of [][]\T1/pcr/m/sl/10 Paramete
 rs.Parameter[][]\T1/ptm/m/n/10 ) ^^U Elec-tric sus-cep-ti-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 546--551
+Underfull \hbox (badness 10000) in paragraph at lines 553--558
 \T1/ptm/m/n/10 bil-ity ten-sor of the layer. | \T1/ptm/m/it/10 [chi] \T1/ptm/m/
 n/10 sets \T1/ptm/m/it/10 chi_xx = chi_yy = chi_zz =
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 546--551
+Underfull \hbox (badness 10000) in paragraph at lines 553--558
 \T1/ptm/m/it/10 chi \T1/ptm/m/n/10 | \T1/ptm/m/it/10 [chi_xx,chi_yy,chi_z] \T1/
 ptm/m/n/10 sets \T1/ptm/m/it/10 chi_xx,chi_yy,chi_zz\T1/ptm/m/n/10 , oth-ers ar
 e zero |
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 546--551
+Underfull \hbox (badness 10000) in paragraph at lines 553--558
 \T1/ptm/m/it/10 [chi_xx,chi_yy,chi_z,chi_g] \T1/ptm/m/n/10 sets \T1/ptm/m/it/10
  chi_xx,chi_yy,chi_zz \T1/ptm/m/n/10 and de-pend-ing on \T1/ptm/b/n/10 magdir
  []
 
 [11]
-Underfull \hbox (badness 10000) in paragraph at lines 641--641
+Underfull \hbox (badness 10000) in paragraph at lines 648--648
 []\T1/ptm/m/it/10 chitensorfunction\T1/ptm/m/n/10 , \T1/ptm/m/it/10 d=None\T1/p
 tm/m/n/10 ,
  []
 
 [12]
-Underfull \hbox (badness 10000) in paragraph at lines 705--705
+Underfull \hbox (badness 10000) in paragraph at lines 712--712
 []\T1/ptm/m/it/10 densitydict={}\T1/ptm/m/n/10 , \T1/ptm/m/it/10 d=None\T1/ptm/
 m/n/10 , \T1/ptm/m/it/10 sigma=None\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 729--734
+Underfull \hbox (badness 10000) in paragraph at lines 736--741
 []\T1/pcr/b/n/10 chitensor \T1/ptm/m/n/10 (list of [][]\T1/pcr/m/sl/10 Paramete
 rs.Parameter[][]\T1/ptm/m/n/10 ) ^^U Elec-tric sus-cep-ti-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 729--734
+Underfull \hbox (badness 10000) in paragraph at lines 736--741
 \T1/ptm/m/n/10 bil-ity ten-sor of the layer. | \T1/ptm/m/it/10 [chi] \T1/ptm/m/
 n/10 sets \T1/ptm/m/it/10 chi_xx = chi_yy = chi_zz =
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 729--734
+Underfull \hbox (badness 10000) in paragraph at lines 736--741
 \T1/ptm/m/it/10 chi \T1/ptm/m/n/10 | \T1/ptm/m/it/10 [chi_xx,chi_yy,chi_z] \T1/
 ptm/m/n/10 sets \T1/ptm/m/it/10 chi_xx,chi_yy,chi_zz\T1/ptm/m/n/10 , oth-ers ar
 e zero |
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 729--734
+Underfull \hbox (badness 10000) in paragraph at lines 736--741
 \T1/ptm/m/it/10 [chi_xx,chi_yy,chi_z,chi_g] \T1/ptm/m/n/10 sets \T1/ptm/m/it/10
  chi_xx,chi_yy,chi_zz \T1/ptm/m/n/10 and de-pend-ing on \T1/ptm/b/n/10 magdir
  []
 
 [13]
-Underfull \hbox (badness 10000) in paragraph at lines 836--836
+Underfull \hbox (badness 10000) in paragraph at lines 843--843
 []\T1/ptm/m/it/10 filename\T1/ptm/m/n/10 , \T1/ptm/m/it/10 lineread-er-func-tio
 n=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 en-er-
  []
@@ -1280,40 +1280,40 @@ n=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 en-er-
 [14]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sphinxtitleref' on input line 953.
+(hyperref)                removing `\sphinxtitleref' on input line 960.
 
 [15] [16] [17] [18]
-Underfull \hbox (badness 10000) in paragraph at lines 1201--1201
+Underfull \hbox (badness 10000) in paragraph at lines 1208--1208
 \T1/ptm/m/it/10 rpi_column=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 rleft_column=No
 ne\T1/ptm/m/n/10 , \T1/ptm/m/it/10 rright_column=None\T1/ptm/m/n/10 ,
  []
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sphinxtitleref' on input line 1230.
+(hyperref)                removing `\sphinxtitleref' on input line 1237.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1240--1240
+Underfull \hbox (badness 10000) in paragraph at lines 1247--1247
 []\T1/ptm/m/it/10 costfunction\T1/ptm/m/n/10 , \T1/ptm/m/it/10 pa-ram-e-ter_set
 tings\T1/ptm/m/n/10 , \T1/ptm/m/it/10 it-er-a-tions\T1/ptm/m/n/10 , \T1/ptm/m/i
 t/10 num-ber_of_cores=1\T1/ptm/m/n/10 , \T1/ptm/m/it/10 gen-er-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1240--1240
+Underfull \hbox (badness 10000) in paragraph at lines 1247--1247
 \T1/ptm/m/it/10 a-tion_size=300\T1/ptm/m/n/10 , \T1/ptm/m/it/10 mu-ta-tion_stre
 ngth=0.01\T1/ptm/m/n/10 , \T1/ptm/m/it/10 elite=2\T1/ptm/m/n/10 , \T1/ptm/m/it/
 10 par-ent_percentage=0.25\T1/ptm/m/n/10 ,
  []
 
 [19]
-Underfull \hbox (badness 10000) in paragraph at lines 1304--1304
+Underfull \hbox (badness 10000) in paragraph at lines 1311--1311
 []\T1/ptm/m/it/10 residualandcostfunction\T1/ptm/m/n/10 , \T1/ptm/m/it/10 pa-ra
 m-e-ter_settings\T1/ptm/m/n/10 , \T1/ptm/m/it/10 par-al-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1304--1304
+Underfull \hbox (badness 10000) in paragraph at lines 1311--1311
 \T1/ptm/m/it/10 lel_points\T1/ptm/m/n/10 , \T1/ptm/m/it/10 num-ber_of_cores=1\T
 1/ptm/m/n/10 , \T1/ptm/m/it/10 strict=True\T1/ptm/m/n/10 , \T1/ptm/m/it/10 con-
 
@@ -1429,19 +1429,19 @@ Underfull \hbox (badness 10000) in paragraph at lines 127--128
  []
 
 [28])
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1386.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1386.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1393.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 1393.
  (./PyXMRTool.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1386.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1386.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1393.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1393.
 
 Package rerunfilecheck Info: File `PyXMRTool.out' has not changed.
-(rerunfilecheck)             Checksum: 360778EEB44C6230DF9B115A983CEC36;1391.
+(rerunfilecheck)             Checksum: F6FF4A7C6958E6C324FC217241FFA653;1358.
  ) 
 Here is how much of TeX's memory you used:
  14044 strings out of 493029
- 197276 string characters out of 6136234
- 322228 words of memory out of 5000000
+ 197271 string characters out of 6136234
+ 322216 words of memory out of 5000000
  17140 multiletter control sequences out of 15000+600000
  53492 words of font info for 76 fonts, out of 8000000 for 9000
  1142 hyphenation exceptions out of 8191
@@ -1457,10 +1457,10 @@ xlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texlive/texmf-
 dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type
 1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utm
 ri8a.pfb>
-Output written on PyXMRTool.pdf (32 pages, 197546 bytes).
+Output written on PyXMRTool.pdf (32 pages, 198189 bytes).
 PDF statistics:
- 536 PDF objects out of 1000 (max. 8388607)
- 481 compressed objects within 5 object streams
+ 537 PDF objects out of 1000 (max. 8388607)
+ 482 compressed objects within 5 object streams
  126 named destinations out of 1000 (max. 500000)
  109 words of extra memory for PDF output out of 10000 (max. 10000000)
 

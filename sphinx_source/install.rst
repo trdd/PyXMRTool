@@ -3,7 +3,7 @@ Installation
 ==================
 
 Dependencies:
-    'PyXMRTool' depends on the 'Pythonreflectivity' from Martin Zwiebler.
+    :mod:`PyXMRTool` depends on the package :mod:`Pythonreflectivity` from Martin Zwiebler.
     You need to install it first.
 
 Download the PyXMRTool project as zip from https://github.com/malaclypseII/PyXMRTool and unpack it.

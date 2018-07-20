@@ -1,0 +1,9 @@
+#
+####### Pip Requirements #######
+#
+###### Requirements without Version Specifiers ######
+matplotlib
+numpy
+scipy
+joblib
+Pythonreflectivity

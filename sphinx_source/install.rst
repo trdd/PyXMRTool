@@ -2,4 +2,4 @@
 todo: Installation
 ==================
 
-to be written 
+So far the PyXMRTool

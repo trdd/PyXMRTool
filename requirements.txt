@@ -1,9 +1,9 @@
 #
-####### Pip Requirements #######
+####### Pip Requirements for readthedocs #######
 #
 ###### Requirements without Version Specifiers ######
 matplotlib
 numpy
 scipy
 joblib
-Pythonreflectivity
+#Pythonreflectivity

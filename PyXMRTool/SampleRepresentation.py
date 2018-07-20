@@ -26,8 +26,8 @@ So far the following formfactor types are implemented:
 __author__ = "Yannic Utz"
 __copyright__ = ""
 __credits__ = ["Yannic Utz and Martin Zwiebler"]
-__license__ = ""
-__version__ = ""
+__license__ = "GNU General Public License v3.0"
+__version__ = "0.9"
 __maintainer__ = "Yannic Utz"
 __email__ = "yannic.utz@tu-dresden.de"
 __status__ = "beta"

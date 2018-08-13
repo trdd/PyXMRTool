@@ -4,7 +4,6 @@
    contain the root `toctree` directive.
 
 
-`Project Homepage <https://github.com/malaclypseII/PyXMRTool>`
    
 PyXMRTool's documentation
 =========================
@@ -26,3 +25,9 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+Project Homepage
+================
+
+https://github.com/malaclypseII/PyXMRTool/

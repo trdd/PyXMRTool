@@ -48,17 +48,18 @@ class ReflDataSimulator(object):
                 
             * \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
             * \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
-            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
+            * \'s\'             - only the sum of the reflectivities of left and right polarized light will be stored and simulated (contains only structural information)
+            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated (contains only magnetic information)
             * \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.\'cx20\' or \'cx0.1\'
-            * \'lL\', \'cL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. 
+            * \'lL\', \'cL\', \'sL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities (or derived values) themselfs their logarithms are stored and simulated. 
         length_scale : float
             Defines in which unit lengths are measured in your script. The unit is then **length_scale** * meters. Default is **length_scale** = *1e-9* which means *nm*. It is important to define it here due to conversion between energies and wavelength.
         """
         
         if not isinstance(mode,str):
             raise TypeError("\'mode\' has to be a string.")
-        if not (mode=="l" or mode=="c" or mode=="x" or mode[0:2]=="cx" or mode=="lL" or mode=="cL" or mode[0:3]=="cLx"):
-            raise ValueError("\'mode\' can only take the values \'l\', \'lL\', \'c\', \'cL\', \'x\', \'cx<xfactor>\' or \'cLx<xfactor>\'.")      
+        if not (mode=="l" or mode=="c" or mode=="s" or mode=="sL" or mode=="x" or mode[0:2]=="cx" or mode=="lL" or mode=="cL" or mode[0:3]=="cLx"):
+            raise ValueError("\'mode\' can only take the values \'l\', \'lL\', \'c\', \'cL\', \'s\', \'sL\', \'x\', \'cx<xfactor>\' or \'cLx<xfactor>\'.")      
         if not isinstance(length_scale, numbers.Real):
             raise ValueError("\'length_scale\' has to be a real number.")
         
@@ -98,7 +99,7 @@ class ReflDataSimulator(object):
             for item in self._expdata:
                 flatexpdata.extend(item[2])
                 flatexpdata.extend(item[3])
-        elif self._mode=="x":
+        elif self._mode=="x" or self._mode=="s" or self._mode=="sL":
             for item in self._expdata:
                 flatexpdata.extend(item[2])
         elif self._mode=='cx' or self._mode=='cLx' :
@@ -122,7 +123,7 @@ class ReflDataSimulator(object):
             
             #if non-magnetic, Pythonreflectivity.Reflectivity delivers only pi and sigma polarization!
             #check for this case and get left and right circular as average of pi and sigma if necessary
-            if len(rcalc)==2 and (self._mode=="c" or self._mode=="cL" or self._mode=="x" or self._mode=="cx" or self._mode=="cLx"):
+            if len(rcalc)==2 and (self._mode=="c" or self._mode=="cL" or self._mode=="s" or self._mode=="sL"or self._mode=="x" or self._mode=="cx" or self._mode=="cLx"):
                 average=(rcalc[0]+rcalc[1])/2.0
                 circular=numpy.empty((2,len(average)))
                 circular[0]=average         #left circular polarization
@@ -144,6 +145,10 @@ class ReflDataSimulator(object):
             elif self._mode=="cL": #logarithm of circular polarization
                 flatsimdata.extend(numpy.log(self._reflmodifierfunction(rcalc[2],fitpararray)))                 #calculate logarithms of reflectivities
                 flatsimdata.extend(numpy.log(self._reflmodifierfunction(rcalc[3],fitpararray)))
+            elif self._mode=="s": # sum of circular polarizations
+                flatsimdata.extend(self._reflmodifierfunction(rcalc[2],fitpararray)+self._reflmodifierfunction(rcalc[3],fitpararray))
+            elif self._mode=="sL": #logarithm of sum of circular polarizations
+                flatsimdata.extend(numpy.log(self._reflmodifierfunction(rcalc[2],fitpararray)+self._reflmodifierfunction(rcalc[3],fitpararray)))                 #calculate logarithms of sum of reflectivities
             elif self._mode=="x": #xmcd: normalized difference between circular polarizations. 
                 rleft=self._reflmodifierfunction(rcalc[2],fitpararray)
                 rright=self._reflmodifierfunction(rcalc[3],fitpararray)
@@ -294,6 +299,14 @@ class ReflDataSimulator(object):
                         if rleft is None or rright is None:
                             raise Exception("Needed data not in line")
                         datapoints.append([energy,angle,numpy.log(rleft),numpy.log(rright)])                       #store logarithms of reflectivities
+                    elif self._mode=='s':
+                        if rleft is None or rright is None:
+                            raise Exception("Needed data not in line")
+                        datapoints.append([energy,angle,rleft+rright])                         
+                    elif self._mode=='sL':
+                        if rleft is None or rright is None:
+                            raise Exception("Needed data not in line")
+                        datapoints.append([energy,angle,numpy.log(rleft+rright)])                               #store logarithms of sum of reflectivities
                     elif self._mode=='x':
                         if xmcd is None:
                             raise Exception("Needed data not in line")
@@ -389,7 +402,7 @@ class ReflDataSimulator(object):
         """
         Return length of the flat data representation. 
         
-        It will be the number of measured data points times 2 for mode "l" and "c", only the number of measured data points for mode "x" and the number of measured data points times 3 for mode "cx"
+        It will be the number of measured data points times 2 for mode "l" and "c", only the number of measured data points for mode "x" and "s", and the number of measured data points times 3 for mode "cx"
         """
         return len(self._getExpDataFlat())
         
@@ -416,10 +429,10 @@ class ReflDataSimulator(object):
                 item[2]=simdata_flat[startindex:startindex+datalen]                                     #rsigma or rleft
                 item[3]=simdata_flat[startindex+datalen:startindex+2*datalen]                           #rpi or rright
                 startindex=startindex+2*datalen
-        elif self._mode=="x":
+        elif self._mode=="x" or self._mode=="s" or self._mode=="sL":
             for item in simdata:
                 datalen=len(item[1])
-                item[2]=simdata_flat[startindex:startindex+datalen]                                     #xmcd
+                item[2]=simdata_flat[startindex:startindex+datalen]                                     #xmcd or sum of rleft and rright
                 startindex=startindex+datalen
         elif self._mode=="cx" or self._mode=="cLx":
             for item in simdata:
@@ -501,11 +514,11 @@ class ReflDataSimulator(object):
             plt.close(self._fig)
         
         #create figure and subplots
-        if self._mode == "l" or self._mode == "lL" or self._mode == "c" or self._mode == "cL":      #linear and circula polarization (or logarithm of it)       
+        if self._mode == "l" or self._mode == "lL" or self._mode == "c" or self._mode == "cL":      #linear and circular polarization (or logarithm of it)       
             self._fig = plt.figure(figsize=(10,5))
             self._ax1 = self._fig.add_subplot(121,projection='3d')                  
             self._ax2 = self._fig.add_subplot(122,projection='3d')                  
-        elif self._mode == "x":          #xmcd
+        elif self._mode == "x" or self._mode == "s" or self._mode == "sL":          #xmcd and sum of circular polarizations
             self._fig = plt.figure(figsize=(10,5))
             self._ax1 = self._fig.add_subplot(111,projection='3d')              #for xmcd
         elif self._mode == "cx" or self._mode == "cLx" :    #circular polarization and xmcd
@@ -578,8 +591,28 @@ class ReflDataSimulator(object):
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
+        
+        elif self._mode == "s":            #sum of circular polarizations
+            self._ax1.clear()
+            self._ax1.set_xlabel('angle')
+            self._ax1.set_ylabel('energy')
+            self._ax1.set_zlabel('sum of circ. refl.')
+            for item in expdata:                                                            #go trough energies of experimental data
+                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+            for item in simdata:                                                            #go trough energies of simulated data
+                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
                 
-        elif self._mode == "x":            #xmcd
+        elif self._mode == "sL":            #log of sum of circular polarizations
+            self._ax1.clear()
+            self._ax1.set_xlabel('angle')
+            self._ax1.set_ylabel('energy')
+            self._ax1.set_zlabel('log( sum of circ. refl. )')
+            for item in expdata:                                                            #go trough energies of experimental data
+                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+            for item in simdata:                                                            #go trough energies of simulated data
+                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+        
+        elif self._mode == "x":            #xmcd#log of sum of circular polarizations
             self._ax1.clear()
             self._ax1.set_xlabel('angle')
             self._ax1.set_ylabel('energy')
@@ -659,12 +692,13 @@ class ReflDataSimulator(object):
                 
             * \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
             * \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
+            * \'s\'             - only the sum of the reflectivities of left and right polarized light will be stored and simulated (contains only structural information)
             * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
             * \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.\'cx20\' or \'cx0.1\'
-            * \'lL\', \'cL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. 
+            * \'lL\', \'cL\', \'sL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. 
         """
         
-        #use the __init__ method to change mode to be sure to treat mode in the same way, even if changes occur in the futu
+        #use the __init__ method to change mode to be sure to treat mode in the same way, even if changes occur in the futur
         self.__init__(mode,self._lengthscale)
         #read data again if already read
         if hasattr(self,"_expdata"):

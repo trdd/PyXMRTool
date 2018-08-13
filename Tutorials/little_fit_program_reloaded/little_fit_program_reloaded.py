@@ -224,7 +224,8 @@ if __name__ == '__main__':
     # But due to the approximative nature of floating point arithmetic, differences occur, which might lead to the slightly different convergence.
     # 
     # If I take Martins parameters in convergence (see below "aite"), I get exactly the same reflectivity values as long as I set the used value for the Boltzmann constant times c to the the same approximation as he does (hbar_times_c=1973.16).
-    # Not only in this script here but also within the module "Experiment.py"
+    # Not only in this script here but also within the module "Experiment.py".
+    # This proves that the above mentioned differences have nothing to do with bugs within the simulation.
     # The usage of more exact values given with the scipy package lead to a maximum relative differenc in the reflectivities of about 1e-3.
     # But the maximal relative difference of the parameters in convergence is still only 1e-4.
     

@@ -175,7 +175,7 @@ def Evolution(costfunction, parameter_settings , iterations, number_of_cores=1, 
 
         
         
-def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , parallel_points ,number_of_cores=1, strict=True, control_file=None, plotfunction=None):
+def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , parallel_points ,number_of_cores=1, strict=True, convergence_criterium=1e-7, control_file=None, plotfunction=None):
     """
     Modified Levenberg-Marquard algorithm (see PhD thesis of Martin Zwiebler). Good convergence, but might end up in a local mininum.
     Return the optimized parameter set and the coresponding value of the costfunction.
@@ -203,6 +203,8 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , pa
         Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.
     strict : bool
         Usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set **stict** = *False* this parameter will be neglected locally.
+    convergence_criterium : float
+        If the relative difference between the costs in two succeeding iterations is smaller than **convergence_criterium**, the fitting is defined as \`converged\`.
     control_file : str 
         Filename of a control file. If it is given, you can abort the optimization routine by writing "terminate 1" to the beginning of its first line.
     plotfunction : callable
@@ -274,7 +276,7 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , pa
             
             fiterror2=out[min_i][1]
             
-            if( abs( (fiterror1-fiterror2)/(fiterror1+fiterror2) ) < 1.0e-7 ):
+            if( abs( (fiterror1-fiterror2)/(fiterror1+fiterror2) ) < convergence_criterium ):
                 print( "  --> Converged at cost=" + str(fiterror2) )
                 return aite, out[min_i][1]                      #return best fit parameters and corresponding value of the costfunction      
             elif control_file is not None:

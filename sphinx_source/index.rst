@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 
-`Project Homepage <https://github.com/malaclypseII/PyXMRTool>
+`Project Homepage <https://github.com/malaclypseII/PyXMRTool>`
    
 PyXMRTool's documentation
 =========================

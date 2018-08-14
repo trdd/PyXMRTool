@@ -177,7 +177,7 @@ class ReflDataSimulator(object):
     
     #public methods
     
-    def ReadData(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0):
+    def ReadData(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0, skipzeroreflectivities=True):
         """
         Read the data files and store the data corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`)
         
@@ -202,6 +202,8 @@ class ReflDataSimulator(object):
             A user-definde function which is used to modify the obtained information. It takes the tuple/list of independent and dependent variables of a single data point and returns a modified one. It can be used for example if the data file contains qz values instead of angles. In this case you can read the qz values first as angles and replace them afterwards with the angles calculated out of it with the **pointmodifierfunction**. Of course you can also use a adopted **linereaderfunction** for this purpose (if all necessary information can be found in one line of the data files).
         headerlines : int
             specifies the number of lines which should be ignored at the top of each file.
+        skipzeroreflectivities : bool
+            Measured reflectivities should usually not be exactly zero. Sometimes zeros arise in a measurement file, when only one of the polarizations was measured at a certain angle-energy-combination. Usually this happens if this angle-energy-combination turns out not to be interesting after measuring one polarization and therefor the second one was not measured. For such cases you can set **skipzeroreflectivities** to *True* (default). Datapoints which contain reflectivities which are exactly zero will then be removed. If you don't want to have this behavior, set **skipzeroreflectivities** to *False*. But be aware that this can lead to problems. The program will try to fit these zero-values and if you use a logarithmic mode there will be errors.
         """
         
         #Parameter checking
@@ -286,27 +288,51 @@ class ReflDataSimulator(object):
                     if self._mode=='l':
                         if rsigma is None or rpi is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,rsigma,rpi]) 
+                        if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,rsigma,rpi]) 
                     elif self._mode=='lL':
                         if rsigma is None or rpi is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,numpy.log(rsigma),numpy.log(rpi)])                        #store logarithms of reflectivities
+                        if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,numpy.log(rsigma),numpy.log(rpi)])                        #store logarithms of reflectivities
                     elif self._mode=='c':
                         if rleft is None or rright is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,rleft,rright])                         
+                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,rleft,rright])                         
                     elif self._mode=='cL':
                         if rleft is None or rright is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,numpy.log(rleft),numpy.log(rright)])                       #store logarithms of reflectivities
+                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,numpy.log(rleft),numpy.log(rright)])                       #store logarithms of reflectivities
                     elif self._mode=='s':
                         if rleft is None or rright is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,rleft+rright])                         
+                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,rleft+rright])                         
                     elif self._mode=='sL':
                         if rleft is None or rright is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,numpy.log(rleft+rright)])                               #store logarithms of sum of reflectivities
+                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,numpy.log(rleft+rright)])                               #store logarithms of sum of reflectivities
                     elif self._mode=='x':
                         if xmcd is None:
                             raise Exception("Needed data not in line")
@@ -314,11 +340,19 @@ class ReflDataSimulator(object):
                     elif self._mode=='cx':
                         if rleft is None or rright is None or xmcd is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,rleft,rright,self._xmcdfactor*xmcd])                   #here the measured xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
+                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,rleft,rright,self._xmcdfactor*xmcd])                   #here the measured xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
                     elif self._mode=='cLx':
                         if rleft is None or rright is None or xmcd is None:
                             raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,numpy.log(rleft),numpy.log(rright),self._xmcdfactor*xmcd])  #store logarithms of reflectivities
+                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+                        else:
+                            datapoints.append([energy,angle,numpy.log(rleft),numpy.log(rright),self._xmcdfactor*xmcd])  #store logarithms of reflectivities
             i+=1
         
         # up to now there is an intermediate data structure: a list of complete datapoints eg. [ [energy1,angle1,rsigma1,rpi1], ...., [energyN,angleN,rsigmaN,rpiN]]

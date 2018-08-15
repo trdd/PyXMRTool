@@ -14,6 +14,8 @@ So far the following layer types are implemented:
 So far the following formfactor types are implemented:
 
 * :class:`.FFfromFile`: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.
+
+* :class:`.FFfromScaledAbsorption`: Reads an absorption measurement (fitted to off-resonant tabulated values) and a theoretical/tabulated energy-dependen formfactor from textfiles. Within a given energy-range the absorption is scaled with a fittable factor and the real part is obtained by a Kramers-Kronig transformation. See section 3.3 of Martin Zwiebler PhD-Thesis for details.
     
 
 

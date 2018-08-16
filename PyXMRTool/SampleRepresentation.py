@@ -15,7 +15,7 @@ So far the following formfactor types are implemented:
 
 * :class:`.FFfromFile`: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.
 
-* :class:`.FFfromScaledAbsorption`: Reads an absorption measurement (fitted to off-resonant tabulated values) and a theoretical/tabulated energy-dependen formfactor from textfiles. Within a given energy-range the absorption is scaled with a fittable factor and the real part is obtained by a Kramers-Kronig transformation. See section 3.3 of Martin Zwiebler PhD-Thesis for details.
+* :class:`.FFfromScaledAbsorption`: Reads an absorption measurement (fitted to off-resonant tabulated values) and a theoretical/tabulated energy-dependen formfactor from textfiles. Within a given energy-range, the absorption is scaled with a fittable factor and the real part is obtained by a Kramers-Kronig transformation. See section 3.3 of Martin Zwiebler PhD-Thesis for details.
     
 
 
@@ -694,10 +694,10 @@ class FFfromFile(Formfactor):
         #Energies and formfactors don't have to be stored explicitly , because they are contained in the "self._interpolator" function.
         self._interpolator=interpolate.interp1d(energies,numpy.transpose(numpy.concatenate((formfactors.real,formfactors.imag),1))) 
     
-    def _getMinE_(self):
+    def _getMinE(self):
         return self._minE
     
-    def _getMaxE_(self):
+    def _getMaxE(self):
         return self._maxE
     
     
@@ -766,9 +766,9 @@ class FFfromFile(Formfactor):
         
         
     #properties
-    maxE=property(_getMaxE_)
+    maxE=property(_getMaxE)
     """Upper limit of stored energy range. Read-only."""
-    minE=property(_getMinE_)
+    minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
     
 
@@ -777,7 +777,7 @@ class FFfromScaledAbsorption(Formfactor):
     A formfactor class which uses the imaginary part of the formfactor (experimentally determined absorption signal which has been fitted to off-resonant values) given as a file, scales it with a fittable factor and calculates the real part by the Kramers-Kronig transformation. It realizes the procedure described in section 3.3 of Martin Zwiebler PhD-Thesis.
     """
     
-    def __init__(self, E1, E2, E3, scaling_factor, theoretical_filename, absorption_filename, theoretical_linereaderfunction=None, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0)):
+    def __init__(self, E1, E2, E3, scaling_factor, theoretical_filename, absorption_filename, theoretical_linereaderfunction=None, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
         """Initializes the FFfromScaledAbsorption object with an energy-dependent imaginary part of the formfactor given as file.
         
         To perform the Kramers-Kronig transformation without integrating to infinity, also theoretical/tabulated formfactors (f0) have to be given as file. Their imaginary part differs only close to resonance from the measured absorption and should have been used before to perform the fit of the measured absorption to off-resonant values. As these tabulated form factors are usually not polarization dependent, they should be given here just as complex values (or two real ones).
@@ -821,6 +821,9 @@ class FFfromScaledAbsorption(Formfactor):
         energyshift : :class:`Parameters.Parameter`
             Species a fittable energyshift between the energy-dependent formfactor calculated by the whole above mentioned procedure and the `real` one in the reflectivity measurement.
             As a consequence the peak but also E1,E2 and E3 are shifted.
+        minE : float
+        maxE : float
+            Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **theoretical_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
         """
         #check parameters
         if not isinstance(E1, numbers.Real):
@@ -831,18 +834,8 @@ class FFfromScaledAbsorption(Formfactor):
             raise TypeError("\'E3\' needs to be a real number.")
         if E1<0 or E2<0 or E3<0:
             raise ValueError("Energies \'E1\', \'E2\' and \'E3\' have to be greater than zero.")
-        if not [E1,E2,E3]==sorted[E1,E2,E3]:
+        if not [E1,E2,E3]==sorted([E1,E2,E3]):
             raise ValueError("Energies \'E1\', \'E2\' and \'E3\' have to have ascending values.")
-        if not len(f0_E1)==9:
-            raise TypeError("\'f0_E1\' has to be a list/array of 9 elements.")
-        for element in f0_E1:
-            if not isinstance(element,numbers.Number):
-                raise TypeError("Each element of \'Im_f0_E1\' needs to be a (complex) number.")
-        if not len(f0_E3)==9:
-            raise TypeError("\'f0_E3\' has to be a list/array of 9 elements.")
-        for element in f0_E3:
-            if not isinstance(element,numbers.Number):
-                raise TypeError("Each element of \'f0_E1\' needs to be a (complex) number.")
         if not isinstance(scaling_factor,Parameters.Parameter):
             raise TypeError("\'scaling_factor\' has to be of type Parameters.Parameter.")    
         if not isinstance(theoretical_filename,str):
@@ -863,16 +856,21 @@ class FFfromScaledAbsorption(Formfactor):
             raise TypeError("\'absorption_linereaderfunction\' needs to be a callable object.")
         if not isinstance(energyshift,Parameters.Parameter):
             raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
+        if (minE is None and maxE is not None) or (minE is not None and maxE is None):
+            raise Exception("You have to set both, \'minE\' and \'maxE\'.")
+        if minE is not None and (not isinstance(minE,numbers.Real) or minE<0):
+            raise TypeError("\'minE\' must be a positive real number.")
+        if maxE is not None and (not isinstance(maxE,numbers.Real) or maxE<0):
+            raise TypeError("\'maxE\' must be a positive real number.")
+        if not minE<maxE:
+            raise ValueError("\'minE\' must be smaller than \'maxE\'.")
         
         #store parameters
         self._E1=E1
         self._E2=E2
         self._E3=E3
-        self._f0_E1=f0_E1
-        self._f0_E3=f0_E3
         self._scaling_factor=scaling_factor       #Attention: this is supposed to be an instance of "Parameters.Parameter". So a value can be obtained with self._scaling_factor.getValue(fitparraray)
         self._energyshift=energyshift             #Attention: this is supposed to be an instance of "Parameters.Parameter". So a value can be obtained with self._energyshift.getValue(fitparraray)
-        
         
         #read theoretica/tabulated formfactors from file
         theo_energies=[]
@@ -891,8 +889,13 @@ class FFfromScaledAbsorption(Formfactor):
                         raise ValueError("Linereader function hast to return a list/tuple of numbers.")
                 if isinstance(linereaderoutput[0],complex):
                     raise ValueError("Linereader function hast to return a real value for the energy.")
-                theo_energies.append(linereaderoutput[0])                                                        #store energies in one list
-                theo_formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                if (minE is not None and maxE is not None):
+                    if minE<=linereaderoutput[0] and linereaderoutput[0]<=maxE:
+                        theo_energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        theo_formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                else:
+                    theo_energies.append(linereaderoutput[0])                                                        #store energies in one list
+                    theo_formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
         theo_formfactors=numpy.array(theo_formfactors)                                                                #convert list formfactors to a numpy array for convinience
         self._minE=min(theo_energies)
         self._maxE=max(theo_energies)
@@ -900,7 +903,7 @@ class FFfromScaledAbsorption(Formfactor):
         #After that the array of N arrays of 2 element is transformed to an array of 2 arrays of N elements as needed by the interp1d function.
         #Therefore, this function will return an array of length 2 wich has to be transformed back to 1 complex valued elements.
         self._theo_interpolator=interpolate.interp1d(theo_energies,numpy.transpose(numpy.concatenate((theo_formfactors.real,theo_formfactors.imag),1)))
-        
+                
         #read imaginary part of formfactor from file
         abs_energies=[]
         abs_im_formfactors=[]
@@ -919,15 +922,16 @@ class FFfromScaledAbsorption(Formfactor):
                 abs_energies.append(linereaderoutput[0])                                                        #store energies in one list
                 abs_im_formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
         abs_im_formfactors=numpy.array(abs_im_formfactors)                                                                #convert list formfactors to a numpy array for convinience
-        self._abs_minE=min(abs_energie)
-        self._abs_maxE=max(abs_energie)
+        self._abs_minE=min(abs_energies)
+        self._abs_maxE=max(abs_energies)
         if self._E1 < self._abs_minE or self._E2 > self._abs_maxE:
             raise Exception("Given absorption data does not cover needed range between E1 and E2.")
         #Create an interpolation function based on the given energie-imag_formfactor-points. 
         #Therefore, the array of N arrays of 9 element is transformed to an array of 9 arrays of N elements as needed by the interp1d function.
         #This function will return an array of length 9 which is the interpolated imaginary part of the formfactor at the requested energy.
         #Energies and formfactors don't have to be stored explicitly , because they are contained in the "self._interpolator" function.
-        self._abs_interpolator=interpolate.interp1d(energies,numpy.transpose(abs_im_formfactors) )
+        self._abs_interpolator=interpolate.interp1d(abs_energies,numpy.transpose(abs_im_formfactors) )
+        
         
         #create array of energies and different arrays of 9-element tensor to calculate the actuall formfactors
         # "im_f1": imaginary part of formfactors for scaling_factor (a) = 1
@@ -949,8 +953,8 @@ class FFfromScaledAbsorption(Formfactor):
             if energy < self._E1:
                 energies.append(energy)
                 im_f1.append(numpy.array([theo_formfactors[i].imag,0,0, 0,theo_formfactors[i].imag,0, 0,0,theo_formfactors[i].imag]))      #below E1, formfactor tensor is a diagonal tensor, values are the given "theoretical" ones
-                d_im_f1.append(numpy.array([0,0,0, 0,0,0, 0,0,0]))                                                                          #below E1, the imaginary part of the formfactor does not depend on "a", the derivative has only entries equal to zero
-                diff_im_f1.append(numpy.array([0,0,0, 0,0,0, 0,0,0]))                                                                       #below E1, the imaginary part is given by theoretical values, therefore the difference is zero
+                d_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0]))
+                diff_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0]))                               
             i+=1
         i=0
         for energy in abs_energies:
@@ -972,14 +976,15 @@ class FFfromScaledAbsorption(Formfactor):
                 diff_im_f1.append( im_f1[i] - numpy.array([im,0,0,0,im,0,0,0,im]) )   #between E1 and E2, just the difference between linearly interpolated imaginary part of the formfactor and the "theoretical" value 
             elif energy >= self._E3:
                 im_f1.append(numpy.array([theo_formfactors[i].imag,0,0, 0,theo_formfactors[i].imag,0, 0,0,theo_formfactors[i].imag]))      #above E3, formfactor tensor is a diagonal tensor, values are the given "theoretical" ones
-                d_im_f1.append(numpy.array([0,0,0, 0,0,0, 0,0,0]))                                                                        #above E3, the imaginary part of the formfactor does not depend on "a", the derivative has only entries equal to zero
-                diff_im_f1.append(numpy.array([0,0,0, 0,0,0, 0,0,0]))                                                                       #above E3, the imaginary part is given by theoretical values, therefore the difference is zero
+                d_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0]))
+                diff_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0])) 
             i+=1
             
         im_f1=numpy.array(im_f1)
         d_im_f1=numpy.array(d_im_f1)
         diff_im_f1=numpy.array(diff_im_f1)
         
+       
         #perform Kramers-Kronig transformations to obtain "kk_diff_im_f1" and "kk_d_im_f1"
         #therefore one array for every position of the tensors is needed, which can be obtained with "transpose"
         trans_diff_im_f1=numpy.transpose(diff_im_f1)
@@ -991,7 +996,9 @@ class FFfromScaledAbsorption(Formfactor):
             trans_kk_d_im_f1.append(KramersKronig(energies,trans_d_im_f1[i]))
         trans_kk_diff_im_f1=numpy.array(trans_kk_diff_im_f1)
         trans_kk_d_im_f1=numpy.array(trans_kk_d_im_f1)
-       
+        
+
+     
         #Create interpolation functions for the above created arrays for later use with "getFF"
         #For this the arrays of N arrays of 9 elements are transposed to arrays of 9 arras of N elements as needed by the interp1d function (trans_kk_diff_im_f1 and trans_kk_d_im_f1 are already transposed)
         #The functions will return arrays of length 9 for the corresponding energy as interpolation.
@@ -1000,11 +1007,12 @@ class FFfromScaledAbsorption(Formfactor):
         self._kk_diff_im_f1_interpolator=interpolate.interp1d(energies,trans_kk_diff_im_f1)
         self._kk_d_im_f1_interpolator=interpolate.interp1d(energies,trans_kk_d_im_f1)
         
+        
     
-    def _getMinE_(self):
+    def _getMinE(self):
         return self._minE
     
-    def _getMaxE_(self):
+    def _getMaxE(self):
         return self._maxE
     
     
@@ -1025,7 +1033,7 @@ class FFfromScaledAbsorption(Formfactor):
             if not line.isspace():                               #ignore empty lines        
                 linearray=line.split()
                 if not len(linearray)==10:
-                    raise Exception("Formfactor file has wrong format.")
+                    raise Exception("Absorption file has wrong format.")
                 linearray=[ast.literal_eval(item) for item in linearray]
                 return linearray
             else:
@@ -1051,7 +1059,7 @@ class FFfromScaledAbsorption(Formfactor):
                 if not line.isspace():                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==2:
-                        raise Exception("Formfactor file has wrong format.")
+                        raise Exception("File for theoretical formfactor has wrong format.")
                     linearray=[ast.literal_eval(item) for item in linearray]
                     return linearray
                 else:
@@ -1064,7 +1072,7 @@ class FFfromScaledAbsorption(Formfactor):
                 if not line.isspace():                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==3:
-                        raise Exception("Formfactor file has wrong format.")
+                        raise Exception("File for theoretical formfactor file has wrong format.")
                     linearray=[ast.literal_eval(item) for item in linearray]
                     return [linearray[0], linearray[1]+1j*linearray[2]]
                 else:
@@ -1087,22 +1095,23 @@ class FFfromScaledAbsorption(Formfactor):
         scaling_factor=self._scaling_factor.getValue(fitpararray)
         energyshift=self._energyshift.getValue(fitpararray)
         
-        if energy+energyshift<self.minE or energy+energyshift>self.maxE:
+        if energy+energyshift<self.minE or energy+energyshift>self.maxE:                                  #use this strange construction with numpy arrays to allow "energy" to be a numpy array of energies
             raise ValueError("\'energy + energyshift = "+str(energy)+" + "+ str(energyshift) + " = " + str(energy+energyshift) +"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
         
         energy=energy+energyshift  #apply energyshift
         
         ImFF  = (scaling_factor - 1) * self._d_im_f1_interpolator(energy)  + self._im_f1_interpolator(energy)
-        RealFF= self._theo_interpolator(energy) + self._kk_diff_im_f1_interpolator(energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
-        
+        theo_real=self._theo_interpolator(energy)[0]
+        RealFF= numpy.array([theo_real,0,0,0,theo_real,0,0,0,theo_real]) + self._kk_diff_im_f1_interpolator(energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
+           
         return RealFF + 1j* ImFF
         
         
         
     #properties
-    maxE=property(_getMaxE_)
+    maxE=property(_getMaxE)
     """Upper limit of stored energy range. Read-only."""
-    minE=property(_getMinE_)
+    minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
     
     

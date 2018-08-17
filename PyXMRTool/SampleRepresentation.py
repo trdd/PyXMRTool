@@ -632,8 +632,44 @@ class Formfactor(object):
         **energy** is measured in units of eV.
         """
         raise NotImplementedError
-
-
+    
+    def _getMinE(self):
+        raise NotImplementedError
+    
+    def _getMaxE(self):
+        raise NotImplementedError
+    
+    def plotFF(self,fitpararray=None,energies=None):
+        """
+        Plot the energy-dependent formfactor with the energies (in eV) listed in the list/array **energies**. If this array is not given the plot covers the hole existing energy-range.
+        The **fitpararray** has only to be given in cases where the formfactor depends on a fitparamter, e.g. for class:`FFfromScaledAbsorption`.
+        """
+        if energies is None:
+            energies=numpy.linspace(self.minE, self.maxE, 1000)
+        ff=[]
+        for e in energies:
+            ff.append(self.getFF(e,fitpararray))
+        ff=numpy.array(ff)
+        ff=numpy.transpose(ff)
+        fig = matplotlib.pyplot.figure(figsize=(10,10))
+        axes=[]
+        for i in range(9):
+            axes.append(fig.add_subplot(330+i+1))
+        i=0
+        for ax in axes:
+            ax.set_xlabel('energy (eV)')
+            ax.locator_params(axis='x', nbins=4)
+            ax.plot(energies,ff[i].real)
+            ax.plot(energies,ff[i].imag)
+            i+=1
+        matplotlib.pyplot.show()
+        
+    #properties
+    maxE=property(_getMaxE)
+    """Upper limit of stored energy range. Read-only."""
+    minE=property(_getMinE)
+    """Lower limit of stored energy range. Read-only."""
+    
 class FFfromFile(Formfactor):
     """
     Class to deal with energy-dependent atomic form-factors which are tabulated in files.
@@ -762,16 +798,14 @@ class FFfromFile(Formfactor):
         FFallReal=self._interpolator(energy+energyshift)
         #return directly the numpy array, it is usefull further Calculation
         return FFallReal[:9]+FFallReal[9:]*1j
-        
-        
-        
+    
     #properties
     maxE=property(_getMaxE)
     """Upper limit of stored energy range. Read-only."""
     minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
-    
-
+        
+        
 class FFfromScaledAbsorption(Formfactor):
     """
     A formfactor class which uses the imaginary part of the formfactor (experimentally determined absorption signal which has been fitted to off-resonant values) given as a file, scales it with a fittable factor and calculates the real part by the Kramers-Kronig transformation. It realizes the procedure described in section 3.3 of Martin Zwiebler PhD-Thesis.
@@ -1105,15 +1139,14 @@ class FFfromScaledAbsorption(Formfactor):
         RealFF= numpy.array([theo_real,0,0,0,theo_real,0,0,0,theo_real]) + self._kk_diff_im_f1_interpolator(energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
            
         return RealFF + 1j* ImFF
-        
-        
-        
+    
     #properties
     maxE=property(_getMaxE)
     """Upper limit of stored energy range. Read-only."""
     minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
     
+
     
 #--------------------------------------------------------------------------------------------------------------------------
 # convenience functions

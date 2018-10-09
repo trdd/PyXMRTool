@@ -1083,6 +1083,8 @@ class FFfromScaledAbsorption(Formfactor):
         If **complex_numbers** = *False* then the reader reads real and imaginary part of the formfactor seperately, i.e. every line has to consist of 3 numbers seperated by whitespaces::
             
             energy ff_real ff_im 
+        
+        If you want to read the complete complex formfactor tensor, you have to build your own linereader.
         """
         commentsymbol='#'
         if complex_numbers==True:

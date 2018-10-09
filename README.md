@@ -5,5 +5,5 @@ This tool is based on the work of Martin Zwiebler and shall provide a user frien
 
 Requirements: you need the python package  "Pythonreflectivity" from Martin Zwiebler
 
-Documentation: See https://pyxmrtool.readthedocs.io/en/latest/ for documentation.
+Documentation: See http://pyxmrtool.readthedocs.io for documentation.
 

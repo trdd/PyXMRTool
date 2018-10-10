@@ -1176,7 +1176,7 @@ def plotAtomDensity(hs,fitpararray,colormap=[],atomnames=None):
     number_of_layers=hs.N_total
     if atomnames is None:
         atomnames=AtomLayerObject.getAtomNames()
-        widthstep=0.9/len(atomnames)                #if no order is given plot each set of bar with smaller width to not cover the underlying bar
+        widthstep=1.0/len(atomnames)                #if no order is given plot each set of bar with smaller width to not cover the underlying bar
     else:
         widthstep=0.0
     if atomnames==[]:

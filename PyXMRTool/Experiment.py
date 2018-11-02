@@ -516,10 +516,12 @@ class ReflDataSimulator(object):
         """
         Return simulated data according to the bevor set-up model and the parameter values given with **fitpararray** (see also :mod:`Parameters`).
         Usually, the data is simulated for the energies and angles of the stored experimental data. If you specify **energy_angles**, then the data is simulated for the energy/angle combinations given there.
-        **energy_angles** has to have the following shape:
+        
+        **energy_angles** has to have the following shape::
+        
             [[energy1,[angle11,....angle1N]], ...[energyL,[angleL,....angleLK]] 
         
-        The retured data is a list and has on of the following or similar shapes::
+        The returned data is a list and has on of the following or similar shapes::
             
             [[energy1,[angle1,....angleN], [rsigma1, .... rsigmaN], [rpi1,...rpiN]], ...[energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]] 
             [[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 

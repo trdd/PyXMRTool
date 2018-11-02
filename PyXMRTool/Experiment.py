@@ -49,7 +49,7 @@ class ReflDataSimulator(object):
             * \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
             * \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
             * \'s\'             - only the sum of the reflectivities of left and right polarized light will be stored and simulated (contains only structural information)
-            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated (contains only magnetic information)
+            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated (contains only magnetic information). Actually, it is the normalized XMCD or asymmetry *(rleft-rright)/(rleft+rright)*.
             * \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.\'cx20\' or \'cx0.1\'
             * \'lL\', \'cL\', \'sL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities (or derived values) themselfs their logarithms are stored and simulated. This is usefull for fitting as with the logarithm the errors of different data points are weighted in a comparable way, in spite of the strongly decaying intensitiy for higher angles (see J.Pyhs.: Condens. Matter 26 (2014) 363201, page 16).
         length_scale : float
@@ -184,7 +184,7 @@ class ReflDataSimulator(object):
         This function enables a very flexible reading of the data files.
         Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd).
         So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
-        Where the values for the independent variables comes from can differ: either from lists (**energies**,**angles**), from the filenames (**filenamereaderfunction**) or from the lines in the data file (**linereaderfunction**).
+        Where the values for the independent variables comes from can differ: either from lists (**energies**, **angles**), from the filenames (**filenamereaderfunction**) or from the lines in the data file (**linereaderfunction**).
         
         Parameters
         ---------
@@ -727,9 +727,9 @@ class ReflDataSimulator(object):
             * \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
             * \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
             * \'s\'             - only the sum of the reflectivities of left and right polarized light will be stored and simulated (contains only structural information)
-            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated
+            * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated. Actually, it is the normalized XMCD or asymmetry *(rleft-rright)/(rleft+rright)*.
             * \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.\'cx20\' or \'cx0.1\'
-            * \'lL\', \'cL\', \'sL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. 
+            * \'lL\', \'cL\', \'sL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. This is usefull for fitting as with the logarithm the errors of different data points are weighted in a comparable way, in spite of the strongly decaying intensitiy for higher angles (see J.Pyhs.: Condens. Matter 26 (2014) 363201, page 16).
         """
         
         #use the __init__ method to change mode to be sure to treat mode in the same way, even if changes occur in the futur

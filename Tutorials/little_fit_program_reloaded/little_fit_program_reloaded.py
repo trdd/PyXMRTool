@@ -6,6 +6,8 @@
 
 import numpy
 import scipy
+import matplotlib
+from matplotlib import pyplot
 
 import Pythonreflectivity
 
@@ -199,6 +201,29 @@ if __name__ == '__main__':
     simu.setMode("cx")
     simdata=simu.getSimData(best)
     simu.plotData(best)
+    
+    
+    #plot obtained suszeptibility tensor of the magnetic layer
+    energies=numpy.linspace(600,750,1000)
+    chi_array=[]
+    for e in energies:
+        chi=layer_chi(best, e)
+        chi_array.append([chi[0],0,-chi[3],0,chi[1],0,chi[3],0,chi[2]])
+    chi_array=numpy.array(chi_array)
+    chi_array=numpy.transpose(chi_array)
+    fig = matplotlib.pyplot.figure(figsize=(10,10))
+    axes=[]
+    for i in range(9):
+        axes.append(fig.add_subplot(330+i+1))
+    i=0
+    for ax in axes:
+        ax.set_xlabel('energy (eV)')
+        ax.locator_params(axis='x', nbins=4)
+        ax.plot(energies,chi_array[i].real)
+        ax.plot(energies,chi_array[i].imag)
+        i+=1
+    matplotlib.pyplot.show()
+        
 
     
     

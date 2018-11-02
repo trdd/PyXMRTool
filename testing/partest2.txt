@@ -1,0 +1,5 @@
+#<start_value>           <fixed>                  <lower_limit>            <upper_limit>            <name>
+1                        0                        0.7                      10                       x                        
+5000                     1                        -                        -                        y                        
+399j                     0                        1j                       (300+1000j)              z                        
+56                       0                        10                       100                      h                        

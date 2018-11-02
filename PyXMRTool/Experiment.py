@@ -48,18 +48,18 @@ class ReflDataSimulator(object):
                 
             * \'l\'             - for linear polarized light, only reflectivity for sigma and pi polarization will be stored and simulated
             * \'c\'             - for circular polarized light, only reflectivity for left circular and right circular polarization will be stored and simulated
-            * \'s\'             - only the sum of the reflectivities of left and right polarized light will be stored and simulated (contains only structural information)
+            * \'t\'             - only the total reflectivity (sum of reflectivities of different polarizations l/r or sigma/pi) will be stored and simulated (contains only structural information)
             * \'x\'             - for xmcd, only the difference between the reflectivity for right circular and left circular polarization will be stored and simulated (contains only magnetic information). Actually, it is the normalized XMCD or asymmetry *(rleft-rright)/(rleft+rright)*.
             * \'cx<xfactor>\'   - for the reflections of circular pol. light and the xmcd signal (which should usually been calculated from the left and right circ. pol.) simultaniously \'<xfactor>\' is optional and can be used to multiply the xmcd signal with this value. This can be usefull to give the xmcd more or less weight during fitting e.g.\'cx20\' or \'cx0.1\'
-            * \'lL\', \'cL\', \'sL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities (or derived values) themselfs their logarithms are stored and simulated. This is usefull for fitting as with the logarithm the errors of different data points are weighted in a comparable way, in spite of the strongly decaying intensitiy for higher angles (see J.Pyhs.: Condens. Matter 26 (2014) 363201, page 16).
+            * \'lL\', \'cL\', \'tL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities (or derived values) themselfs their logarithms are stored and simulated. This is usefull for fitting as with the logarithm the errors of different data points are weighted in a comparable way, in spite of the strongly decaying intensitiy for higher angles (see J.Pyhs.: Condens. Matter 26 (2014) 363201, page 16).
         length_scale : float
             Defines in which unit lengths are measured in your script. The unit is then **length_scale** * meters. Default is **length_scale** = *1e-9* which means *nm*. It is important to define it here due to conversion between energies and wavelength.
         """
         
         if not isinstance(mode,str):
             raise TypeError("\'mode\' has to be a string.")
-        if not (mode=="l" or mode=="c" or mode=="s" or mode=="sL" or mode=="x" or mode[0:2]=="cx" or mode=="lL" or mode=="cL" or mode[0:3]=="cLx"):
-            raise ValueError("\'mode\' can only take the values \'l\', \'lL\', \'c\', \'cL\', \'s\', \'sL\', \'x\', \'cx<xfactor>\' or \'cLx<xfactor>\'.")      
+        if not (mode=="l" or mode=="c" or mode=="t" or mode=="tL" or mode=="x" or mode[0:2]=="cx" or mode=="lL" or mode=="cL" or mode[0:3]=="cLx"):
+            raise ValueError("\'mode\' can only take the values \'l\', \'lL\', \'c\', \'cL\', \'t\', \'tL\', \'x\', \'cx<xfactor>\' or \'cLx<xfactor>\'.")      
         if not isinstance(length_scale, numbers.Real):
             raise ValueError("\'length_scale\' has to be a real number.")
         
@@ -81,7 +81,9 @@ class ReflDataSimulator(object):
         
         #set length scale. Has direct impact for the calculation of wavelengths from energies.
         self._lengthscale=length_scale                                                                  #need this property only for the methode setMode
-        self._hcfactor=scipy.constants.physical_constants["Planck constant in eV s"][0]*scipy.constants.physical_constants["speed of light in vacuum"][0]/length_scale   
+        self._hcfactor=scipy.constants.physical_constants["Planck constant in eV s"][0]*scipy.constants.physical_constants["speed of light in vacuum"][0]/length_scale
+        
+        
         
         
     #private methods
@@ -99,7 +101,7 @@ class ReflDataSimulator(object):
             for item in self._expdata:
                 flatexpdata.extend(item[2])
                 flatexpdata.extend(item[3])
-        elif self._mode=="x" or self._mode=="s" or self._mode=="sL":
+        elif self._mode=="x" or self._mode=="t" or self._mode=="tL":
             for item in self._expdata:
                 flatexpdata.extend(item[2])
         elif self._mode=='cx' or self._mode=='cLx' :
@@ -109,13 +111,17 @@ class ReflDataSimulator(object):
                 flatexpdata.extend(item[4])                
         return flatexpdata
     
-    def _getSimDataFlat(self,fitpararray):
+    def _getSimDataFlat(self,fitpararray, energy_angles=None):
         """
-        Return simulated data according to the bevor set-up model and the parameter values given with fitpararray as flat array.
+        Return simulated data according to the bevor set-up model, the energies/angles of the stored experimental data and the parameter values given with fitpararray as flat array.
+        
+        If energy_angles is given, the energies and angles specified there are used instead.
         """
         # leave out parameter test, and test for existance of heterostructure to speed things up (this function will be called often in fit routines)
         flatsimdata=[]
-        for item in self._expdata:
+        if energy_angles is None:
+            energy_angles=self._expdata
+        for item in energy_angles:
             #item[0] is the energy, item[1] is the list of angles at this energy
             singeE_HS=self._hs.getSingleEnergyStructure(fitpararray,item[0])      
             wavelength=self._hcfactor/item[0]
@@ -123,7 +129,7 @@ class ReflDataSimulator(object):
             
             #if non-magnetic, Pythonreflectivity.Reflectivity delivers only pi and sigma polarization!
             #check for this case and get left and right circular as average of pi and sigma if necessary
-            if len(rcalc)==2 and (self._mode=="c" or self._mode=="cL" or self._mode=="s" or self._mode=="sL"or self._mode=="x" or self._mode=="cx" or self._mode=="cLx"):
+            if len(rcalc)==2 and (self._mode=="c" or self._mode=="cL" or self._mode=="t" or self._mode=="tL"or self._mode=="x" or self._mode=="cx" or self._mode=="cLx"):
                 average=(rcalc[0]+rcalc[1])/2.0
                 circular=numpy.empty((2,len(average)))
                 circular[0]=average         #left circular polarization
@@ -145,9 +151,9 @@ class ReflDataSimulator(object):
             elif self._mode=="cL": #logarithm of circular polarization
                 flatsimdata.extend(numpy.log(self._reflmodifierfunction(rcalc[2],fitpararray)))                 #calculate logarithms of reflectivities
                 flatsimdata.extend(numpy.log(self._reflmodifierfunction(rcalc[3],fitpararray)))
-            elif self._mode=="s": # sum of circular polarizations
+            elif self._mode=="t": # total reflectivity/sum of circular polarizations
                 flatsimdata.extend(self._reflmodifierfunction(rcalc[2],fitpararray)+self._reflmodifierfunction(rcalc[3],fitpararray))
-            elif self._mode=="sL": #logarithm of sum of circular polarizations
+            elif self._mode=="tL": #logarithm of total reflectivity/sum of circular polarizations
                 flatsimdata.extend(numpy.log(self._reflmodifierfunction(rcalc[2],fitpararray)+self._reflmodifierfunction(rcalc[3],fitpararray)))                 #calculate logarithms of sum of reflectivities
             elif self._mode=="x": #xmcd: normalized difference between circular polarizations. 
                 rleft=self._reflmodifierfunction(rcalc[2],fitpararray)
@@ -169,7 +175,128 @@ class ReflDataSimulator(object):
                 flatsimdata.extend(numpy.log(rright))
                 flatsimdata.extend(self._xmcdfactor*xmcd)                                   #here the simulated xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
         return flatsimdata
+    
+    def _destillDatapoint(self, datapoint,skipzeroreflectivities=True):
+        """Takes a complete datapoint (which contains all possible entries) and destill a datapoint as it is needed for the current mode (see :meth:`.__init__`).
+        
+        This private method is used by :meth:`.ReadData` to convert the data returned by the *linereaderfunction* and the *pointmodifierfunction* and it is used by :meth:`.setData` to destill the given datapoints before they are given to :meth.`_setData`.
+        """
+        energy,angle,rsigma,rpi,rleft,rright,xmcd,total=datapoint    #unpack datapoint
+        if self._mode=='l':
+            if rsigma is None or rpi is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,rsigma,rpi]
+        elif self._mode=='lL':
+            if rsigma is None or rpi is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,numpy.log(rsigma),numpy.log(rpi)]                        #store logarithms of reflectivities
+        elif self._mode=='c':
+            if rleft is None or rright is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,rleft,rright]                       
+        elif self._mode=='cL':
+            if rleft is None or rright is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,numpy.log(rleft),numpy.log(rright)]            #store logarithms of reflectivities
+        elif self._mode=='t':
+            if total is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (total==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,total]
+        elif self._mode=='tL':
+            if total is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (total==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,numpy.log(total)]                  #store logarithms of sum of reflectivities
+        elif self._mode=='x':
+            if xmcd is None:
+                raise Exception("Needed data not in line")
+            return [energy,angle,xmcd] 
+        elif self._mode=='cx':
+            if rleft is None or rright is None or xmcd is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,rleft,rright,self._xmcdfactor*xmcd]                   #here the measured xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
+        elif self._mode=='cLx':
+            if rleft is None or rright is None or xmcd is None:
+                raise Exception("Needed data not in line")
+            if skipzeroreflectivities==True and (rleft==0 or rright==0):
+                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
+                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
+            else:
+                return [energy,angle,numpy.log(rleft),numpy.log(rright),self._xmcdfactor*xmcd]  #store logarithms of reflectivities
+        
+        
+    
+    
+    def _setData(self, datapoints):
+        """Creates the internal structure self._expdata, without consistency check.
+        
+        The data is taken from the list of datapoints, which has e.g. the following shape:
+        [ [energy1,angle1,rsigma1,rpi1], ...., [energyN,angleN,rsigmaN,rpiN]]
+        So there are many datapoints with the same energies.
+        
+       
+        The data structure self._expdata is created for internal storage. It should be fast for delivering data belonging to single energies.
+        Therefore it looks like this:  self._expdata=[[energy1,[angle1,....angleN], [rsigma1, .... rsigmaN], [rpi1,...rpiN]], ...[energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [total1, .... totalK]] 
+                                  
+        This private method is used by :meth:`.ReadData` to convert the temporary list of datapoints and by :meth:`.SetData` which just adds an consistency check for the list of datapoints delivered by the user.
+        """
+        
+        self._expdata=[]
+        while(len(datapoints)>0):
+            element=datapoints.pop(0)
+            energy=element[0]
+            single_energy_datapoints=[element]
+            #fill single_energy_datapoints array
+            while(1):
+                try:
+                    index=[item[0] for item in datapoints].index(energy)
+                except:
+                    break
+                single_energy_datapoints.append(datapoints.pop(index))
+            single_energy_datapoints=[item[1:] for item in single_energy_datapoints]        #remove energy
+            single_energy_datapoints.sort(key=lambda item: item[0])                         #sort for increasing angles
+            single_energy_datapoints=((numpy.array(single_energy_datapoints)).transpose()).tolist()                  #make a numpy array out of it,transpose it, and transform it again to a list of lists
+            item=[energy]                                                                    #create one item for the list self._expdata
+            item.extend(single_energy_datapoints)                                            #extend it, such that it looks like this [energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]  or equivalent
+            for ang in item[1]:                                                  #check if every angle occurs only once for this energy
+                if item[1].count(ang)>1:
+                    raise Exception("There is more than one datapoint with energy="+str(energy)+"eV and angle="+ str(ang)+"degrees.")
+            self._expdata.append(item)
+        self._expdata.sort(key=lambda item:item[0])                         #sort with ascending energy
             
+    
+    
     
     def _getHCFactor(self):
         return self._hcfactor
@@ -182,7 +309,7 @@ class ReflDataSimulator(object):
         Read the data files and store the data corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`)
         
         This function enables a very flexible reading of the data files.
-        Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd).
+        Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd,total).
         So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
         Where the values for the independent variables comes from can differ: either from lists (**energies**, **angles**), from the filenames (**filenamereaderfunction**) or from the lines in the data file (**linereaderfunction**).
         
@@ -276,7 +403,7 @@ class ReflDataSimulator(object):
             for line in lines:
                 output=linereaderfunction(line)
                 if output is not None:
-                    energy,angle,rsigma,rpi,rleft,rright,xmcd=output
+                    energy,angle,rsigma,rpi,rleft,rright,xmcd,total=output
                     if file_energy is not None:                                                  #overwrite energy and/or angle if file-wide energy and/or angle is given
                         energy=file_energy
                     if file_angle is not None:
@@ -284,75 +411,10 @@ class ReflDataSimulator(object):
                     if energy is None or angle is None:
                         raise Exception("Needed data not in line")
                     if pointmodifierfunction is not None:
-                        energy,angle,rsigma,rpi,rleft,rright,xmcd=pointmodifierfunction([energy,angle,rsigma,rpi,rleft,rright,xmcd])   #apply pointmodifierfunction
-                    if self._mode=='l':
-                        if rsigma is None or rpi is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,rsigma,rpi]) 
-                    elif self._mode=='lL':
-                        if rsigma is None or rpi is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,numpy.log(rsigma),numpy.log(rpi)])                        #store logarithms of reflectivities
-                    elif self._mode=='c':
-                        if rleft is None or rright is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,rleft,rright])                         
-                    elif self._mode=='cL':
-                        if rleft is None or rright is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,numpy.log(rleft),numpy.log(rright)])                       #store logarithms of reflectivities
-                    elif self._mode=='s':
-                        if rleft is None or rright is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,rleft+rright])                         
-                    elif self._mode=='sL':
-                        if rleft is None or rright is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,numpy.log(rleft+rright)])                               #store logarithms of sum of reflectivities
-                    elif self._mode=='x':
-                        if xmcd is None:
-                            raise Exception("Needed data not in line")
-                        datapoints.append([energy,angle,xmcd]) 
-                    elif self._mode=='cx':
-                        if rleft is None or rright is None or xmcd is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,rleft,rright,self._xmcdfactor*xmcd])                   #here the measured xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
-                    elif self._mode=='cLx':
-                        if rleft is None or rright is None or xmcd is None:
-                            raise Exception("Needed data not in line")
-                        if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                            print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                            print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-                        else:
-                            datapoints.append([energy,angle,numpy.log(rleft),numpy.log(rright),self._xmcdfactor*xmcd])  #store logarithms of reflectivities
+                        datapoint=pointmodifierfunction([energy,angle,rsigma,rpi,rleft,rright,xmcd,total])   #apply pointmodifierfunction; datapoint should be an array like this [energy,angle,rsigma,rpi,rleft,rright,xmcd,total]
+                    dest_datapoint=self._destillDatapoint(datapoint,skipzeroreflectivities)
+                    if dest_datapoint is not None:
+                        datapoints.append(dest_datapoint)                    
             i+=1
         
         # up to now there is an intermediate data structure: a list of complete datapoints eg. [ [energy1,angle1,rsigma1,rpi1], ...., [energyN,angleN,rsigmaN,rpiN]]
@@ -364,31 +426,40 @@ class ReflDataSimulator(object):
         #                          or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
         #                          or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
         
-        self._expdata=[]
-        while(len(datapoints)>0):
-            element=datapoints.pop(0)
-            energy=element[0]
-            single_energy_datapoints=[element]
-            #fill single_energy_datapoints array
-            while(1):
-                try:
-                    index=[item[0] for item in datapoints].index(energy)
-                except:
-                    break
-                single_energy_datapoints.append(datapoints.pop(index))
-            single_energy_datapoints=[item[1:] for item in single_energy_datapoints]        #remove energy
-            single_energy_datapoints.sort(key=lambda item: item[0])                         #sort for increasing angles
-            single_energy_datapoints=((numpy.array(single_energy_datapoints)).transpose()).tolist()                  #make a numpy array out of it,transpose it, and transform it again to a list of lists
-            item=[energy]                                                                    #create one item for the list self._expdata
-            item.extend(single_energy_datapoints)                                            #extend it, such that it looks like this [energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]  or equivalent
-            for ang in item[1]:                                                  #check if every angle occurs only once for this energy
-                if item[1].count(ang)>1:
-                    raise Exception("There is more than one datapoint with energy="+str(energy)+"eV and angle="+ str(ang)+"degrees.")
-            self._expdata.append(item)
-        self._expdata.sort(key=lambda item:item[0])                         #sort with ascending energy
+        self._setData(datapoints)
+        self._datasource="files"            #store where the data comes from
         
+    
+    def setData(self, datapoints):
+        """
+        Store the data given with **datapoints** corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`) instead of reading the data from data files (see :meth:`.ReadData`).
         
-      
+        **datapoints** has to be a list/array of datapoints of the following form:
+           [[energy1,angle1,rsigma1,rpi1,rleft1,rright1,xmcd1,total1], ..., [energyK,angleK,rsigmaK,rpiK,rleftK,rrightK,xmcdK,totalK]
+        Each datapoint corresponds to a measurement of the reflectivity at a certain angle and energy. Entries are alowed to hold *None* if the corresponding entry is not needed for current **mode**.
+        """
+        
+        #convert to numpy array
+        datapoints=numpy.array(datapoints)
+        #some checks
+        if not len(datapoints.shape)==2:                        #if not 2-dimensional
+            raise ValueError("Input data has wrong shape.")
+        if not datapoints.shape[1]==8:                           #if datapoints do not have 8 entries
+            raise ValueError("Input data has wrong shape.")
+        
+        #store parameters for later use with setMode
+        self._datapoints=datapoints
+
+        
+        #destill datapoints (extract only needed entries)
+        dest_datapoints=[]
+        for point in datapoints:
+            dest_point=self._destillDatapoint(point,skipzeroreflectivities=False)
+            if dest_point is not None:
+                dest_datapoints.append(dest_point)   
+        #create internal structure for storage
+        self._setData(dest_datapoints)
+        self._datasource="array"            #store where the data comes from
     
     def setModel(self, heterostructure, reflmodifierfunction=None, MultipleScattering=True, MagneticCutoff=1e-50):
         """
@@ -401,8 +472,8 @@ class ReflDataSimulator(object):
         
             pp=Paramters.ParameterPool("any_parameterfile")
             ...
-            b=pp.NewParameter("background")
-            m=pp.NewParameter("multiplier")
+            b=pp.newParameter("background")
+            m=pp.newParameter("multiplier")
             reflmodifierfunction=lambda r, fitpararray: b.getValue(fitpararray) + r * m.getValue(fitpararray)
         
         and give this function to :meth:`.setModel`.
@@ -436,14 +507,17 @@ class ReflDataSimulator(object):
         """
         Return length of the flat data representation. 
         
-        It will be the number of measured data points times 2 for mode "l" and "c", only the number of measured data points for mode "x" and "s", and the number of measured data points times 3 for mode "cx"
+        It will be the number of measured data points times 2 for mode "l" and "c", only the number of measured data points for mode "x" and "t", and the number of measured data points times 3 for mode "cx"
         """
         return len(self._getExpDataFlat())
         
         
-    def getSimData(self,fitpararray):
+    def getSimData(self,fitpararray, energy_angles=None):
         """
         Return simulated data according to the bevor set-up model and the parameter values given with **fitpararray** (see also :mod:`Parameters`).
+        Usually, the data is simulated for the energies and angles of the stored experimental data. If you specify **energy_angles**, then the data is simulated for the energy/angle combinations given there.
+        **energy_angles** has to have the following shape:
+            [[energy1,[angle11,....angle1N]], ...[energyL,[angleL,....angleLK]] 
         
         The retured data is a list and has on of the following or similar shapes::
             
@@ -451,26 +525,48 @@ class ReflDataSimulator(object):
             [[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 
             [[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
             [[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
+            [[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [total1, .... totalK]] 
         """
         # leave out parameter test, and test for existance of heterostructure to speed things up (this function will be called often in fit routines)
-        simdata=copy.deepcopy(self._expdata)                                    #copy experimental data to get energies and angles
-        simdata_flat=self._getSimDataFlat(fitpararray)
+        if energy_angles is None:
+            simdata=copy.deepcopy(self._expdata)                                    #copy experimental data to get energies and angles
+        else:
+            if not isinstance(energy_angles,(list,tuple)):
+                raise ValueError("`energy_angles` needs to be a list or tuple.")
+            for item in energy_angles:
+                if not len(item)==2:
+                    raise ValueError("`energy_angles` has a wrong shape.")
+                if not isinstance(item[0],numbers.Real):
+                    raise ValueError("`energy_angles` has a wrong shape.")
+                if not isinstance(item[1],(list,tuple)):
+                    raise ValueError("`energy_angles` has a wrong shape.")
+            simdata=energy_angles
+        simdata_flat=self._getSimDataFlat(fitpararray,energy_angles)
         #replace the copied experimental data with simulated values
         startindex=0
         if self._mode=="l" or self._mode=="lL" or self._mode=="c" or self._mode=="cL":
             for item in simdata:
                 datalen=len(item[1])
+                if energy_angles is not None:
+                    item.append([])
+                    item.append([])
                 item[2]=simdata_flat[startindex:startindex+datalen]                                     #rsigma or rleft
                 item[3]=simdata_flat[startindex+datalen:startindex+2*datalen]                           #rpi or rright
                 startindex=startindex+2*datalen
-        elif self._mode=="x" or self._mode=="s" or self._mode=="sL":
+        elif self._mode=="x" or self._mode=="t" or self._mode=="tL":
             for item in simdata:
                 datalen=len(item[1])
+                if energy_angles is not None:
+                    item.append([])
                 item[2]=simdata_flat[startindex:startindex+datalen]                                     #xmcd or sum of rleft and rright
                 startindex=startindex+datalen
         elif self._mode=="cx" or self._mode=="cLx":
             for item in simdata:
                 datalen=len(item[1])
+                if energy_angles is not None:
+                    item.append([])
+                    item.append([])
+                    item.append([])
                 item[2]=simdata_flat[startindex:startindex+datalen]                                     #rleft
                 item[3]=simdata_flat[startindex+datalen:startindex+2*datalen]                           #rright
                 item[4]=simdata_flat[startindex+2*datalen:startindex+3*datalen]                         #xmcd
@@ -552,7 +648,7 @@ class ReflDataSimulator(object):
             self._fig = plt.figure(figsize=(10,5))
             self._ax1 = self._fig.add_subplot(121,projection='3d')                  
             self._ax2 = self._fig.add_subplot(122,projection='3d')                  
-        elif self._mode == "x" or self._mode == "s" or self._mode == "sL":          #xmcd and sum of circular polarizations
+        elif self._mode == "x" or self._mode == "t" or self._mode == "tL":          #xmcd and total
             self._fig = plt.figure(figsize=(10,5))
             self._ax1 = self._fig.add_subplot(111,projection='3d')              #for xmcd
         elif self._mode == "cx" or self._mode == "cLx" :    #circular polarization and xmcd
@@ -626,21 +722,21 @@ class ReflDataSimulator(object):
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
         
-        elif self._mode == "s":            #sum of circular polarizations
+        elif self._mode == "t":            #sum of circular polarizations
             self._ax1.clear()
             self._ax1.set_xlabel('angle')
             self._ax1.set_ylabel('energy')
-            self._ax1.set_zlabel('sum of circ. refl.')
+            self._ax1.set_zlabel('total refl.')
             for item in expdata:                                                            #go trough energies of experimental data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
                 
-        elif self._mode == "sL":            #log of sum of circular polarizations
+        elif self._mode == "tL":            #log of sum of circular polarizations
             self._ax1.clear()
             self._ax1.set_xlabel('angle')
             self._ax1.set_ylabel('energy')
-            self._ax1.set_zlabel('log( sum of circ. refl. )')
+            self._ax1.set_zlabel('log( total refl. )')
             for item in expdata:                                                            #go trough energies of experimental data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
@@ -736,21 +832,23 @@ class ReflDataSimulator(object):
         self.__init__(mode,self._lengthscale)
         #read data again if already read
         if hasattr(self,"_expdata"):
-            self.ReadData(self._datafiles,self._datalinereaderfunction, self._dataenergies, self._dataangles, self._datafilenamereaderfunction, self._datapointmodifierfunction, self._dataheaderlines)
-
+            if self._datasource=="files":
+                self.ReadData(self._datafiles,self._datalinereaderfunction, self._dataenergies, self._dataangles, self._datafilenamereaderfunction, self._datapointmodifierfunction, self._dataheaderlines)
+            elif self._datasource=="array":
+                self.setData(self._datapoints)
         
                
         
     @staticmethod
-    def createLinereader(energy_column=None,angle_column=None,rsigma_column=None,rpi_column=None,rleft_column=None,rright_column=None,xmcd_column=None,commentsymbol='#'):
+    def createLinereader(energy_column=None,angle_column=None,rsigma_column=None,rpi_column=None,rleft_column=None,rright_column=None,xmcd_column=None,total_column=None,commentsymbol='#'):
         """
-        Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers *[energy,angle,rsigma,rpi,rleft,rright,xmcd]* (or *None* for a uncommented line).
+        Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers *[energy,angle,rsigma,rpi,rleft,rright,xmcd,sum]* (or *None* for a uncommented line).
         
         With the parameters *..._column* you can determin wich column is interpreted how.
         Column numbers are starting from 0.
         """
         #check parameters
-        parameterlist=[energy_column,angle_column,rsigma_column,rpi_column,rleft_column,rright_column,xmcd_column]
+        parameterlist=[energy_column,angle_column,rsigma_column,rpi_column,rleft_column,rright_column,xmcd_column,total_column]
         for item in parameterlist:
             if not (isinstance(item, int) or item is None):
                 raise TypeError("Columns have to be given as integer numbers.")

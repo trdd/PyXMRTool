@@ -1,0 +1,20 @@
+The documentation of this project is build automatically by the Sphinx Documentation Generator.
+
+To generate/refresh the documention change to the directory "sphinx_source" and type
+"make html" 
+or
+"make pdf"
+or
+"make epub"
+
+The result can be found in "sphinx_source/build".
+
+The content of the documentaion is given by ".rst" files in the directory "sphinx_source" which
+use the "reStructuredText" markup language (see http://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html).
+
+The root file is "index.rst". In the "toctree" section it links to furhter files (stated without the .rst suffix) or folders containing files (like "api").
+
+The ".rst" files within the folder "api" link directly towards the projects source file and generate automatically an api documentation from their docstrings.
+Docstrings are stated directly at the beginning of modules, class or function definitions and enclosed in three quotation marks (""") at beginning and end.
+
+

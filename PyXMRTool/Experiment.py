@@ -436,6 +436,7 @@ class ReflDataSimulator(object):
         
         **datapoints** has to be a list/array of datapoints of the following form:
            [[energy1,angle1,rsigma1,rpi1,rleft1,rright1,xmcd1,total1], ..., [energyK,angleK,rsigmaK,rpiK,rleftK,rrightK,xmcdK,totalK]
+           
         Each datapoint corresponds to a measurement of the reflectivity at a certain angle and energy. Entries are alowed to hold *None* if the corresponding entry is not needed for current **mode**.
         """
         

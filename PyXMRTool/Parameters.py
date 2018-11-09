@@ -6,24 +6,35 @@ To allow for transparent modelling, :class:`.Fitparameter` is derived from :clas
 I.e. the code using a parameter does not have to know if it is a constant :class:`.Parameter` or a variable :class:`.Fitparameter`.
 The values of both are obtained in the same way with **getValue**.
 
-Both parameter classes support also the creation of of dependent paramters by arithmetic operations:
+Derived parameters which are arbitrary functions of other parameters can be defined with instance of :class:`.DerivedParameter`.
+
+All parameter classes support also the creation of simple derived paramters by arithmetic operations.
 
 .. doctest::
 
     >>> import Parameters
+    >>> import math
     >>> const=Parameters.Parameter(30.7)
     >>> const.getValue()
     30.7
     >>> pp=Parameters.ParameterPool()
     >>> par_real=pp.newParameter('par_real',start_val=0,lower_lim=-10,upper_lim=10)
     >>> par_complex=pp.newParameter('par_complex',start_val=0+0j,lower_lim=-10-1j,upper_lim=100.3+20j)
-    >>> par_real.getValue([1,2,3])
+    >>> fitpararray = [1,2,3]
+    >>> par_real.getValue(fitpararray)
     1
-    >>> par_complex.getValue([1,2,3])
+    >>> par_complex.getValue(fitpararray)
     (2+3j)
-    >>> dep_par = ((par_complex + 5*par_real)*0.68)**const
-    >>> dep_par.getValue([1,2,3])
+    >>> simple_derived_par = ((par_complex + 5*par_real)*0.68)**const
+    >>> simple_derived_par.getValue(fitpararray)
     (8.367641368810413e+21-1.1467109965804664e+21j)
+    >>> def sinus(A,w): return A*math.sin(w)
+    >>> derived_par = Parameters.DerivedParameter(sinus, const, par_real)
+    >>> derived_par.getValue(fitpararray)
+    25.833159233602423
+    >>> print (derived_par**2).getValue(fitpararray)
+    667.352115989
+    
 """
 
 
@@ -348,7 +359,43 @@ class Fitparameter(Parameter):
     complex=property(_getComplex)
     """(*bool*) Signals if fitparameter is a complex number (*True*) or not (*False*). Read-only."""
     
-
+class DerivedParameter(Parameter):
+    """Objects of this class represent derived parameters which can be arbitrary functions of other parameters."""
+    
+    
+    def __init__(self,f, *params):
+        """Initialize a derived parameter as function **f** of the parameters ***params** which are instances of the class :class:`.Parameter`.
+        
+        BEWARE: There is no type checking here. The user is responsible for a matching number of arguments and the correct types.
+        
+        Parameters
+        ----------
+        f : function
+            Function of a arbitrary number of real or complex parameters which returns a real or complex number
+        *params : :class:`Parameters.Parameter`
+            The parameter objects from which the  :class:`.DerivedParameter` object is derived. Should be the same number of parameters as expected by **f**. (The star means that this is a variable number of parameters.
+        """
+        
+        
+        self._f=f
+        self._params=params
+        
+    #special methods
+    def __str__(self):
+        """Determines how an *object* of this class react on ``str(object)``."""
+        return "<" + type(self).__module__ + "." + type(self).__name__ + " object: function of the parameters " + ", ".join([str(param) for param in self._params])+">"
+            
+    #public methods
+    def getValue(self,fitpararray=None):
+        """
+        Return the value of the derived parameter corresponding to the given array of fit values.
+       
+        **fitpararray** is only allowed to be *None* if the DerivedParameter is not derived from instances of 
+        :class:`.Fitparameter`.
+        """
+        values=[param.getValue(fitpararray) for param in self._params]
+        return self._f(*values)
+        
 
 class ParameterPool(object):
     """Collects a pool of Parameter objects and connects them with a parameter file."""

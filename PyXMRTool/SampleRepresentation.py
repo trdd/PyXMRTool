@@ -40,6 +40,7 @@ import numbers
 import numpy
 import ast
 from  scipy import interpolate
+import scipy
 import matplotlib.pyplot
 import Pythonreflectivity
 
@@ -1148,6 +1149,126 @@ class FFfromScaledAbsorption(Formfactor):
     minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
     
+#-----------------------------------------------------------------------------------------------------------------------------
+# Density Profil classes
+
+class DensityProfile(object):
+    """
+    This class can be used to generate arbitrary density profiles within a stack of :class:`.AtomLayerObject`s of equal thicknesses.
+    
+    The idea is to collect all information regarding the density profile in an object of this class and to generate entries for the *densitydict* of the single :class:`.AtomLayerObject` instances from it.
+    This means that the class :class:`.DensityProfile`does not really talk to the layers, but is only a higher level convinience class to set up the interconnected densities of the atoms within the :class:`.AtomLayerObject`s as instances of :class:`Parameters.DerivedParameter`.
+    """
+    
+    def __init__(self, start_layer_idx, end_layer_idx, layer_thickness, profile_function, *params):
+        """
+        Parameters
+        ----------
+        start_layer_idx : int
+            Index of the first layer of the density profile.
+        end_layer_idx : int
+            Index of the last layer of the density profile.
+        layer_thickness : :class:`Parameters.Parameter`
+            Thickness of the individual layers. The Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+        profile_function  : callable
+            The density of the corresponding atom as function of the distance **z** from the lower surface of start layer and an arbitray number of additional numeric parameters. The function realy has to expect these parameters to be floats or complex numbers not instances of :class:`Parameters.Parameter`. E.g. ``erf(z ,center, width, max)``
+        *params : :class:`Parameters.Parameter`
+            Parameters for the function **profile_function** without **z**. E.g. (from above) ``*params=(center,width,max)
+        """
+        
+        #type checking
+        if not isinstance(start_layer_idx,int):
+            raise TypeError("\'start_layer_idx\' has to be an integer number.")
+        elif not isinstance(end_layer_idx,int):
+            raise TypeError("\'end_layer_idx\' has to be an integer number.")
+        elif not isinstance(layer_thickness, Parameters.Parameter):
+            raise TypeError("\'layer_thickness\' has to be an instance of class \'Parameters.Parameter\'.")
+        elif not callable(profile_function):
+            raise TypeError("\'profile_function\' has to be a callable.")
+        for par in params:
+            if not isinstance(par, Parameters.Parameter):
+                raise TypeError("Each entry of *params has to be an instance of class \'Parameters.Parameter\'.") 
+        
+        self._start_layer_idx=start_layer_idx
+        self._end_layer_idx=end_layer_idx
+        self._layer_thickness=layer_thickness
+        self._profile_function=profile_function
+        self._params=params
+    
+    def getDensityPar(self, layer_idx):
+        """
+        Return the density parameter as instance of :class:`Parameters.DerivedParameter` for the layer with index **idx** coresponding to the defined density profile.
+        """
+        
+        #parameter checking
+        if not isinstance(layer_idx,int):
+            raise TypeError("\'start_layer_idx\' has to be an integer number.")
+        elif layer_idx<self._start_layer_idx or layer_idx>self._end_layer_idx:
+            raise ValueError("Density Profile is only defined from layer index "+str(self._start_layer_idx)+ " to " + str(self._end_layer_idx) +". \'layer_idx="+str(layer_idx)+"\' is out of range.")
+        
+        #create and return the corresponding derived parameter object
+        return Parameters.DerivedParameter(self._profile_function,(layer_idx-self._start_layer_idx)*self._layer_thickness, *self._params)
+    
+    def getDensity(self, z, fitpararray):
+        """
+        Return the density at a certain distance **z** from the lower surface of start layer corresponding to the fit parameter values given by **fitpararray**.
+        
+        Might be used for plotting the resulting density profile etc.
+        """
+        
+        #parameter checking
+        if not isinstance(z, numbers.Real):
+            raise TypeError("\'z\' has to be a real number.")
+        elif not isinstance(fitpararray,list):
+            raise TypeError("\fitparray\' has to be a list.")
+                
+        return self._profile_function(z,*[par.getValue(fitpararray) for par in self._params])
+    
+
+class DensityProfile_erf(DensityProfile):
+    """
+    Specialized :class:`DensityProfile` class. Realizes the density profile with the function ``f(z) = 0.5*maximum*(1+erf( (z-position) / (sigma*sqrt(2)) ) )``.
+    """
+    
+    def __init__(self, start_layer_idx, end_layer_idx, layer_thickness, position, sigma, maximum):
+        """
+        Parameters
+        ----------
+        start_layer_idx : int
+            Index of the first layer of the density profile.
+        end_layer_idx : int
+            Index of the last layer of the density profile.
+        layer_thickness : :class:`Parameters.Parameter`
+            Thickness of the individual layers. The Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+        position : :class:`Parameters.Parameter`
+        maximum : :class:`Parameters.Parameter`
+        sigma : :class:`Parameters.Parameter`
+        """
+        
+        #type checking
+        if not isinstance(start_layer_idx,int):
+            raise TypeError("\'start_layer_idx\' has to be an integer number.")
+        elif not isinstance(end_layer_idx,int):
+            raise TypeError("\'end_layer_idx\' has to be an integer number.")
+        elif not isinstance(layer_thickness, Parameters.Parameter):
+            raise TypeError("\'layer_thickness\' has to be an instance of class \'Parameters.Parameter\'.")
+        elif not isinstance(position, Parameters.Parameter):
+            raise TypeError("\'position\' has to be an instance of class \'Parameters.Parameter\'.") 
+        elif not isinstance(maximum, Parameters.Parameter):
+            raise TypeError("\'maximum\' has to be an instance of class \'Parameters.Parameter\'.") 
+        elif not isinstance(sigma, Parameters.Parameter):
+            raise TypeError("\'sigma\' has to be an instance of class \'Parameters.Parameter\'.") 
+        
+        self._start_layer_idx=start_layer_idx
+        self._end_layer_idx=end_layer_idx
+        self._layer_thickness=layer_thickness
+        self._params=(position,sigma ,maximum)
+        
+        #define profile function
+        def erf_profile(z, pos, sig, m):
+            return 0.5 * m * (1+scipy.special.erf((z-pos)/(numpy.sqrt(2)*sig)))
+        self._profile_function=erf_profile   
+    
 
     
 #--------------------------------------------------------------------------------------------------------------------------
@@ -1156,7 +1277,8 @@ class FFfromScaledAbsorption(Formfactor):
 def plotAtomDensity(hs,fitpararray,colormap=[],atomnames=None):
     """Convenience function. Create a bar plot of the atom densities of all instances of :class:`.AtomLayerObject` contained in the :class:`.Heterostructure` object **hs** corresdonding to the **fitpararray** (see :mod:`Parameters`) and return the plotted information as dictionary.
     
-        
+    This plot is only usefull for stacks of layers with equal widths as the widths are not taken into account for the plots
+    
     You can  define the colors of the bars with **colormap**. Just give a list of matplotlib color names. They will be used in the given order.
     You can define which atoms you want to plot or in which order. Give **atomnames** as a list of strings. If **atomnames** is not given, the bars will have different width, such that overlapped bars can be seen.
     """
@@ -1186,7 +1308,7 @@ def plotAtomDensity(hs,fitpararray,colormap=[],atomnames=None):
     densitylistdict={}
     for name in atomnames:
         densitylistdict[name]=numpy.zeros(number_of_layers)                                 #create dictionary, which has an entry for every atom, with its name as key and as value a list. These lists are as long as there are numbers of layers and filled with zeros.
-    
+        
     for i in range(hs.N):                                                   
         layer=hs.getLayer(i)                                                    #go through all layers in the heterostructure
         if isinstance(layer,AtomLayerObject):                                   #if it is an instance of AtomLayerObject (i.e. contains information about atom densities)

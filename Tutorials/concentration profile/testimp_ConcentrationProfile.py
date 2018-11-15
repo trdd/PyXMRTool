@@ -75,20 +75,24 @@ SampleRepresentation.AtomLayerObject.registerAtom("O",FF_O)
 bottom_layer=SampleRepresentation.AtomLayerObject({"O":density_O,"Sr":density_Sr},total_thickness-transzone_thickness)
 hs.setLayer(0,bottom_layer)
 
+#create density profile for Sr
+#def erf_profile(z, maximum, pos, sigma):
+#    return maximum*0.5 * (1+scipy.special.erf((z-pos)/(np.sqrt(2)*sigma)))
+#density_profile_Sr=SampleRepresentation.DensityProfile(1,number_of_trans_layers,Parameters.Parameter(lattice_const),erf_profile,density_Sr,number_of_trans_layers*lattice_const-transition_pos,-transition_width)
+density_profile_Sr=SampleRepresentation.DensityProfile_erf(1,number_of_trans_layers,Parameters.Parameter(lattice_const),position=number_of_trans_layers*lattice_const-transition_pos,sigma=-transition_width,maximum=density_Sr,)
+
 #create transition layers and add them to the heterostructure
-for i in range(number_of_trans_layers):
-    Sr_concentration=0.5 * (1-scipy.special.erf((i*lattice_const-(transzone_thickness-transition_pos))/math.sqrt(2)/transition_width))  # average number of Sr atoms per Sr site (between 0 and 1)
-    density_of_sr_in_layer= density_Sr * Sr_concentration
-    density_of_co_in_layer= density_Sr * (1-Sr_concentration)
-    l_i= SampleRepresentation.AtomLayerObject({"O":density_O,"Sr":density_of_sr_in_layer, "Co": density_of_co_in_layer},Parameters.Parameter(lattice_const))
-    hs.setLayer(1+i, l_i)
+for i in range(1,number_of_trans_layers+1):
+    l_i= SampleRepresentation.AtomLayerObject({"O":density_O,"Sr":density_profile_Sr.getDensityPar(i), "Co": density_Sr-density_profile_Sr.getDensityPar(i)},Parameters.Parameter(lattice_const))
+    hs.setLayer(i, l_i)
 
 
 
-
+#get a dummy fitpararray
+fitpararray, lower, upper = pp.getStartLowerUpper()
 
 cmap=['yellow','magenta','black','b','green','red','grey','magenta']
-#SampleRepresentation.plotAtomDensity(hs,ar,cmap,["Al","Sr"])
-SampleRepresentation.plotAtomDensity(hs,ar,cmap)
+SampleRepresentation.plotAtomDensity(hs,fitpararray,cmap,["Co","Sr"])
+#SampleRepresentation.plotAtomDensity(hs,fitpararray,cmap)
 
 #refl=Pythonreflectivity.Reflectivity(hs.getSingleEnergyStructure(ar,850),[1+1.0*i for i in range(90)], 2*math.pi*constants.hbar/constants.e*constants.c*10**9/850)

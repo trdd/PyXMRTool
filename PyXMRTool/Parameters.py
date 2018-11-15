@@ -86,84 +86,84 @@ class Parameter(object):
     def __add__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) + other.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) + other.getValue(fitpararray)
         else: 
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) + other
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) + other
         return new
     def __radd__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: other.getValue(fitpararray) + self.getValue(fitpararray)  
+            new.getValue = lambda fitpararray=None: other.getValue(fitpararray) + self.getValue(fitpararray)  
         else: 
-            new.getValue = lambda fitpararray:  other + self.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None:  other + self.getValue(fitpararray)
         return new
     def __sub__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) - other.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) - other.getValue(fitpararray)
         else: 
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) - other
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) - other
         return new
     def __rsub__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: other.getValue(fitpararray) - self.getValue(fitpararray)  
+            new.getValue = lambda fitpararray=None: other.getValue(fitpararray) - self.getValue(fitpararray)  
         else: 
-            new.getValue = lambda fitpararray:  other -self.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None:  other -self.getValue(fitpararray)
         return new
     def __mul__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) * other.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) * other.getValue(fitpararray)
         else: 
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) * other
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) * other
         return new
     def __rmul__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: other.getValue(fitpararray) * self.getValue(fitpararray)  
+            new.getValue = lambda fitpararray=None: other.getValue(fitpararray) * self.getValue(fitpararray)  
         else: 
-            new.getValue = lambda fitpararray:  other * self.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None:  other * self.getValue(fitpararray)
         return new
     def __div__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) / other.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) / other.getValue(fitpararray)
         else: 
-            new.getValue = lambda fitpararray: self.getValue(fitpararray) / other
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) / other
         return new
     def __rdiv__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: other.getValue(fitpararray) / self.getValue(fitpararray)  
+            new.getValue = lambda fitpararray=None: other.getValue(fitpararray) / self.getValue(fitpararray)  
         else: 
-            new.getValue = lambda fitpararray:  other / self.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None:  other / self.getValue(fitpararray)
         return new
     def __pow__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: self.getValue(fitpararray)**other.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray)**other.getValue(fitpararray)
         else: 
-            new.getValue = lambda fitpararray: self.getValue(fitpararray)**other
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray)**other
         return new
     def __rpow__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
-            new.getValue = lambda fitpararray: other.getValue(fitpararray)**self.getValue(fitpararray)  
+            new.getValue = lambda fitpararray=None: other.getValue(fitpararray)**self.getValue(fitpararray)  
         else: 
-            new.getValue = lambda fitpararray:  other**self.getValue(fitpararray)
+            new.getValue = lambda fitpararray=None:  other**self.getValue(fitpararray)
         return new
     def __neg__(self):
         new = Parameter()
-        new.getValue = lambda fitpararray: - self.getValue(fitpararray)
+        new.getValue = lambda fitpararray=None: - self.getValue(fitpararray)
         return new
     def __pos__(self):
         new = Parameter()
-        new.getValue = lambda fitpararray: + self.getValue(fitpararray)
+        new.getValue = lambda fitpararray=None: + self.getValue(fitpararray)
         return new
     def __abs__(self):
         new = Parameter()
-        new.getValue = lambda fitpararray: abs(self.getValue(fitpararray))
+        new.getValue = lambda fitpararray=None: abs(self.getValue(fitpararray))
         return new
     
     
@@ -366,7 +366,7 @@ class DerivedParameter(Parameter):
     def __init__(self,f, *params):
         """Initialize a derived parameter as function **f** of the parameters ***params** which are instances of the class :class:`.Parameter`.
         
-        BEWARE: There is no type checking here. The user is responsible for a matching number of arguments and the correct types.
+        BEWARE: The user is responsible for a matching number of arguments.
         
         Parameters
         ----------
@@ -375,7 +375,11 @@ class DerivedParameter(Parameter):
         *params : :class:`Parameters.Parameter`
             The parameter objects from which the  :class:`.DerivedParameter` object is derived. Should be the same number of parameters as expected by **f**. (The star means that this is a variable number of parameters.
         """
-        
+        if not callable(f):
+            raise Exception("\'f\' has to be a function.")
+        for par in params:
+            if not isinstance(par, Parameter):
+                raise TypeError("Each entry of *params has to be an instance of class \'Parameters.Parameter\'.")       
         
         self._f=f
         self._params=params

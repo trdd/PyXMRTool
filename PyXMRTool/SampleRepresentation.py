@@ -1154,10 +1154,10 @@ class FFfromScaledAbsorption(Formfactor):
 
 class DensityProfile(object):
     """
-    This class can be used to generate arbitrary density profiles within a stack of :class:`.AtomLayerObject`s of equal thicknesses.
+    This class can be used to generate arbitrary density profiles within a stack of several :class:`.AtomLayerObject` of equal thicknesses.
     
     The idea is to collect all information regarding the density profile in an object of this class and to generate entries for the *densitydict* of the single :class:`.AtomLayerObject` instances from it.
-    This means that the class :class:`.DensityProfile`does not really talk to the layers, but is only a higher level convinience class to set up the interconnected densities of the atoms within the :class:`.AtomLayerObject`s as instances of :class:`Parameters.DerivedParameter`.
+    This means that the class :class:`.DensityProfile` does not really talk to the layers, but is only a higher level convinience class to set up the interconnected densities of the atoms within the layers as instances of :class:`Parameters.DerivedParameter`.
     """
     
     def __init__(self, start_layer_idx, end_layer_idx, layer_thickness, profile_function, *params):
@@ -1165,15 +1165,15 @@ class DensityProfile(object):
         Parameters
         ----------
         start_layer_idx : int
-            Index of the first layer of the density profile.
+            Index of the first layer in the scope of the density profile.
         end_layer_idx : int
-            Index of the last layer of the density profile.
+            Index of the last layer in the scope of the density profile.
         layer_thickness : :class:`Parameters.Parameter`
             Thickness of the individual layers. The Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
         profile_function  : callable
-            The density of the corresponding atom as function of the distance **z** from the lower surface of start layer and an arbitray number of additional numeric parameters. The function realy has to expect these parameters to be floats or complex numbers not instances of :class:`Parameters.Parameter`. E.g. ``erf(z ,center, width, max)``
+            The density of the corresponding atom as function of the distance **z** from the lower surface of start layer and of an arbitray number of additional numeric parameters. The function realy has to expect these parameters to be floats or complex numbers not instances of :class:`Parameters.Parameter`. E.g. ``erf(z ,center, width, max)``
         *params : :class:`Parameters.Parameter`
-            Parameters for the function **profile_function** without **z**. E.g. (from above) ``*params=(center,width,max)
+            Parameters for the function **profile_function** without **z**. E.g. (from above) ``*params=(center,width,max)``
         """
         
         #type checking
@@ -1227,7 +1227,10 @@ class DensityProfile(object):
 
 class DensityProfile_erf(DensityProfile):
     """
-    Specialized :class:`DensityProfile` class. Realizes the density profile with the function ``f(z) = 0.5*maximum*(1+erf( (z-position) / (sigma*sqrt(2)) ) )``.
+    Specialized :class:`DensityProfile` class.
+    Realizes a density profile with the function 
+    
+    ``f(z) = 0.5*maximum*(1+erf( (z-position) / (sigma*sqrt(2)) ) )``.
     """
     
     def __init__(self, start_layer_idx, end_layer_idx, layer_thickness, position, sigma, maximum):
@@ -1241,8 +1244,11 @@ class DensityProfile_erf(DensityProfile):
         layer_thickness : :class:`Parameters.Parameter`
             Thickness of the individual layers. The Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
         position : :class:`Parameters.Parameter`
-        maximum : :class:`Parameters.Parameter`
+            Center position of the transition. Measured from the bottom of the start layer. The Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
         sigma : :class:`Parameters.Parameter`
+            Width of the transition. Unit: see above.
+        maximum : :class:`Parameters.Parameter`
+            Maximum value of the function. Should usually be measured in mol/cm^3. For other units you have to take care with the **densityunitfactor** at :class:`.AtomLayerObject`.
         """
         
         #type checking

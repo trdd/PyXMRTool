@@ -312,10 +312,11 @@ class LayerObject(object):
             The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
         chitensor : list of :class:`Parameters.Parameter`
             Electric susceptibility tensor of the layer.
-            | *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
-            | *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero
-            | *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir** *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)
-            | *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements
+            
+            * *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
+            * *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero
+            * *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir** *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)
+            * *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements
          
         magdir : str
             Gives the magnetization direction for MOKE. Possible values are *\"x\"*, *\"y\"*, *\"z\"* and *\"0\"* (no magnetization).
@@ -529,15 +530,6 @@ class AtomLayerObject(LayerObject):
             Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
         sigma : :class:`Parameters.Parameter`
             The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
-        chitensor : list of :class:`Parameters.Parameter`
-            Electric susceptibility tensor of the layer.
-            | *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
-            | *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*, others are zero
-            | *[chi_xx,chi_yy,chi_z,chi_g]* sets  *chi_xx,chi_yy,chi_zz* and depending on **magdir** *chi_yz=-chi_zy=chi_g* (if *x*), *chi_xz=-chi_zx=chi_g* (if *y*) or *chi_xz=-chi_zx=chi_g* (if *z*)
-            | *[chi_xx,chi_xy,chi_xz,chi_yx,chi_yy,chi_yz,chi_zx,chi_zy,chi_zz]* sets all the corresdonding elements
-         
-        magdir : str
-            Gives the magnetization direction for MOKE. Possible values are *\"x\"*, *\"y\"*, *\"z\"* and *\"0\"* (no magnetization).
         densityunitfactor : float
             If the densities in densitydict are measured in another unit than mol/cm^3, state this value which translates your generic density to the one used internally.
             I.e.::
@@ -553,11 +545,15 @@ class AtomLayerObject(LayerObject):
                 raise TypeError("The values of the \'densitydict\' dictionary have to be instances of the \'Parameter\' class or of derived classes.")
             if atomname not in type(self)._atomdict:
                 raise ValueError("Atom \'"+atomname+"\' has not been registered yet.")
+        if not isinstance(densityunitfactor, numbers.Real):
+            raise TypeError("\'densityunitfactor\' has to be a real number.")
+        
+        self._densityunitfactor=densityunitfactor
         
         self._densitydict=densitydict.copy()                                #The usage of "copy" creates a copy of the dictionary. By this, we ensure, that changes of the original dictionary outside the object will not affect the AtomLayerObject
         
          #call constructor of the base class
-        super(AtomLayerObject,self).__init__(None, d,  sigma, magdir)     
+        super(AtomLayerObject,self).__init__(None, d,  sigma, magdir="0")     #magdir is not used; the magnetization and their direction should be handled within the corresponding Formfactor classes
         
            
     def getDensitydict(self,fitpararray=None):
@@ -576,7 +572,7 @@ class AtomLayerObject(LayerObject):
         **energy** is measured in units of eV.
         """
         #gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
-        ffsum=sum([item[1].getValue(fitpararray)*(type(self)._atomdict[item[0]]).getFF(energy,fitpararray) for item in self._densitydict.items()])
+        ffsum=sum([item[1].getValue(fitpararray)*self._densityunitfactor*(type(self)._atomdict[item[0]]).getFF(energy,fitpararray) for item in self._densitydict.items()])
         
         
         
@@ -826,18 +822,19 @@ class FFfromFile(Formfactor):
 class FFfromScaledAbsorption(Formfactor):
     """
     A formfactor class which uses the imaginary part of the formfactor (experimentally determined absorption signal which has been fitted to off-resonant values) given as a file, scales it with a fittable factor and calculates the real part by the Kramers-Kronig transformation. It realizes the procedure described in section 3.3 of Martin Zwiebler PhD-Thesis.
+    It thereby deals only with the diagonal elements of the formfactor tensor. For the off-diagonal elements, the magnetic formfactors classes are used.
     """
     
-    def __init__(self, E1, E2, E3, scaling_factor, theoretical_filename, absorption_filename, theoretical_linereaderfunction=None, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
+    def __init__(self, E1, E2, E3, scaling_factor, tabulated_filename, absorption_filename, tabulated_linereaderfunction=None, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
         """Initializes the FFfromScaledAbsorption object with an energy-dependent imaginary part of the formfactor given as file.
         
-        To perform the Kramers-Kronig transformation without integrating to infinity, also theoretical/tabulated formfactors (f0) have to be given as file. Their imaginary part differs only close to resonance from the measured absorption and should have been used before to perform the fit of the measured absorption to off-resonant values. As these tabulated form factors are usually not polarization dependent, they should be given here just as complex values (or two real ones).
+        To perform the Kramers-Kronig transformation without integrating to infinity, also theoretical/tabulated formfactors (f0) have to be given as file. Their imaginary part differs only close to resonance from the measured absorption and should have been used before to perform the fit of the measured absorption to off-resonant values. As these tabulated formfactors are usually not polarization dependent, they should be given here just as complex values (or two real ones).
             
         
         The imaginary part of each element of the formfactor is:
         
         * the value given by **Im_f0_E1**, for energy < **E1**.
-        * the value given by the file scaled by **scaling_factor** (roughly, see Thesis for details), for E1 <= energy <= E2
+        * the value given by the file scaled by **scaling_factor** (roughly, see PhD Thesis of Martin Zwiebler for details), for E1 <= energy <= E2
         * linear inperpolation between the scaled value at E2 and the value given for E3 by **Im_f0_E3**, for E2 < energy < E3
         * the value given by **Im_f0_E3**, for E3 < energy       
         
@@ -853,19 +850,19 @@ class FFfromScaledAbsorption(Formfactor):
             Energy in eV. From this energy on the imaginary part of the formactor is constant **Im_f_E3**.
         scaling_factor : :class:`Parameter.Parameter`
             Specifies the fittable scaling factor (called *a* in Martin Zwiebler PhD Thesis).
-        theoretical_filename : str
+        tabulated_filename : str
             Path to the text file which contains the tabulated/theoretical formfactor for the corresponding element.
         absorption_filename : str
             Path to the text file which contains the imaginary part of the formfactor which results from an apsorption measurement and a subsequent fit to off-resonant tabulated values.
-        theoretical_linereaderfunction : callable
-            This function is used to convert one line from the *theoretical* text file to data.
-            It should be a function which takes a string and returns a tuple or list of 10 values: ``(energy,f_xx,f_xy,f_xz,f_yx,f_yy,f_yz,f_zx,f_zy,f_zz)``,
-            where `energy` is measured in units of `eV` and formfactors are complex values in units of `e/atom` (dimensionless).
+        tabulated_linereaderfunction : callable
+            This function is used to convert one line from the *tabulated* text file to data.
+            It should be a function which takes a string and returns a tuple or list of 2 values: ``(energy,f)``,
+            where `energy` is measured in units of `eV` and the formfactor `f` is a complex value in units of `e/atom` (dimensionless).
             It can also return `None` if it detects a comment line.
             You can use :meth:`FFfromScaledAbsorption.createTheoreticalLinereader` to get a standard function, which just reads this array as whitespace separated from the line.
         absorption_linereaderfunction : callable
             This function is used to convert one line from the *absorption* text file to data.
-            It should be a function which takes a string and returns a tuple or list of 10 values: ``(energy, Im f_xx, Im f_xy, Im f_xz, Im f_yx, Im f_yy, Im f_yz, Im f_zx, Im f_zy, Im f_zz)``,
+            It should be a function which takes a string and returns a tuple or list of 4 values: ``(energy, Im f_xx, Im f_yy, Im f_zz)``,
             where `energy` is measured in units of `eV` and imaginary parts of formfactors are real values in units of `e/atom` (dimensionless).
             It can also return `None` if it detects a comment line.
             You can use :meth:`FFfromScaledAbsorption.createAbsorptionLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.
@@ -874,7 +871,7 @@ class FFfromScaledAbsorption(Formfactor):
             As a consequence the peak but also E1,E2 and E3 are shifted.
         minE : float
         maxE : float
-            Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **theoretical_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
+            Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **tabulated_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
         """
         #check parameters
         if not isinstance(E1, numbers.Real):
@@ -889,18 +886,18 @@ class FFfromScaledAbsorption(Formfactor):
             raise ValueError("Energies \'E1\', \'E2\' and \'E3\' have to have ascending values.")
         if not isinstance(scaling_factor,Parameters.Parameter):
             raise TypeError("\'scaling_factor\' has to be of type Parameters.Parameter.")    
-        if not isinstance(theoretical_filename,str):
-            raise TypeError("\'theoretical_filename\' needs to be a string.")
-        if not os.path.isfile(theoretical_filename):
-            raise Exception("File \'"+theoretical_filename+"\' does not exist.")
+        if not isinstance(tabulated_filename,str):
+            raise TypeError("\'tabulated_filename\' needs to be a string.")
+        if not os.path.isfile(tabulated_filename):
+            raise Exception("File \'"+tabulated_filename+"\' does not exist.")
         if not isinstance(absorption_filename,str):
             raise TypeError("\'absorption_filename\' needs to be a string.")
         if not os.path.isfile(absorption_filename):
             raise Exception("File \'"+absorption_filename+"\' does not exist.")
-        if theoretical_linereaderfunction is None:
-            theoretical_linereaderfunction=self.createTheoreticalLinereader()
-        if not callable(theoretical_linereaderfunction):
-            raise TypeError("\'theoretical_linereaderfunction\' needs to be a callable object.")
+        if tabulated_linereaderfunction is None:
+            tabulated_linereaderfunction=self.createTheoreticalLinereader()
+        if not callable(tabulated_linereaderfunction):
+            raise TypeError("\'tabulated_linereaderfunction\' needs to be a callable object.")
         if absorption_linereaderfunction is None:
             absorption_linereaderfunction=self.createAbsorptionLinereader()
         if not callable(absorption_linereaderfunction):
@@ -924,11 +921,11 @@ class FFfromScaledAbsorption(Formfactor):
         self._energyshift=energyshift             #Attention: this is supposed to be an instance of "Parameters.Parameter". So a value can be obtained with self._energyshift.getValue(fitparraray)
         
         #read theoretica/tabulated formfactors from file
-        theo_energies=[]
-        theo_formfactors=[]
-        with open(theoretical_filename,'r') as f:
+        tab_energies=[]
+        tab_formfactors=[]
+        with open(tabulated_filename,'r') as f:
             for line in f:
-                linereaderoutput=theoretical_linereaderfunction(line)
+                linereaderoutput=tabulated_linereaderfunction(line)
                 if linereaderoutput is None:
                     break
                 if not isinstance(linereaderoutput,(tuple,list)) :
@@ -942,18 +939,18 @@ class FFfromScaledAbsorption(Formfactor):
                     raise ValueError("Linereader function hast to return a real value for the energy.")
                 if (minE is not None and maxE is not None):
                     if minE<=linereaderoutput[0] and linereaderoutput[0]<=maxE:
-                        theo_energies.append(linereaderoutput[0])                                                        #store energies in one list
-                        theo_formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                        tab_energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        tab_formfactors.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
                 else:
-                    theo_energies.append(linereaderoutput[0])                                                        #store energies in one list
-                    theo_formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
-        theo_formfactors=numpy.array(theo_formfactors)                                                                #convert list formfactors to a numpy array for convinience
-        self._minE=min(theo_energies)
-        self._maxE=max(theo_energies)
+                    tab_energies.append(linereaderoutput[0])                                                        #store energies in one list
+                    tab_formfactors.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+        tab_formfactors=numpy.array(tab_formfactors)                                                                #convert list formfactors to a numpy array for convinience
+        self._minE=min(tab_energies)
+        self._maxE=max(tab_energies)
         #Create an interpolation function based on the given energie-formfactor-points. The formfactors are thererfore transformed to arrays of length 2 but with real values. 
         #After that the array of N arrays of 2 element is transformed to an array of 2 arrays of N elements as needed by the interp1d function.
         #Therefore, this function will return an array of length 2 wich has to be transformed back to 1 complex valued elements.
-        self._theo_interpolator=interpolate.interp1d(theo_energies,numpy.transpose(numpy.concatenate((theo_formfactors.real,theo_formfactors.imag),1)))
+        self._tab_interpolator=interpolate.interp1d( tab_energies, numpy.transpose(numpy.concatenate( (numpy.reshape(tab_formfactors.real,(-1,1)),numpy.reshape(tab_formfactors.imag,(-1,1))),1)) )
                 
         #read imaginary part of formfactor from file
         abs_energies=[]
@@ -965,8 +962,8 @@ class FFfromScaledAbsorption(Formfactor):
                     break
                 if not isinstance(linereaderoutput,(tuple,list)) :
                     raise TypeError("Linereader function has to return a list/tuple.")
-                if not  len(linereaderoutput)==10:
-                    raise ValueError("Linereader function hast to return a list/tuple with 10 elements.")
+                if not  len(linereaderoutput)==4:
+                    raise ValueError("Linereader function hast to return a list/tuple with 4 elements.")
                 for item in linereaderoutput:
                     if not isinstance(item,numbers.Real):
                         raise ValueError("Linereader function hast to return a list/tuple of real numbers.")
@@ -978,16 +975,16 @@ class FFfromScaledAbsorption(Formfactor):
         if self._E1 < self._abs_minE or self._E2 > self._abs_maxE:
             raise Exception("Given absorption data does not cover needed range between E1 and E2.")
         #Create an interpolation function based on the given energie-imag_formfactor-points. 
-        #Therefore, the array of N arrays of 9 element is transformed to an array of 9 arrays of N elements as needed by the interp1d function.
-        #This function will return an array of length 9 which is the interpolated imaginary part of the formfactor at the requested energy.
+        #Therefore, the array of N arrays of 3 element is transformed to an array of 3 arrays of N elements as needed by the interp1d function.
+        #This function will return an array of length 3 which is the interpolated imaginary part of the formfactor at the requested energy.
         #Energies and formfactors don't have to be stored explicitly , because they are contained in the "self._interpolator" function.
         self._abs_interpolator=interpolate.interp1d(abs_energies,numpy.transpose(abs_im_formfactors) )
         
         
-        #create array of energies and different arrays of 9-element tensor to calculate the actuall formfactors
+        #create array of energies and different arrays of 3-element tensor to calculate the actual formfactors
         # "im_f1": imaginary part of formfactors for scaling_factor (a) = 1
         # "d_im_f1": derivative with respect to a of the imaginary part of formfactors
-        # "diff_im_f1": difference between "im_f1" and theoretical formfactors
+        # "diff_im_f1": difference between "im_f1" and tabulated formfactors
         # "kk_diff_im_f1": Kramers-Kronig transformed "diff_im_f1
         # "kk_d_im_f1": Kramers-Kronig transformed "d_im_f1"
         energies=[]
@@ -995,42 +992,42 @@ class FFfromScaledAbsorption(Formfactor):
         d_im_f1=[]
         diff_im_f1=[]
         im_f1_E2 = self._abs_interpolator(self._E2)        #imaginary part of formfactors for scaling_factor (a) = 1 at E2
-        re,im = self._theo_interpolator(self._E1)
-        im_f0_E1 = numpy.array([im,0,0,0,im,0,0,0,im])     #imaginary part of formfactors  at E1  (does not depend on "a")
-        re,im = self._theo_interpolator(self._E3)
-        im_f0_E3 = numpy.array([im,0,0,0,im,0,0,0,im])     #imaginary part of formfactors  at E3  (does not depend on "a")
+        re,im = self._tab_interpolator(self._E1)
+        im_f0_E1 = numpy.array([im,im,im])     #imaginary part of formfactors  at E1  (does not depend on "a")
+        re,im = self._tab_interpolator(self._E3)
+        im_f0_E3 = numpy.array([im,im,im])     #imaginary part of formfactors  at E3  (does not depend on "a")
         i=0
-        for energy in theo_energies:
+        for energy in tab_energies:
             if energy < self._E1:
                 energies.append(energy)
-                im_f1.append(numpy.array([theo_formfactors[i].imag,0,0, 0,theo_formfactors[i].imag,0, 0,0,theo_formfactors[i].imag]))      #below E1, formfactor tensor is a diagonal tensor, values are the given "theoretical" ones
-                d_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0]))
-                diff_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0]))                               
+                im_f1.append(numpy.array([tab_formfactors[i].imag,tab_formfactors[i].imag,tab_formfactors[i].imag]))      #below E1, formfactor tensor is a diagonal tensor, values are the given "tabulated" ones
+                d_im_f1.append(numpy.array([0,0,0]))
+                diff_im_f1.append(numpy.array([0,0,0]))                               
             i+=1
         i=0
         for energy in abs_energies:
             if energy >= self._E1 and energy <=self._E2:
                 energies.append(energy)
                 im_f1.append(abs_im_formfactors[i])                                #between E1 and E2, it is just the measured imaginary part of the formfactor
-                d_im_f1.append(abs_im_formfactors[i]-im_f0_E1)                         #between E1 and E2, the derivative is the difference between "measured" imaginary part of the formfactor and the "theoretical" value at E1
-                re,im = self._theo_interpolator(energy)
-                diff_im_f1.append( abs_im_formfactors[i] - numpy.array([im,0,0,0,im,0,0,0,im]) )   #between E1 and E2, just the difference between "measured" imaginary part of the formfactor and the "theoretical" value 
+                d_im_f1.append(abs_im_formfactors[i]-im_f0_E1)                         #between E1 and E2, the derivative is the difference between "measured" imaginary part of the formfactor and the "tabulated" value at E1
+                re,im = self._tab_interpolator(energy)
+                diff_im_f1.append( abs_im_formfactors[i] - numpy.array([im,im,im]) )   #between E1 and E2, just the difference between "measured" imaginary part of the formfactor and the "tabulated" value 
             i+=1
         i=0
-        for energy in theo_energies:
+        for energy in tab_energies:
             if energy > self._E2:
                 energies.append(energy)
             if energy > self._E2 and energy < self._E3:
                 im_f1.append( im_f1_E2 + (energy-E2)/(E3-E2)*(im_f0_E3 - im_f1_E2) )             #between E2 and E3, it is a linear interpolation
                 d_im_f1.append( (self._E3-energy)/(self._E3-self._E2) * (im_f1_E2-im_f0_E1) )    #between E2 and E3, the imaginary part is a linear interpolation, the derivative correspondingly
-                re,im = self._theo_interpolator(energy)
-                diff_im_f1.append( im_f1[i] - numpy.array([im,0,0,0,im,0,0,0,im]) )   #between E1 and E2, just the difference between linearly interpolated imaginary part of the formfactor and the "theoretical" value 
+                re,im = self._tab_interpolator(energy)
+                diff_im_f1.append( im_f1[i] - numpy.array([im,im,im]) )   #between E1 and E2, just the difference between linearly interpolated imaginary part of the formfactor and the "tabulated" value 
             elif energy >= self._E3:
-                im_f1.append(numpy.array([theo_formfactors[i].imag,0,0, 0,theo_formfactors[i].imag,0, 0,0,theo_formfactors[i].imag]))      #above E3, formfactor tensor is a diagonal tensor, values are the given "theoretical" ones
-                d_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0]))
-                diff_im_f1.append(numpy.array([0,0,0,0,0,0,0,0,0])) 
+                im_f1.append(numpy.array([tab_formfactors[i].imag,tab_formfactors[i].imag,tab_formfactors[i].imag]))      #above E3, values are the given "tabulated" ones
+                d_im_f1.append(numpy.array([0,0,0]))
+                diff_im_f1.append(numpy.array([0,0,0])) 
             i+=1
-            
+        
         im_f1=numpy.array(im_f1)
         d_im_f1=numpy.array(d_im_f1)
         diff_im_f1=numpy.array(diff_im_f1)
@@ -1042,13 +1039,17 @@ class FFfromScaledAbsorption(Formfactor):
         trans_d_im_f1=numpy.transpose(d_im_f1)
         trans_kk_diff_im_f1=[]
         trans_kk_d_im_f1=[]
-        for i in range(9):
+        for i in range(3):
             trans_kk_diff_im_f1.append(KramersKronig(energies,trans_diff_im_f1[i]))
             trans_kk_d_im_f1.append(KramersKronig(energies,trans_d_im_f1[i]))
         trans_kk_diff_im_f1=numpy.array(trans_kk_diff_im_f1)
         trans_kk_d_im_f1=numpy.array(trans_kk_d_im_f1)
         
-
+        #inflate 3-element arrays (just diagonals of formfactor tensor) to 9-element arrays, by adding zeros as off-diogonals
+        im_f1=numpy.insert(im_f1,[1,1,1,2,2,2],[0,0,0,0,0,0],1)
+        trans_d_im_f1=numpy.insert(trans_d_im_f1,[1,1,1,2,2,2],0,0)
+        trans_kk_diff_im_f1=numpy.insert(trans_kk_diff_im_f1,[1,1,1,2,2,2],0,0)
+        trans_kk_d_im_f1=numpy.insert(trans_kk_d_im_f1,[1,1,1,2,2,2],0,0)
      
         #Create interpolation functions for the above created arrays for later use with "getFF"
         #For this the arrays of N arrays of 9 elements are transposed to arrays of 9 arras of N elements as needed by the interp1d function (trans_kk_diff_im_f1 and trans_kk_d_im_f1 are already transposed)
@@ -1083,7 +1084,7 @@ class FFfromScaledAbsorption(Formfactor):
             line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
             if not line.isspace():                               #ignore empty lines        
                 linearray=line.split()
-                if not len(linearray)==10:
+                if not len(linearray)==4:
                     raise Exception("Absorption file has wrong format.")
                 linearray=[ast.literal_eval(item) for item in linearray]
                 return linearray
@@ -1092,9 +1093,9 @@ class FFfromScaledAbsorption(Formfactor):
         return linereader                                                               #here the FUNKTION linereader is returned
     
     @staticmethod
-    def createTheoreticalLinereader(complex_numbers=True):
+    def createTabulatedLinereader(complex_numbers=True):
         """
-        Return the standard linereader function for theoretical formfactor files for usage with :meth:`FFfromScaledAbsorption.__init__`.
+        Return the standard linereader function for tabulated formfactor files for usage with :meth:`FFfromScaledAbsorption.__init__`.
         
         This standard linereader function reads energy and the complex formfactor as a whitespace-seperated list (i.e. 2 numbers) and interpretes \"#\" as comment sign.
         If **complex_numbers** = *False* then the reader reads real and imaginary part of the formfactor seperately, i.e. every line has to consist of 3 numbers seperated by whitespaces::
@@ -1112,7 +1113,7 @@ class FFfromScaledAbsorption(Formfactor):
                 if not line.isspace():                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==2:
-                        raise Exception("File for theoretical formfactor has wrong format.")
+                        raise Exception("File for tabulated formfactor has wrong format.")
                     linearray=[ast.literal_eval(item) for item in linearray]
                     return linearray
                 else:
@@ -1125,7 +1126,7 @@ class FFfromScaledAbsorption(Formfactor):
                 if not line.isspace():                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==3:
-                        raise Exception("File for theoretical formfactor file has wrong format.")
+                        raise Exception("File for tabulated formfactor file has wrong format.")
                     linearray=[ast.literal_eval(item) for item in linearray]
                     return [linearray[0], linearray[1]+1j*linearray[2]]
                 else:
@@ -1154,8 +1155,8 @@ class FFfromScaledAbsorption(Formfactor):
         energy=energy+energyshift  #apply energyshift
         
         ImFF  = (scaling_factor - 1) * self._d_im_f1_interpolator(energy)  + self._im_f1_interpolator(energy)
-        theo_real=self._theo_interpolator(energy)[0]
-        RealFF= numpy.array([theo_real,0,0,0,theo_real,0,0,0,theo_real]) + self._kk_diff_im_f1_interpolator(energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
+        tab_real=self._tab_interpolator(energy)[0]
+        RealFF= numpy.array([tab_real,0,0,0,tab_real,0,0,0,tab_real]) + self._kk_diff_im_f1_interpolator(energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
            
         return RealFF + 1j* ImFF
     

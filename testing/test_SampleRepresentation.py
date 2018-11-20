@@ -65,12 +65,11 @@ FF_Co=SampleRepresentation.FFfromFile("Co.F",SampleRepresentation.FFfromFile.cre
 print "... FF_Sr"
 FF_Sr=SampleRepresentation.FFfromFile("Sr.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
 #fake atom zum testen (sollte so eigentlich nicht genutzt werden)
-#Die Dateien "C_imag.F" und "C_theo.F" sind beide selbst gebastelt aus den Daten von "https://physics.nist.gov/PhysRefData/FFast/html/form.html" fuer Kohlenstoff.
+#Die Dateien "C_imag.F" und "C_tabul.F" sind beide selbst gebastelt aus den Daten von "https://physics.nist.gov/PhysRefData/FFast/html/form.html" fuer Kohlenstoff.
 #"C_Imag.F" enthaelt nur den Imaginaerteil des Formfaktors, dafuer aber als Matrix ausgebreitet (allerdings sind nur die Diagonaleintraege ungleich Null und alle gleich).
 #"C_Theo.F" enthaelt Real- und Imaginaerteil des Formfaktors, aber jeweils nur als Skalar.
 print "... FF_Ya"
-FF_Ya=SampleRepresentation.FFfromScaledAbsorption(E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),theoretical_filename="C_theo.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),theoretical_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTheoreticalLinereader(complex_numbers=False),minE=150,maxE=650)
-
+FF_Ya=SampleRepresentation.FFfromScaledAbsorption(E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),tabulated_filename="C_tabul.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False),minE=150,maxE=650)
 
 print "Register atoms"
 SampleRepresentation.AtomLayerObject.registerAtom("Co",FF_Co)
@@ -85,7 +84,7 @@ FF_Ya.plotFF(ar,np.linspace(200,600,10000))
 
 #test behavior of FF_Ya
 print "Test behavior of FF_Ya"
-print "...Therefore plot FF_Ya (real and imag) with scaling_factor=1, scaling_factor=3 and the stored theoretical values."
+print "...Therefore plot FF_Ya (real and imag) with scaling_factor=1, scaling_factor=3 and the stored theoretical/tabulated values."
 en=np.arange(150,600)
 ar[27]=1  #setze scaling_factor auf 1
 one=[]
@@ -97,18 +96,18 @@ ten=[]
 for e in en:
     ten.append(FF_Ya.getFF(e,ar)[0])
 ten=np.array(ten)
-theo=[]
+tab=[]
 for e in en:
-    x=FF_Ya._theo_interpolator(e)
-    theo.append(x[0]+x[1]*1j)
-theo=np.array(theo)
+    x=FF_Ya._tab_interpolator(e)
+    tab.append(x[0]+x[1]*1j)
+tab=np.array(tab)
 fig, ax = plt.subplots()
 ax.plot(en,one.real, label="scaling=1, real") 
 ax.plot(en,one.imag, label="scaling=1, imag")
 ax.plot(en,ten.real, label="scaling=3, real")
 ax.plot(en,ten.imag, label="scaling=3, imag")
-ax.plot(en,theo.real, label="theoretical, real")
-ax.plot(en,theo.imag, label="theoretical, imag")
+ax.plot(en,tab.real, label="tabulated, real")
+ax.plot(en,tab.imag, label="tabulated, imag")
 legend = ax.legend(loc='upper right', shadow=True)
 plt.show()
 

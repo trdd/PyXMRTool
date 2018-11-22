@@ -379,31 +379,31 @@ class DerivedParameter(Parameter):
     """Objects of this class represent derived parameters which can be arbitrary functions of other parameters."""
     
     
-    def __init__(self,f, *params):
-        """Initialize a derived parameter as function **f** of the parameters ***params** which are instances of the class :class:`.Parameter`.
+    def __init__(self,f, *args):
+        """Initialize a derived parameter as function **f** of the parameters ***args** which are instances of the class :class:`.Parameter`.
         
         BEWARE: The user is responsible for a matching number of arguments.
         
         Parameters
         ----------
         f : function
-            Function of a arbitrary number of real or complex parameters which returns a real or complex number
-        *params : :class:`Parameters.Parameter`
-            The parameter objects from which the  :class:`.DerivedParameter` object is derived. Should be the same number of parameters as expected by **f**. (The star means that this is a variable number of parameters.
+            Function of a arbitrary number of real or complex arguments which returns a real or complex number
+        *args : :class:`Parameters.Parameter`
+            The parameter objects from which the  :class:`.DerivedParameter` object is derived. Should be the same number of arguments as expected by **f**. (The star means that this is a variable number of arguments).
         """
         if not callable(f):
             raise Exception("\'f\' has to be a function.")
-        for par in params:
-            if not isinstance(par, Parameter):
-                raise TypeError("Each entry of *params has to be an instance of class \'Parameters.Parameter\'.")       
+        for arg in args:
+            if not isinstance(arg, Parameter):
+                raise TypeError("Each entry of *args has to be an instance of class \'Parameters.Parameter\'.")       
         
         self._f=f
-        self._params=params
+        self._args=args
         
     #special methods
     def __str__(self):
         """Determines how an *object* of this class react on ``str(object)``."""
-        return "<" + type(self).__module__ + "." + type(self).__name__ + " object: function of the parameters " + ", ".join([str(param) for param in self._params])+">"
+        return "<" + type(self).__module__ + "." + type(self).__name__ + " object: function of the parameters " + ", ".join([str(arg) for arg in self._args])+">"
             
     #public methods
     def getValue(self,fitpararray=None):
@@ -413,9 +413,10 @@ class DerivedParameter(Parameter):
         **fitpararray** is only allowed to be *None* if the DerivedParameter is not derived from instances of 
         :class:`.Fitparameter`.
         """
-        values=[param.getValue(fitpararray) for param in self._params]
+        values=[param.getValue(fitpararray) for param in self._args]
         return self._f(*values)
-        
+    
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------       
 
 class ParameterPool(object):
     """Collects a pool of Parameter objects and connects them with a parameter file."""
@@ -663,4 +664,72 @@ class ParameterPool(object):
             
         
     
-
+class ParametrizedFunction(object):
+    """Object of this class can be used for an easy implementation of a function of one argument which should be parametrized by fitparameters."""
+    
+        
+    def __init__(self,f, *args):
+        """Initialize the parametrized function with a function **f** and an arbitrary number of parameters ***args**.
+        
+        BEWARE: The user is responsible for a matching number of arguments.
+        
+        Parameters
+        ----------
+        f : function
+            Function *f(x,*f_args)* of an argument *x* and and an arbitrary number of real or complex arguments, which parametrize the function.
+        *args : :class:`Parameters.Parameter`
+            The parameter objects which parametrize the function. Should be the same number of arguments as expected by **f** without the *x*.
+        """
+        if not callable(f):
+            raise Exception("\'f\' has to be a function.")
+        for arg in args:
+            if not isinstance(arg, Parameter):
+                raise TypeError("Each entry of *args has to be an instance of class \'Parameters.Parameter\'.")       
+        
+        self._f=f
+        self._args=args
+        
+    #special methods
+    def __str__(self):
+        """Determines how an *object* of this class react on ``str(object)``."""
+        return "<" + type(self).__module__ + "." + type(self).__name__ + " object: parametrized with " + ", ".join([str(arg) for arg in self._args])+">"
+            
+    #public methods
+    def getValue(self, x, fitpararray=None):
+        """
+        Return the value of the parametrized function for a certain **x** corresponding to the given array of fit values.
+       
+        **fitpararray** is only allowed to be *None* if the used Parameters are not derived from instances of 
+        :class:`.Fitparameter`.
+        """
+        values=[param.getValue(fitpararray) for param in self._args]
+        return self._f(x, *values)
+    
+    def getFunction(self, fitpararray=None):
+        """
+        Return the function for a specific set of parameter values given by the **fitpararray**.
+       
+        **fitpararray** is only allowed to be *None* if the used parameters are not derived from instances of 
+        :class:`.Fitparameter`.
+        """
+        values=[param.getValue(fitpararray) for param in self._args]
+        def wrapper_function(x):
+            return self._f(x, *values)
+        return wrapper_function
+    
+    def getParameter(self, x):
+        """
+        Return the parametrized value for a certain **x**. Result is an instance of :class:`.DerivedParameter`
+        
+        **x** can also be an instance of :class:`.Parameter`!!!
+       
+        **fitpararray** is only allowed to be *None* if the used parameters are not derived from instances of 
+        :class:`.Fitparameter`.
+        """
+        if isinstance(x, Parameter):
+            return DerivedParameter(self._f,x,*self._args)
+        else:
+            def wrapper_function(*values):
+                return self._f(x, *values)
+            return DerivedParameter(wrapper_function, *self._args)
+    

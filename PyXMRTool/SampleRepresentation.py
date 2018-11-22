@@ -683,6 +683,7 @@ class Formfactor(object):
     minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
     
+   
 class FFfromFile(Formfactor):
     """
     Class to deal with energy-dependent atomic form-factors which are tabulated in files.
@@ -1177,7 +1178,7 @@ class DensityProfile(object):
     This means that the class :class:`.DensityProfile` does not really talk to the layers, but is only a higher level convinience class to set up the interconnected densities of the atoms within the layers as instances of :class:`Parameters.DerivedParameter`.
     """
     
-    def __init__(self, start_layer_idx, end_layer_idx, layer_thickness, profile_function, *params):
+    def __init__(self, start_layer_idx, end_layer_idx, layer_thickness, profile_function):
         """
         Parameters
         ----------
@@ -1187,10 +1188,8 @@ class DensityProfile(object):
             Index of the last layer in the scope of the density profile.
         layer_thickness : :class:`Parameters.Parameter`
             Thickness of the individual layers. The Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
-        profile_function  : callable
-            The density of the corresponding atom as function of the distance **z** from the lower surface of start layer and of an arbitray number of additional numeric parameters. The function realy has to expect these parameters to be floats or complex numbers not instances of :class:`Parameters.Parameter`. E.g. ``erf(z ,center, width, max)``
-        *params : :class:`Parameters.Parameter`
-            Parameters for the function **profile_function** without **z**. E.g. (from above) ``*params=(center,width,max)``
+        profile_function  : :class:`Parameters.ParametrizedFunction`
+            The density of the corresponding atom as function of the distance **z** from the lower surface of start layer parametrized by arbitrary parameters (see :class:`Parameters.ParametrizedFunction` for details). 
         """
         
         #type checking
@@ -1200,17 +1199,13 @@ class DensityProfile(object):
             raise TypeError("\'end_layer_idx\' has to be an integer number.")
         elif not isinstance(layer_thickness, Parameters.Parameter):
             raise TypeError("\'layer_thickness\' has to be an instance of class \'Parameters.Parameter\'.")
-        elif not callable(profile_function):
-            raise TypeError("\'profile_function\' has to be a callable.")
-        for par in params:
-            if not isinstance(par, Parameters.Parameter):
-                raise TypeError("Each entry of *params has to be an instance of class \'Parameters.Parameter\'.") 
+        elif not isinstance(profile_function, Parameters.ParametrizedFunction):
+            raise TypeError("\'profile_function\' has to be an instance of \`Parameters.ParametrizedFunction\`.")
         
         self._start_layer_idx=start_layer_idx
         self._end_layer_idx=end_layer_idx
         self._layer_thickness=layer_thickness
         self._profile_function=profile_function
-        self._params=params
     
     def getDensityPar(self, layer_idx):
         """
@@ -1224,7 +1219,8 @@ class DensityProfile(object):
             raise ValueError("Density Profile is only defined from layer index "+str(self._start_layer_idx)+ " to " + str(self._end_layer_idx) +". \'layer_idx="+str(layer_idx)+"\' is out of range.")
         
         #create and return the corresponding derived parameter object
-        return Parameters.DerivedParameter(self._profile_function,(layer_idx-self._start_layer_idx)*self._layer_thickness, *self._params)
+        
+        return self._profile_function.getParameter((layer_idx-self._start_layer_idx)*self._layer_thickness)
     
     def getDensity(self, z, fitpararray):
         """
@@ -1239,7 +1235,7 @@ class DensityProfile(object):
         elif not isinstance(fitpararray,list):
             raise TypeError("\fitparray\' has to be a list.")
                 
-        return self._profile_function(z,*[par.getValue(fitpararray) for par in self._params])
+        return self._profile_function.getValue(z,fitpararray)
     
 
 class DensityProfile_erf(DensityProfile):
@@ -1285,12 +1281,13 @@ class DensityProfile_erf(DensityProfile):
         self._start_layer_idx=start_layer_idx
         self._end_layer_idx=end_layer_idx
         self._layer_thickness=layer_thickness
-        self._params=(position,sigma ,maximum)
+        
         
         #define profile function
         def erf_profile(z, pos, sig, m):
             return 0.5 * m * (1+scipy.special.erf((z-pos)/(numpy.sqrt(2)*sig)))
-        self._profile_function=erf_profile   
+            
+        self._profile_function=Parameters.ParametrizedFunction(erf_profile, position, sigma, maximum)
     
 
     

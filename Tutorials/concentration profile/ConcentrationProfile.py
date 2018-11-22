@@ -87,7 +87,7 @@ def lin_decay_profile_fct(z,z_start,rel_gradient,maximum):
         return maximum
     else:
         return maximum*(1-float(z-z_start)*rel_gradient)
-density_profile_O=SampleRepresentation.DensityProfile(1,number_of_trans_layers,Parameters.Parameter(lattice_const), lin_decay_profile_fct, number_of_trans_layers*lattice_const-decay_depth,decay_rel_gradient,density_O)
+density_profile_O=SampleRepresentation.DensityProfile(1,number_of_trans_layers,Parameters.Parameter(lattice_const), Parameters.ParametrizedFunction(lin_decay_profile_fct, number_of_trans_layers*lattice_const-decay_depth,decay_rel_gradient, density_O) )
 
 
 

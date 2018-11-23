@@ -456,9 +456,9 @@ class ModelChiLayerObject(LayerObject):
             Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
         sigma : :class:`Parameters.Parameter`
             The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
-        chitensorfunction : callable
+        chitensorfunction : :class:`Parameters.ParametrizedFunction`
             Energy-dependent electric susceptibility tensor of the layer.
-            It is supposed to be a function of two parameters (**fitpararray**, **energy**) which returns a list of either 1,3,4 or 9 real or complex numbers.
+            A parametrized function of energy (see :class:`Parameters.ParametrizedFunction`) which reurns a list of either 1,3,4 or 9 real or complex numbers.
             See also documentation of :mod:`Pythonreflectivity`.
             
             * *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
@@ -472,8 +472,8 @@ class ModelChiLayerObject(LayerObject):
         """
         
         #check parameters
-        if not callable(chitensorfunction):
-            raise TypeError("\'chitensorfunction has to be callable.")
+        if not isinstance(chitensorfunction,Parameters.ParametrizedFunction):
+            raise TypeError("\'chitensorfunction\' has to be an instance of \`Parameters.ParametrizedFunction\`.")
         #asign members
         self._chitensorfunction=chitensorfunction
         #call constructor of the base class
@@ -483,8 +483,9 @@ class ModelChiLayerObject(LayerObject):
         return self._chitensorfunction
     
     def _setChitensor_(self,chitensorfunction):
-        if not callable(chitensorfunction):
-            raise TypeError("\'chitensorfunction has to be callable.")
+        #check parameters
+        if not isinstance(chitensorfunction,Parameters.ParametrizedFunction):
+            raise TypeError("\'chitensorfunction\' has to be an instance of \`Parameters.ParametrizedFunction\`.")
         self._chitensorfunction=chitensorfunction
 
     
@@ -496,12 +497,12 @@ class ModelChiLayerObject(LayerObject):
         **energy** is measured in units of eV.
         """
         #get chitensor from chitensorfunction
-        chitensor=self._chitensorfunction(fitpararray, energy)
+        chitensor=self._chitensorfunction.getValue(energy,fitpararray)
         #check tensor bevor giving it to the outside
         if not (len(chitensor)==1 or len(chitensor)==3 or len(chitensor)==4 or len(chitensor)==9):
             raise ValueError("\'chitensorfunction\' must return an array of length 1, 3, 4, or 9.")
         if len(chitensor)==4 and self._magdir=="0":
-            raise ValueError("You have to define the direction of magnetization \'magdir\'.")
+            raise ValueError("You have to define the direction of magnetization \'magdir\' if the \`chitensorfunction\` delivers a 4-element array.")
         for item in chitensor:
             if not isinstance(item,numbers.Number):
                 raise TypeError("Elements of the array returnd by \'chitensorfunction\' have to be numbers.")
@@ -911,7 +912,7 @@ class FFfromScaledAbsorption(Formfactor):
             raise TypeError("\'minE\' must be a positive real number.")
         if maxE is not None and (not isinstance(maxE,numbers.Real) or maxE<0):
             raise TypeError("\'maxE\' must be a positive real number.")
-        if not minE<maxE:
+        if maxE is not None and minE is not None and not minE<maxE:
             raise ValueError("\'minE\' must be smaller than \'maxE\'.")
         
         #store parameters
@@ -938,13 +939,22 @@ class FFfromScaledAbsorption(Formfactor):
                         raise ValueError("Linereader function hast to return a list/tuple of numbers.")
                 if isinstance(linereaderoutput[0],complex):
                     raise ValueError("Linereader function hast to return a real value for the energy.")
-                if (minE is not None and maxE is not None):
-                    if minE<=linereaderoutput[0] and linereaderoutput[0]<=maxE:
+                if (minE is None and maxE is None):
+                    tab_energies.append(linereaderoutput[0])                                                        #store energies in one list
+                    tab_formfactors.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+                elif minE is None:
+                    if linereaderoutput[0]<=maxE:
+                        tab_energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        tab_formfactors.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+                elif maxE is None:
+                    if minE<=linereaderoutput[0]:
                         tab_energies.append(linereaderoutput[0])                                                        #store energies in one list
                         tab_formfactors.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
                 else:
-                    tab_energies.append(linereaderoutput[0])                                                        #store energies in one list
-                    tab_formfactors.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+                    if minE<=linereaderoutput[0] and linereaderoutput[0]<=maxE:
+                        tab_energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        tab_formfactors.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+
         tab_formfactors=numpy.array(tab_formfactors)                                                                #convert list formfactors to a numpy array for convinience
         self._minE=min(tab_energies)
         self._maxE=max(tab_energies)

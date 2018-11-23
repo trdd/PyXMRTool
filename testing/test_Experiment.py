@@ -14,17 +14,18 @@ from PyXMRTool import SampleRepresentation
 
 
 
-#pp=Parameters.ParameterPool("partest_Experiment.txt")
-pp=Parameters.ParameterPool()
+pp=Parameters.ParameterPool("partest_Experiment.txt")
+#pp=Parameters.ParameterPool()
 
 #set up layer system
 #l=SampleRepresentation.LayerObject([pp.newParameter("chi_xx"),pp.newParameter("chi_xy"),pp.newParameter("chi_xz"),pp.newParameter("chi_yx"),pp.newParameter("chi_yy"),pp.newParameter("chi_yz"),pp.newParameter("chi_zx"),pp.newParameter("chi_zy"),pp.newParameter("chi_zz")],pp.newParameter("d"),Parameters.Parameter(0))
 l=SampleRepresentation.LayerObject([pp.newParameter("chi_xx"),pp.newParameter("chi_yy"),pp.newParameter("chi_zz")],pp.newParameter("d"),Parameters.Parameter(0))
 
-ar=[33,0.0094,-0.444]
-ar+=range(21)
+#ar=[33,0.0094,-0.444]
+#ar+=range(39)                       #produce some arbitrary values
+ar,low,up=pp.getStartLowerUpper()
 
-hs=SampleRepresentation.Heterostructure(8,[0,1,2,[10,[3,4,5,6]],7])
+hs=SampleRepresentation.Heterostructure(13)
 
 for i in range(7):
     hs.setLayer(i,SampleRepresentation.LayerObject([pp.newParameter("chi"+str(i))],pp.newParameter("d"+str(i))))
@@ -32,15 +33,23 @@ hs.setLayer(7,l)
 
 FF_Co=SampleRepresentation.FFfromFile("Co.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
 FF_Sr=SampleRepresentation.FFfromFile("Sr.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
+FF_Ya=SampleRepresentation.FFfromScaledAbsorption(E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),tabulated_filename="C_tabul.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False),minE=150,maxE=1000)
 
 
 SampleRepresentation.AtomLayerObject.registerAtom("Co",FF_Co)
 SampleRepresentation.AtomLayerObject.registerAtom("Sr",FF_Sr)
 SampleRepresentation.AtomLayerObject.registerAtom("Al",SampleRepresentation.FFfromFile("Al.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False)))
+SampleRepresentation.AtomLayerObject.registerAtom("Yannicium", FF_Ya)
 
 
-al1=SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al1_density_Sr"),"Al":pp.newParameter("al1_density_Al"),"Co":pp.newParameter("al1_density_Co")},pp.newParameter("al1_d"))
-
+#create one atom layer object with above registered atoms and put it into the heterostructure
+print "Create atom layer object with registered atoms and put it into the heterostructure"
+al1=SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al1_density_Sr"), "Al":pp.newParameter("al1_density_Al"), "Yannicium":pp.newParameter("al1_density_Ya") }, pp.newParameter("al1_d"))
+hs.setLayer(8,al1)
+#add some more atom layer objects
+print "add some more atom layer objects"
+for i in range(9,13):
+    hs.setLayer(i, SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al"+str(i-7)+"_density_Sr"), "Al":pp.newParameter("al"+str(i-7)+"_density_Al"), "Yannicium":pp.newParameter("al"+str(i-7)+"_density_Ya") }, pp.newParameter("al"+str(i-7)+"_d")))
 
 
 #set up experiment

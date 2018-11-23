@@ -418,15 +418,15 @@ class ReflDataSimulator(object):
             for line in lines:
                 output=linereaderfunction(line)
                 if output is not None:
-                    energy,angle,rsigma,rpi,rleft,rright,xmcd,total=output
+                    datapoint=output
                     if file_energy is not None:                                                  #overwrite energy and/or angle if file-wide energy and/or angle is given
-                        energy=file_energy
+                        datapoint[0]=file_energy                #set "energy" of the datapoint to "file_energy"
                     if file_angle is not None:
-                        angle=file_angle
-                    if energy is None or angle is None:
-                        raise Exception("Needed data not in line")
+                        datapoint[1]=file_angle                 #set "angle" of the datapoint to "file_angle"
+                    if datapoint[0] is None or datapoint[1] is None:
+                        raise Exception("Needed data (energy or angle) not in line")
                     if pointmodifierfunction is not None:
-                        datapoint=pointmodifierfunction([energy,angle,rsigma,rpi,rleft,rright,xmcd,total])   #apply pointmodifierfunction; datapoint should be an array like this [energy,angle,rsigma,rpi,rleft,rright,xmcd,total]
+                        datapoint=pointmodifierfunction(datapoint)   #apply pointmodifierfunction; datapoint should be an array like this [energy,angle,rsigma,rpi,rleft,rright,xmcd,total]
                     dest_datapoint=self._destillDatapoint(datapoint,skipzeroreflectivities)
                     if dest_datapoint is not None:
                         datapoints.append(dest_datapoint)                    

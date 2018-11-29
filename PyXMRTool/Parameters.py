@@ -693,7 +693,8 @@ class ParametrizedFunction(object):
     def __str__(self):
         """Determines how an *object* of this class react on ``str(object)``."""
         return "<" + type(self).__module__ + "." + type(self).__name__ + " object: parametrized with " + ", ".join([str(arg) for arg in self._args])+">"
-            
+    
+        
     #public methods
     def getValue(self, x, fitpararray=None):
         """

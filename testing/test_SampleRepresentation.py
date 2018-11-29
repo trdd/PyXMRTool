@@ -70,17 +70,22 @@ FF_Sr=SampleRepresentation.FFfromFile("Sr.F",SampleRepresentation.FFfromFile.cre
 #"C_Theo.F" enthaelt Real- und Imaginaerteil des Formfaktors, aber jeweils nur als Skalar.
 print "... FF_Ya"
 FF_Ya=SampleRepresentation.FFfromScaledAbsorption(E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),tabulated_filename="C_tabul.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False),minE=150,maxE=650)
+print "... MFF_Ya"
+MFF_Ya=SampleRepresentation.MFFfromXMCD(pp.newParameter("theta_M"), pp.newParameter("phi_M"), "generated_xmcd.txt")
 
 print "Register atoms"
 SampleRepresentation.AtomLayerObject.registerAtom("Co",FF_Co)
 SampleRepresentation.AtomLayerObject.registerAtom("Sr",FF_Sr)
 SampleRepresentation.AtomLayerObject.registerAtom("Al",SampleRepresentation.FFfromFile("Al.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False)))
 SampleRepresentation.AtomLayerObject.registerAtom("Yannicium", FF_Ya)
+SampleRepresentation.AtomLayerObject.registerAtom("Yannicium_Magnetization", MFF_Ya)
 
 
 #test ploting
 print "Plot Formfactor FF_Ya"
 FF_Ya.plotFF(ar,np.linspace(200,600,10000))
+print "Plot Magnetic Formfactor MFF_Ya"
+MFF_Ya.plotFF(ar,np.linspace(200,600,10000))
 
 #test behavior of FF_Ya
 print "Test behavior of FF_Ya"

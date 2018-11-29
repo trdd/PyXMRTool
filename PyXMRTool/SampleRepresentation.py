@@ -641,7 +641,7 @@ class Formfactor(object):
     
     def getFF(self,energy,fitpararray=None):
         """
-        Return the formfactor for **energy** corresponding to **fitpararray** (if it depends on it) as 9-element list of complex numbers.
+        Return the formfactor for **energy** corresponding to **fitpararray** (if it depends on it) as 9-element Numpy array of complex numbers.
         
         **energy** is measured in units of eV.
         """
@@ -687,7 +687,7 @@ class Formfactor(object):
    
 class FFfromFile(Formfactor):
     """
-    Class to deal with energy-dependent atomic form-factors which are tabulated in files.
+    Class to deal with energy-dependent atomic form-factors (entire tensor) which are tabulated in files.
     """
   
     def __init__(self, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0)):
@@ -1086,7 +1086,7 @@ class FFfromScaledAbsorption(Formfactor):
         """
         Return the standard linereader function for absorption files for usage with :meth:`FFfromScaledAbsorption.__init__`.
         
-        This standard linereader function reads energy and elements of the imaginary part of the formfactor tensor as a whitespace-seperated list (i.e. 10 numbers) and interpretes \"#\" as comment sign.
+        This standard linereader function reads energy and elements of the imaginary part of the formfactor tensor as a whitespace-seperated list (i.e. 4 numbers) and interpretes \"#\" as comment sign.
         """
         commentsymbol='#'
         def linereader(line):
@@ -1160,10 +1160,10 @@ class FFfromScaledAbsorption(Formfactor):
         scaling_factor=self._scaling_factor.getValue(fitpararray)
         energyshift=self._energyshift.getValue(fitpararray)
         
-        if energy+energyshift<self.minE or energy+energyshift>self.maxE:                                  #use this strange construction with numpy arrays to allow "energy" to be a numpy array of energies
-            raise ValueError("\'energy + energyshift = "+str(energy)+" + "+ str(energyshift) + " = " + str(energy+energyshift) +"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
+        if energy-energyshift<self.minE or energy-energyshift>self.maxE:                                  #use this strange construction with numpy arrays to allow "energy" to be a numpy array of energies
+            raise ValueError("\'energy + energyshift = "+str(energy)+" - "+ str(energyshift) + " = " + str(energy-energyshift) +"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
         
-        energy=energy+energyshift  #apply energyshift
+        energy=energy-energyshift  #apply energyshift
         
         ImFF  = (scaling_factor - 1) * self._d_im_f1_interpolator(energy)  + self._im_f1_interpolator(energy)
         tab_real=self._tab_interpolator(energy)[0]
@@ -1171,6 +1171,236 @@ class FFfromScaledAbsorption(Formfactor):
            
         return RealFF + 1j* ImFF
     
+    #properties
+    maxE=property(_getMaxE)
+    """Upper limit of stored energy range. Read-only."""
+    minE=property(_getMinE)
+    """Lower limit of stored energy range. Read-only."""
+    
+    
+#-----------------------------------------------------------------------------------------------------------------------------
+# Magnetic Formfactor classes
+
+class MagneticFormfactor(Formfactor):
+    """
+    Base class to deal with energy-dependent magnetic form-factors, i.e. only off-diagonal elements of a formfactor tensor originating from the magnetization.
+    """
+    
+    def __init__(self, m_prime, m_primeprime, theta_M, phi_M, minE, maxE, energyshift=Parameters.Parameter(0)):
+        """Initializes the MagneticFormfactor with energy-dependent magnetic terms **m_prime** and **m_primeprime** and the angles **theta_M** and **phi_M** which describe the direction of the magnetization.
+        
+        See *Macke and Goering 2014, J.Phys.: Condens. Matter 26, 363201.* Eq. 11-14 for details.
+        
+        
+        Parameters
+        ----------
+        **m_prime** : :class:Parameters.ParametrizedFunction
+        **m_primeprime** : :class:Parameters.ParametrizedFunction
+            Real and imaginary parts of the magnetic term. Given as parametrized functions of energy.
+        theta_M, phi_M : :class:Parameters.Parameter
+            Angles which describe the direction of the magnetization measured in degrees.
+        minE : float
+        maxE : float
+            Lower and upper limits of the energy range for which the formfactor is defined.
+        energyshift : :class:`Parameters.Parameter`
+            Species a fittable energyshift between the energy-dependent formfactor created from the XMCD measurement and the `real` one in the reflectivity measurement.
+        """
+        
+        #check parameters
+        if not isinstance(m_prime, Parameters.ParametrizedFunction):
+            raise TypeError("\'m_prime\' has to be an instance of \'Parameters.ParametrizedFunction\'.")
+        if not isinstance(m_primeprime, Parameters.ParametrizedFunction):
+            raise TypeError("\'m_primeprime\' has to be an instance of \'Parameters.ParametrizedFunction\'.")
+        if not isinstance(theta_M, Parameters.Parameter):
+            raise TypeError("\'theta_M\' has to be an instance of \'Parameters.Parameter\'.")
+        if not isinstance(phi_M, Parameters.Parameter):
+            raise TypeError("\'phi_M\' has to be an instance of \'Parameters.Parameter\'.")
+        if not isinstance(minE, numbers.Real):
+            raise TypeError("\'minE\' has to be a real number.")
+        if not isinstance(maxE, numbers.Real):
+            raise TypeError("\'maxE\' has to be a real number.")
+        if minE<0 or maxE<0:
+            raise ValueError("\'minE\' and \'maxE\' have to be greater than zero.")
+        if minE>=maxE:
+            raise ValueError("\'minE\' has to be smaller than \'maxE\'.")
+        if not isinstance(energyshift,Parameters.Parameter):
+            raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
+        
+        #store parameters
+        self._mp=m_prime
+        self._mpp=m_primeprime
+        self._theta_M=theta_M
+        self._phi_M=phi_M
+        self._minE=minE
+        self._maxE=maxE
+   
+    #private methods
+    def _getMinE(self):
+        return self._minE
+    
+    def _getMaxE(self):
+        return self._maxE
+    
+    #public methods
+    def getFF(self,energy,fitpararray=None):
+        """
+        Return the magnetic part of the formfactor for **energy** corresponding to **fitpararray** (if it depends on it) as 9-element list of complex numbers.
+        
+        The diagonal elements are all zero here.
+        
+        **energy** is measured in units of eV.
+        """
+        theta_M=numpy.pi/180.0*self._theta_M.getValue(fitpararray)
+        phi_M=numpy.pi/180.0*self._phi_M.getValue(fitpararray)
+        
+        energyshift=self._energyshift.getValue(fitpararray)
+        
+        if energy-energyshift<self.minE or energy-energyshift>self.maxE:                                  #use this strange construction with numpy arrays to allow "energy" to be a numpy array of energies
+            raise ValueError("\'energy + energyshift = "+str(energy)+" - "+ str(energyshift) + " = " + str(energy-energyshift) +"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
+        
+        energy=energy-energyshift  #apply energyshift
+        
+        return ( 1j*self._mp.getValue(energy, fitpararray) - self._mpp.getValue(energy, fitpararray) ) * numpy.array( [ 0 , numpy.cos(theta_M) , -numpy.sin(theta_M)*numpy.sin(phi_M), -numpy.cos(theta_M) , 0 , numpy.sin(theta_M)*numpy.cos(phi_M), numpy.sin(theta_M)*numpy.sin(phi_M) , -numpy.sin(theta_M)*numpy.cos(phi_M) , 0 ] )
+
+    #properties
+    maxE=property(_getMaxE)
+    """Upper limit of stored energy range. Read-only."""
+    minE=property(_getMinE)
+    """Lower limit of stored energy range. Read-only."""
+    
+    
+class MFFfromXMCD(MagneticFormfactor):
+    """
+    Class to deal with a magnetic formfactor (MFF) derived from an XMCD measurement.
+    
+    BEWARE: The absolut values are only correct if you scaled the XMCD signal to tabulated absorbtion data. But usually it is enough to get relative values, which can give you magnetization profiles.
+    """
+    
+    
+        
+    def __init__(self, theta_M, phi_M, filename, linereaderfunction=None, minE=None, maxE=None, energyshift=Parameters.Parameter(0)):
+        """Initializes the MFF from an XMCD measurement given as textfile.
+        
+        The XMCD values are directly used to create the **m_primeprime** function.
+        
+        The **m_prime** function is found as Kramers-Kronig transformation of **m_primeprime**.
+        
+
+        
+        
+        Parameters
+        ----------
+        theta_M, phi_M : :class:Parameters.Parameter
+            Angles which describe the direction of the magnetization measured in degrees.
+        filename : str
+            Path to the text file which contains the XMCD signal as function of energy.
+        linereaderfunction : callable
+            This function is used to convert one line from the *xmcd* text file to data.
+            It should be a function which takes a string and returns a tuple or list of 2 values: ``(energy, xmcd)``,
+            where `energy` is measured in units of `eV` and 'xmcd' is a real value in units of `e/atom` (dimensionless) (if it is scaled correctly).
+            It can also return `None` if it detects a comment line.
+            You can use :meth:`MFFfromXMCD.createLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.
+        minE, maxE : float
+            Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **xmcd_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
+        """
+        #check parameters
+        if not isinstance(filename,str):
+            raise TypeError("\'filename\' needs to be a string.")
+        if not os.path.isfile(filename):
+            raise Exception("File \'"+filename+"\' does not exist.")
+        if linereaderfunction is None:
+            linereaderfunction=self.createLinereader()
+        if not callable(linereaderfunction):
+            raise TypeError("\'linereaderfunction\' needs to be a callable object.")
+        if (minE is None and maxE is not None) or (minE is not None and maxE is None):
+            raise Exception("You have to set both, \'minE\' and \'maxE\'.")
+        if minE is not None and (not isinstance(minE,numbers.Real) or minE<0):
+            raise TypeError("\'minE\' must be a positive real number.")
+        if maxE is not None and (not isinstance(maxE,numbers.Real) or maxE<0):
+            raise TypeError("\'maxE\' must be a positive real number.")
+        if maxE is not None and minE is not None and not minE<maxE:
+            raise ValueError("\'minE\' must be smaller than \'maxE\'.")
+
+        
+       
+        #read theoretica/tabulated formfactors from file
+        energies=[]
+        xmcd=[]
+        with open(filename,'r') as f:
+            for line in f:
+                linereaderoutput=linereaderfunction(line)
+                if linereaderoutput is None:
+                    break
+                if not isinstance(linereaderoutput,(tuple,list)) :
+                    raise TypeError("Linereader function has to return a list/tuple.")
+                if not  len(linereaderoutput)==2:
+                    raise ValueError("Linereader function hast to return a list/tuple with 2 elements.")
+                for item in linereaderoutput:
+                    if not isinstance(item,numbers.Real):
+                        raise ValueError("Linereader function hast to return a list/tuple of real numbers.")
+                if (minE is None and maxE is None):
+                    energies.append(linereaderoutput[0])                                                        #store energies in one list
+                    xmcd.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+                elif minE is None:
+                    if linereaderoutput[0]<=maxE:
+                        energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        xmcd.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+                elif maxE is None:
+                    if minE<=linereaderoutput[0]:
+                        energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        xmcd.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+                else:
+                    if minE<=linereaderoutput[0] and linereaderoutput[0]<=maxE:
+                        energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        xmcd.append(linereaderoutput[1])                                                    #store corresponding formfactors in another list
+
+        xmcd=numpy.array(xmcd)                                                                #convert list xmcd to a numpy array for convinience
+        minE=min(energies)
+        maxE=max(energies)
+        
+        #Create an interpolation function based on the given energie-xmcd-points and plug it into a parametrized Function (even thogh theire are no parameters; but it is easy to use the base class) (buying simplicity with speed here). 
+        mpp= Parameters.ParametrizedFunction( interpolate.interp1d( energies, xmcd ) )
+        
+        #perform Kramers-Kronig transformation
+        m_prime=KramersKronig(energies,xmcd)
+        #Create an interpolation function based on m_prime
+        mp= Parameters.ParametrizedFunction( interpolate.interp1d( energies, m_prime) )
+        
+        #call constructor of base class
+        super(MFFfromXMCD, self).__init__(mp, mpp, theta_M, phi_M, minE, maxE, energyshift)
+    
+    #static methods
+    @staticmethod
+    def createLinereader():
+        """
+        Return the standard linereader function for xmcd files for usage with :meth:`MFFfromXMCD.__init__`.
+        
+        This standard linereader function reads energy and xmcd value as a whitespace-seperated list (i.e. 2 numbers) and interpretes \"#\" as comment sign.
+        """
+        commentsymbol='#'
+        def linereader(line):
+            if not isinstance(line,str):
+                raise TypeError("\'line\' needs to be a string.")
+            line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+            if not line.isspace():                               #ignore empty lines        
+                linearray=line.split()
+                if not len(linearray)==2:
+                    raise Exception("XMCD file has wrong format.")
+                linearray=[ast.literal_eval(item) for item in linearray]
+                return linearray
+            else:
+                return None
+        return linereader                                     
+              
+        
+
+    #private methods
+    def _getMinE(self):
+        return self._minE
+    
+    def _getMaxE(self):
+        return self._maxE
+
     #properties
     maxE=property(_getMaxE)
     """Upper limit of stored energy range. Read-only."""

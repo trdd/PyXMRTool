@@ -178,6 +178,7 @@ if __name__ == '__main__':
     #it needs only a costfunction (usually sum of squared residuals), not the residuals
     def cost(fitpararray):
         return simu.getSSR(fitpararray)
+    
     #best, ssr = Fitters.Evolution(cost, pp.getStartLowerUpper(), iterations=10, number_of_cores=3, generation_size=300, mutation_strength=0.01, elite=3, parent_percentage=0.25, control_file=None)# plotfunction=simu.plotData)
     #set best as new start values
     #pp.setStartValues(best)
@@ -191,7 +192,9 @@ if __name__ == '__main__':
     #Instead is has to be wrapped into another function "rescost" which is defined here. (Usual functions are ok instead of instance methods.)
     #plotfunction=simu.plotData leads to a plot of the current state after every iteration. Can also be set to \'None\' (default) if not needed.
     def rescost(fitpararray):
+        print "gerufen"
         return simu.getResidualsSSR(fitpararray)
+
     best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,pp.getStartLowerUpper(), parallel_points=20 ,number_of_cores=used_cores, strict=False, control_file=None,plotfunction=simu.plotData)
     
     

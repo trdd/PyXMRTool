@@ -531,6 +531,16 @@ class ParameterPool(object):
             return self._parPool[index]
         except ValueError:
             return None
+        
+    def getIndex(self, name):
+        """Return index of an existing parameter with name **name** within the expected *fitpararray*."""
+        if not isinstance(name,str):
+            raise TypeError("\'name\' has to be a string.")
+        try:
+            index=[item.name for item in self._parPool].index(name)
+            return index
+        except ValueError:
+            return None
     
     def readFromFile(self,parfilename):        
         """Read parameters and there initialisation values from file *parfilename**, append them to the pool or overwrite existing once.

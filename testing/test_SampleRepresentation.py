@@ -71,7 +71,7 @@ FF_Sr=SampleRepresentation.FFfromFile("Sr.F",SampleRepresentation.FFfromFile.cre
 print "... FF_Ya"
 FF_Ya=SampleRepresentation.FFfromScaledAbsorption(E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),tabulated_filename="C_tabul.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False),minE=150,maxE=650)
 print "... MFF_Ya"
-MFF_Ya=SampleRepresentation.MFFfromXMCD(pp.newParameter("theta_M"), pp.newParameter("phi_M"), "generated_xmcd.txt")
+MFF_Ya=SampleRepresentation.MFFfromXMCD(pp.newParameter("theta_M"), pp.newParameter("phi_M"), "generated_xmcd.txt", minE=50, maxE=700, energyshift=pp.newParameter("MFF_energyshift"))
 
 print "Register atoms"
 SampleRepresentation.AtomLayerObject.registerAtom("Co",FF_Co)
@@ -91,12 +91,12 @@ MFF_Ya.plotFF(ar,np.linspace(200,600,10000))
 print "Test behavior of FF_Ya"
 print "...Therefore plot FF_Ya (real and imag) with scaling_factor=1, scaling_factor=3 and the stored theoretical/tabulated values."
 en=np.arange(150,600)
-ar[27]=1  #setze scaling_factor auf 1
+ar[pp.getIndex("Ya_scaling")]=1  #setze scaling_factor auf 1
 one=[]
 for e in en:
     one.append(FF_Ya.getFF(e,ar)[0])
 one=np.array(one)
-ar[27]=3  #setze scaling_factor auf 3
+ar[pp.getIndex("Ya_scaling")]=3  #setze scaling_factor auf 3
 ten=[]
 for e in en:
     ten.append(FF_Ya.getFF(e,ar)[0])
@@ -119,12 +119,12 @@ plt.show()
 
 #create one atom layer object with above registered atoms and put it into the heterostructure
 print "Create atom layer object with registered atoms and put it into the heterostructure"
-al1=SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al1_density_Sr"), "Al":pp.newParameter("al1_density_Al"), "Yannicium":pp.newParameter("al1_density_Ya") }, pp.newParameter("al1_d"))
+al1=SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al1_density_Sr"), "Al":pp.newParameter("al1_density_Al"), "Yannicium":pp.newParameter("al1_density_Ya") , "Yannicium_Magnetization":pp.newParameter("al1_magnetization")}, pp.newParameter("al1_d"))
 hs.setLayer(8,al1)
 #add some more atom layer objects
 print "add some more atom layer objects"
 for i in range(9,13):
-    hs.setLayer(i, SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al"+str(i-7)+"_density_Sr"), "Al":pp.newParameter("al"+str(i-7)+"_density_Al"), "Yannicium":pp.newParameter("al"+str(i-7)+"_density_Ya") }, pp.newParameter("al"+str(i-7)+"_d")))
+    hs.setLayer(i, SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al"+str(i-7)+"_density_Sr"), "Al":pp.newParameter("al"+str(i-7)+"_density_Al"), "Yannicium":pp.newParameter("al"+str(i-7)+"_density_Ya"), "Yannicium_Magnetization":pp.newParameter("al"+str(i-7)+"_magnetization") }, pp.newParameter("al"+str(i-7)+"_d")))
 
 
 #pp.writeToFile("partest-samplerep.txt")

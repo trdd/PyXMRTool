@@ -667,14 +667,15 @@ class Formfactor(object):
         ff=numpy.transpose(ff)
         fig = matplotlib.pyplot.figure(figsize=(10,10))
         axes=[]
-        for i in range(9):
-            axes.append(fig.add_subplot(330+i+1))
+        axes.append(fig.add_subplot(331))
+        for i in range(1,9):
+            axes.append(fig.add_subplot(330+i+1, sharey=axes[0]))
         i=0
         for ax in axes:
             ax.set_xlabel('energy (eV)')
             ax.locator_params(axis='x', nbins=4)
-            ax.plot(energies,ff[i].real)
-            ax.plot(energies,ff[i].imag)
+            ax.plot(energies,ff[i].real, label="real")
+            ax.plot(energies,ff[i].imag, label="imaginary")
             i+=1
         matplotlib.pyplot.show()
         
@@ -1194,8 +1195,8 @@ class MagneticFormfactor(Formfactor):
         
         Parameters
         ----------
-        **m_prime** : :class:Parameters.ParametrizedFunction
-        **m_primeprime** : :class:Parameters.ParametrizedFunction
+        m_prime : :class:Parameters.ParametrizedFunction
+        m_primeprime : :class:Parameters.ParametrizedFunction
             Real and imaginary parts of the magnetic term. Given as parametrized functions of energy.
         theta_M, phi_M : :class:Parameters.Parameter
             Angles which describe the direction of the magnetization measured in degrees.
@@ -1233,6 +1234,7 @@ class MagneticFormfactor(Formfactor):
         self._phi_M=phi_M
         self._minE=minE
         self._maxE=maxE
+        self._energyshift=energyshift
    
     #private methods
     def _getMinE(self):
@@ -1300,7 +1302,8 @@ class MFFfromXMCD(MagneticFormfactor):
             where `energy` is measured in units of `eV` and 'xmcd' is a real value in units of `e/atom` (dimensionless) (if it is scaled correctly).
             It can also return `None` if it detects a comment line.
             You can use :meth:`MFFfromXMCD.createLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.
-        minE, maxE : float
+        minE : float
+        maxE : float
             Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **xmcd_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
         """
         #check parameters

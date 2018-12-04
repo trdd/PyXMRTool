@@ -42,9 +42,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
-    'sphinx.ext.imgmath',
+#    'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
+#    'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
 ]
 

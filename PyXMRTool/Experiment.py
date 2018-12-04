@@ -621,9 +621,11 @@ class ReflDataSimulator(object):
         ssr = numpy.sum( numpy.square( residuals  ))
         return residuals,ssr
     
-    def plotData(self, fitpararray,simcolor='r',expcolor='b',simlabel='simulated',explabel='experimental'):
+    def plotData(self, fitpararray,simcolor='r',expcolor='b',simlabel='simulated',explabel='experimental',energy_angles=None):
         """
         Plot simulated and experimental data.
+        
+        If **energy_angles** is given, it will only plot simulated data for the given energy/angle combinations.
         
         This function generates a plot at the first call and refreshes it if called again.
         
@@ -637,6 +639,12 @@ class ReflDataSimulator(object):
                 Label shown in the legend of the plot for the simulated data. Default is *"simulated"*.
             explabel : str 
                 Label shown in the legend of the plot for the experimental data. Default is *"experimental"*.
+            energy_angles : list
+                If given, only simulated data will be plotted for the given energy/angle combinations.
+                It has to have the following shape::
+        
+                    [[energy1,[angle11,....angle1N]], ...[energyL,[angleL,....angleLK]]
+                    
         """
         
         #check parameters
@@ -648,15 +656,23 @@ class ReflDataSimulator(object):
             raise TypeError("\'simlabel\' must be of string type.")
         if not isinstance(explabel,str):
             raise TypeError("\'explabel\' must be of string type.")
+        if energy_angles is not None:
+            if not isinstance(energy_angles,(list,tuple)):
+                raise ValueError("`energy_angles` needs to be a list or tuple.")
+            for item in energy_angles:
+                if not len(item)==2:
+                    raise ValueError("`energy_angles` has a wrong shape.")
+                if not isinstance(item[0],numbers.Real):
+                    raise ValueError("`energy_angles` has a wrong shape.")
+                if not isinstance(item[1],(list,tuple)):
+                    raise ValueError("`energy_angles` has a wrong shape.")
         
         
         
         #get data
-        simdata=self.getSimData(fitpararray)
-        expdata=self.getExpData()
-        
-        
-       
+        simdata=self.getSimData(fitpararray,energy_angles)
+        if energy_angles is None:
+          expdata=self.getExpData()
            
         if hasattr(self,'_fig'):            #close previous figure
             plt.close(self._fig)
@@ -685,9 +701,10 @@ class ReflDataSimulator(object):
             self._ax2.set_xlabel('theta')
             self._ax2.set_ylabel('energy')
             self._ax2.set_zlabel('pi refl.')
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
-                self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+                    self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
@@ -717,9 +734,10 @@ class ReflDataSimulator(object):
             self._ax2.set_xlabel('theta')
             self._ax2.set_ylabel('energy')
             self._ax2.set_zlabel('right circ. refl.')
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
-                self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+                    self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
@@ -733,9 +751,10 @@ class ReflDataSimulator(object):
             self._ax2.set_xlabel('theta')
             self._ax2.set_ylabel('energy')
             self._ax2.set_zlabel('log( right circ. refl. )')
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
-                self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
+                    self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and log of intensities on the z axis
@@ -745,8 +764,9 @@ class ReflDataSimulator(object):
             self._ax1.set_xlabel('angle')
             self._ax1.set_ylabel('energy')
             self._ax1.set_zlabel('total refl.')
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
                 
@@ -755,18 +775,20 @@ class ReflDataSimulator(object):
             self._ax1.set_xlabel('angle')
             self._ax1.set_ylabel('energy')
             self._ax1.set_zlabel('log( total refl. )')
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
         
         elif self._mode == "x":            #xmcd#log of sum of circular polarizations
             self._ax1.clear()
             self._ax1.set_xlabel('angle')
             self._ax1.set_ylabel('energy')
             self._ax1.set_zlabel('xmcd')
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
                         
@@ -786,10 +808,11 @@ class ReflDataSimulator(object):
                 self._ax3.set_zlabel('xmcd')
             else:
                 self._ax3.set_zlabel('xmcd * '+str(self._xmcdfactor))
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
-                self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
-                self._ax3.plot(item[1],item[0]*numpy.ones(len(item[1])),numpy.array(item[4]),color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+                    self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+                    self._ax3.plot(item[1],item[0]*numpy.ones(len(item[1])),numpy.array(item[4]),color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
@@ -811,10 +834,11 @@ class ReflDataSimulator(object):
                 self._ax3.set_zlabel('xmcd')
             else:
                 self._ax3.set_zlabel('xmcd * '+str(self._xmcdfactor))
-            for item in expdata:                                                            #go trough energies of experimental data
-                self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
-                self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
-                self._ax3.plot(item[1],item[0]*numpy.ones(len(item[1])),numpy.array(item[4]),color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
+            if energy_angles is None:
+                for item in expdata:                                                            #go trough energies of experimental data
+                    self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+                    self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=expcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
+                    self._ax3.plot(item[1],item[0]*numpy.ones(len(item[1])),numpy.array(item[4]),color=expcolor)   #angles on the x axis, energies on the y axis and xmcd on the z axis
             for item in simdata:                                                            #go trough energies of simulated data
                 self._ax1.plot(item[1],item[0]*numpy.ones(len(item[1])),item[2],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis
                 self._ax2.plot(item[1],item[0]*numpy.ones(len(item[1])),item[3],color=simcolor)   #angles on the x axis, energies on the y axis and intensities on the z axis

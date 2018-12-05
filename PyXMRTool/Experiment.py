@@ -904,7 +904,7 @@ class ReflDataSimulator(object):
                 if not isinstance(line,str):
                     raise TypeError("\'line\' needs to be a string.")
                 line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-                if not line.isspace():                               #ignore empty lines        
+                if not line.isspace() and line:                               #ignore empty lines        
                     linearray=line.split()
                     linelist=[]
                     i=0

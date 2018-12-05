@@ -706,7 +706,7 @@ class FFfromFile(Formfactor):
             You can use :meth:`FFfromFile.createLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.
         energyshift : :class:`Parameters.Parameter`
             Species a fittable energyshift between the energy-dependent formfactor from **filename** and the `real` one in the reflectivity measurement.
-            So the formfactor delivered from :meth:`FFfromFile.getFF` will not be `formfactor_from_file(E)` but `formfactor_from_file(E+energyshift)`.
+            So the formfactor delivered from :meth:`FFfromFile.getFF` will not be `formfactor_from_file(E)` but `formfactor_from_file(E-energyshift)`.
         """
         if not isinstance(filename,str):
             raise TypeError("\'filename\' needs to be a string.")
@@ -724,7 +724,7 @@ class FFfromFile(Formfactor):
             for line in f:
                 linereaderoutput=linereaderfunction(line)
                 if linereaderoutput is None:
-                    break
+                    continue
                 if not isinstance(linereaderoutput,(tuple,list)) :
                     raise TypeError("Linereader function has to return a list/tuple.")
                 if not  len(linereaderoutput)==10:
@@ -771,7 +771,7 @@ class FFfromFile(Formfactor):
                 if not isinstance(line,str):
                     raise TypeError("\'line\' needs to be a string.")
                 line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-                if not line.isspace():                               #ignore empty lines        
+                if not line.isspace() and line:                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==10:
                         raise Exception("Formfactor file has wrong format.")
@@ -784,7 +784,7 @@ class FFfromFile(Formfactor):
                 if not isinstance(line,str):
                     raise TypeError("\'line\' needs to be a string.")
                 line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-                if not line.isspace():                               #ignore empty lines        
+                if not line.isspace() and line:                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==19:
                         raise Exception("Formfactor file has wrong format.")
@@ -809,9 +809,9 @@ class FFfromFile(Formfactor):
         """
         energyshift=self._energyshift.getValue(fitpararray)
         
-        if energy+energyshift<self.minE or energy+energyshift>self.maxE:
-            raise ValueError("\'energy + energyshift = "+str(energy)+" + "+ str(energyshift) + " = " + str(energy+energyshift) +"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
-        FFallReal=self._interpolator(energy+energyshift)
+        if energy+energyshift<self.minE or energy-energyshift>self.maxE:
+            raise ValueError("\'energy - energyshift = "+str(energy)+" + "+ str(energyshift) + " = " + str(energy-energyshift) +"\' is out of range ("+str(self.minE)+","+str(self.maxE)+").")
+        FFallReal=self._interpolator(energy-energyshift)
         #return directly the numpy array, it is usefull further Calculation
         return FFallReal[:9]+FFallReal[9:]*1j
     
@@ -930,7 +930,7 @@ class FFfromScaledAbsorption(Formfactor):
             for line in f:
                 linereaderoutput=tabulated_linereaderfunction(line)
                 if linereaderoutput is None:
-                    break
+                    continue
                 if not isinstance(linereaderoutput,(tuple,list)) :
                     raise TypeError("Linereader function has to return a list/tuple.")
                 if not  len(linereaderoutput)==2:
@@ -971,7 +971,7 @@ class FFfromScaledAbsorption(Formfactor):
             for line in f:
                 linereaderoutput=absorption_linereaderfunction(line)
                 if linereaderoutput is None:
-                    break
+                    continue
                 if not isinstance(linereaderoutput,(tuple,list)) :
                     raise TypeError("Linereader function has to return a list/tuple.")
                 if not  len(linereaderoutput)==4:
@@ -1094,7 +1094,7 @@ class FFfromScaledAbsorption(Formfactor):
             if not isinstance(line,str):
                 raise TypeError("\'line\' needs to be a string.")
             line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-            if not line.isspace():                               #ignore empty lines        
+            if not line.isspace() and line:                               #ignore empty lines        
                 linearray=line.split()
                 if not len(linearray)==4:
                     raise Exception("Absorption file has wrong format.")
@@ -1122,7 +1122,7 @@ class FFfromScaledAbsorption(Formfactor):
                 if not isinstance(line,str):
                     raise TypeError("\'line\' needs to be a string.")
                 line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-                if not line.isspace():                               #ignore empty lines        
+                if not line.isspace() and line:                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==2:
                         raise Exception("File for tabulated formfactor has wrong format.")
@@ -1135,7 +1135,7 @@ class FFfromScaledAbsorption(Formfactor):
                 if not isinstance(line,str):
                     raise TypeError("\'line\' needs to be a string.")
                 line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-                if not line.isspace():                               #ignore empty lines        
+                if not line.isspace() and line:                               #ignore empty lines        
                     linearray=line.split()
                     if not len(linearray)==3:
                         raise Exception("File for tabulated formfactor file has wrong format.")
@@ -1333,7 +1333,7 @@ class MFFfromXMCD(MagneticFormfactor):
             for line in f:
                 linereaderoutput=linereaderfunction(line)
                 if linereaderoutput is None:
-                    break
+                    continue
                 if not isinstance(linereaderoutput,(tuple,list)) :
                     raise TypeError("Linereader function has to return a list/tuple.")
                 if not  len(linereaderoutput)==2:
@@ -1385,7 +1385,7 @@ class MFFfromXMCD(MagneticFormfactor):
             if not isinstance(line,str):
                 raise TypeError("\'line\' needs to be a string.")
             line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-            if not line.isspace():                               #ignore empty lines        
+            if not line.isspace() and line:                               #ignore empty lines        
                 linearray=line.split()
                 if not len(linearray)==2:
                     raise Exception("XMCD file has wrong format.")

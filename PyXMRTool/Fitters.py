@@ -319,10 +319,12 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , pa
         all_fitpararrays=[copy.copy(aite) for i in range(number_of_fitparameters+1)]          ##this Matrix stores fitparameters for each point that is calculated in parallel
         delta=numpy.zeros(number_of_fitparameters)
         for i in range(number_of_fitparameters):
-            if(all_fitpararrays[i][i]==0 or (lower_limits[i]<0<upper_limits[i]) ):
-                delta[i]=numerical_derivative_factor*max( abs(upper_limits[i]), abs(lower_limits[i] ) )
-            else:
-                delta[i]=numerical_derivative_factor*all_fitpararrays[number_of_fitparameters][i]
+          #YANNIC geaendert in Berlin auf Messzeit 
+            #if(all_fitpararrays[i][i]==0 or (lower_limits[i]<0<upper_limits[i]) ):
+            #    delta[i]=numerical_derivative_factor*max( abs(upper_limits[i]), abs(lower_limits[i] ) )
+            #else:
+            #    delta[i]=numerical_derivative_factor*all_fitpararrays[number_of_fitparameters][i]  
+            delta[i]=numerical_derivative_factor*abs(upper_limits[i]-lower_limits[i] )
             all_fitpararrays[i][i]+=delta[i]
 
 

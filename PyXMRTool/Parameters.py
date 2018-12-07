@@ -474,7 +474,7 @@ class ParameterPool(object):
              return None
         elif 'j' in string or 'J' in string:
             return complex(string)
-        elif '.' in string:
+        elif '.' in string or 'e' in string:
             return float(string)
         else:
             return int(string)
@@ -645,7 +645,7 @@ class ParameterPool(object):
     def setStartValues(self,fitpararray):
         """Set the start values of all parameters which are not fixed using **fitpararray** in the order of occurence in the pool (order of parameter creation). First real and then complex ones.
         
-           Can be used e.g. after finding goog start values with an Evolutionary fitter.
+           Can be used e.g. to write the result of a fit as start values a the parameter file.
         """
         lenreal=len(self._realUnfixedArray)
         lencomplex=len(self._complexUnfixedArray)

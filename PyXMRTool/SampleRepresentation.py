@@ -308,6 +308,7 @@ class LayerObject(object):
         ----------
         d : :class:`Parameters.Parameter`
             Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+            *None* or *0* mean infinitively thick.
         sigma : :class:`Parameters.Parameter`
             The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
         chitensor : list of :class:`Parameters.Parameter`
@@ -454,6 +455,7 @@ class ModelChiLayerObject(LayerObject):
         ----------
         d : :class:`Parameters.Parameter`
             Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+            *None* or *0* mean infinitively thick.
         sigma : :class:`Parameters.Parameter`
             The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
         chitensorfunction : :class:`Parameters.ParametrizedFunction`
@@ -529,6 +531,7 @@ class AtomLayerObject(LayerObject):
             a dictionary which contains atom names (strings, must agree with before registered atoms) and densities (must be instances of :class:`Parameters.Parameter` or of a derived class).
         d : :class:`Parameters.Parameter`
             Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+            *None* or *0* mean infinitively thick.
         sigma : :class:`Parameters.Parameter`
             The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
         densityunitfactor : float

@@ -6,4 +6,5 @@ setup(
     packages=['PyXMRTool',],
     license='GNU Lesser General Public License v3.0',
     long_description=open('README.md').read(),
+    package_data={'PyXMRTool': ['resources/ChantlerTables/*.cff']}
 )

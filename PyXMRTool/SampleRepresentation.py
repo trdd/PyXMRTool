@@ -64,6 +64,23 @@ import Pythonreflectivity
 import Parameters
 
 
+#-----------------------------------------------------------------------------------------------------------------------------
+# global variables for setup
+
+chantler_directory = "resources/ChantlerTables"                #directory which contains Chantler tables relative to this module's directory
+chantler_suffix = ".cff"                                       #suffix of files containing a Chantler table
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------------
+# some stuff happening at exectution of the module
+
+package_directory = os.path.dirname(os.path.abspath(__file__))    #store the absolute path of this  module
+
+
+#-----------------------------------------------------------------------------------------------------------------------------
+# Heterostructure
+
 class Heterostructure(object):
     """Represents a heterostructure as a stack of instances of :class:`.LayerObject` or of derived classes.
     Its main pupose is to model the sample in a very flexibel way and to get the list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) with defined susceptibilities at certain energies.
@@ -662,7 +679,7 @@ class Formfactor(object):
         The **fitpararray** has only to be given in cases where the formfactor depends on a fitparamter, e.g. for class:`FFfromScaledAbsorption`.
         """
         if energies is None:
-            energies=numpy.linspace(self.minE, self.maxE, 1000)
+            energies=numpy.linspace(self.minE, self.maxE, 10000)
         ff=[]
         for e in energies:
             ff.append(self.getFF(e,fitpararray))
@@ -677,9 +694,10 @@ class Formfactor(object):
         for ax in axes:
             ax.set_xlabel('energy (eV)')
             ax.locator_params(axis='x', nbins=4)
-            ax.plot(energies,ff[i].real, label="real")
-            ax.plot(energies,ff[i].imag, label="imaginary")
+            l1=ax.plot(energies,ff[i].real, label="real")
+            l2=ax.plot(energies,ff[i].imag, label="imaginary")
             i+=1
+        axes[6].legend()                    #only place a legend in the lower left element. Not nice, but works.
         matplotlib.pyplot.show()
         
     #properties
@@ -694,7 +712,7 @@ class FFfromFile(Formfactor):
     Class to deal with energy-dependent atomic form-factors (entire tensor) which are tabulated in files.
     """
   
-    def __init__(self, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0)):
+    def __init__(self, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
         """Initializes the FFfromFile object with an energy-dependent formfactor given as file.
         
         Parameters
@@ -710,6 +728,9 @@ class FFfromFile(Formfactor):
         energyshift : :class:`Parameters.Parameter`
             Species a fittable energyshift between the energy-dependent formfactor from **filename** and the `real` one in the reflectivity measurement.
             So the formfactor delivered from :meth:`FFfromFile.getFF` will not be `formfactor_from_file(E)` but `formfactor_from_file(E-energyshift)`.
+        minE : float
+        maxE : float
+            State lower/upper limit energy-range which should be used. Not necessary to state, but can reduce the amount of stored data.
         """
         if not isinstance(filename,str):
             raise TypeError("\'filename\' needs to be a string.")
@@ -721,6 +742,13 @@ class FFfromFile(Formfactor):
             raise Exception("File \'"+filename+"\' does not exist.")
         if not isinstance(energyshift,Parameters.Parameter):
             raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
+        if minE is not None and (not isinstance(minE,numbers.Real) or minE<0):
+            raise TypeError("\'minE\' must be a positive real number.")
+        if maxE is not None and (not isinstance(maxE,numbers.Real) or maxE<0):
+            raise TypeError("\'maxE\' must be a positive real number.")
+        if maxE is not None and minE is not None and not minE<maxE:
+            raise ValueError("\'minE\' must be smaller than \'maxE\'.")
+        
         energies=[]
         formfactors=[]
         with open(filename,'r') as f:
@@ -737,8 +765,22 @@ class FFfromFile(Formfactor):
                         raise ValueError("Linereader function hast to return a list/tuple of numbers.")
                 if isinstance(linereaderoutput[0],complex):
                     raise ValueError("Linereader function hast to return a real value for the energy.")
-                energies.append(linereaderoutput[0])                                                        #store energies in one list
-                formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                if (minE is None and maxE is None):
+                    energies.append(linereaderoutput[0])                                                        #store energies in one list
+                    formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                elif minE is None:
+                    if linereaderoutput[0]<=maxE:
+                        energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                elif maxE is None:
+                    if minE<=linereaderoutput[0]:
+                        energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                else:
+                    if minE<=linereaderoutput[0] and linereaderoutput[0]<=maxE:
+                        energies.append(linereaderoutput[0])                                                        #store energies in one list
+                        formfactors.append(linereaderoutput[1:])                                                    #store corresponding formfactors in another list
+                        
         formfactors=numpy.array(formfactors)                                                                #convert list formfactors to a numpy array for convinience
         self._minE=min(energies)
         self._maxE=max(energies)
@@ -824,6 +866,64 @@ class FFfromFile(Formfactor):
     minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
         
+
+class FFfromChantler(FFfromFile):
+    """
+    Class to create an atomic formfactor for an element from  Database (Chantler Tables taken from https://dx.doi.org/10.18434/T4HS32).
+    """
+  
+    def __init__(self, element_symbol, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
+        """Initializes the FFfromChantler object with an energy-dependent formfactor corresponding to the element given with **element_symbol**.
+        
+        Parameters
+        ----------
+        element_symbol : str
+            Refers to the element of which the atomic formfactor should be looked up. (More specifically: name of the corresponding database file without suffix.)
+        energyshift : :class:`Parameters.Parameter`
+            Species a fittable energyshift between the energy-dependent formfactor from Chantler Tables and the `real` one in the reflectivity measurement.
+            So the formfactor delivered from :meth:`FFfromChantler.getFF` will not be `formfactor_from_database(E)` but `formfactor_from_databayse(E-energyshift)`.
+        minE : float
+        maxE : float
+            State lower/upper limit energy-range which should be used. Not necessary to state, but can reduce the amount of stored data.
+        """
+        if not isinstance(element_symbol,str):
+            raise TypeError("\'element_symbol\' needs to be a string.")
+        if not isinstance(energyshift,Parameters.Parameter):
+            raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
+        
+        
+        filename = os.path.join(package_directory, chantler_directory, element_symbol+chantler_suffix)
+        if not os.path.isfile(filename):
+            raise Exception("No database entry for element \'"+element_symbol+"\' existing.")
+        
+        commentsymbol='#'
+        def chantler_linereader(line):
+            line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+            if not line.isspace() and line:                               #ignore empty lines        
+                linearray=line.split()
+                linearray=[float(item) for item in linearray]
+                return [linearray[0], linearray[1]+1j*linearray[2], 0, 0, 0, linearray[1]+1j*linearray[2], 0, 0,0, linearray[1]+1j*linearray[2]]
+            else:
+                return None
+        
+        super(FFfromChantler, self).__init__(filename, chantler_linereader, energyshift, minE, maxE)          #call constructor of parent class (FFfromFile)
+    
+    #def _getMinE(self):
+    #    return self._minE
+    
+    #def _getMaxE(self):
+    #    return self._maxE
+    
+    
+    #public methods
+        #---> all inherited from FFformFile
+        
+    
+    #properties
+    #maxE=property(_getMaxE)
+    """Upper limit of stored energy range. Read-only."""
+    #minE=property(_getMinE)
+    """Lower limit of stored energy range. Read-only."""
         
 class FFfromScaledAbsorption(Formfactor):
     """
@@ -910,8 +1010,6 @@ class FFfromScaledAbsorption(Formfactor):
             raise TypeError("\'absorption_linereaderfunction\' needs to be a callable object.")
         if not isinstance(energyshift,Parameters.Parameter):
             raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
-        if (minE is None and maxE is not None) or (minE is not None and maxE is None):
-            raise Exception("You have to set both, \'minE\' and \'maxE\'.")
         if minE is not None and (not isinstance(minE,numbers.Real) or minE<0):
             raise TypeError("\'minE\' must be a positive real number.")
         if maxE is not None and (not isinstance(maxE,numbers.Real) or maxE<0):

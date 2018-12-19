@@ -337,7 +337,7 @@ class Fitparameter(Parameter):
         if not self.pool is None:
             self.pool._update()
           
-    def getValue(self,fitpararray):
+    def getValue(self,fitpararray=None):
         """Return the value of the parameter corresponding to the given array of values.
         
            This method only works if the fitparameter is connected to an instance of :class:`.ParameterPool`.
@@ -345,6 +345,8 @@ class Fitparameter(Parameter):
         """        
         if self._fixed==True:
             return self._start_val
+        elif fitpararray is None:
+            raise Exception("Parameter needs a \'fitpararray\' to be evaluated.")
         elif self._index is None:
             raise Exception("Parameter has to be attached to a ParameterPool.")
         elif self.pool.getFitArrayLen()<>len(fitpararray):

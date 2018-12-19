@@ -69,6 +69,7 @@ import Parameters
 
 chantler_directory = "resources/ChantlerTables"                #directory which contains Chantler tables relative to this module's directory
 chantler_suffix = ".cff"                                       #suffix of files containing a Chantler table
+chantler_linereader_file = "ChantlerLinereader.pyt"             #filename of the file containing the function chantler_linereader()
 
 
 
@@ -76,7 +77,7 @@ chantler_suffix = ".cff"                                       #suffix of files 
 # some stuff happening at exectution of the module
 
 package_directory = os.path.dirname(os.path.abspath(__file__))    #store the absolute path of this  module
-
+execfile(os.path.join(package_directory, chantler_directory, chantler_linereader_file))
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # Heterostructure
@@ -565,7 +566,12 @@ class AtomLayerObject(LayerObject):
             if not isinstance(densitydict[atomname], Parameters.Parameter):
                 raise TypeError("The values of the \'densitydict\' dictionary have to be instances of the \'Parameter\' class or of derived classes.")
             if atomname not in type(self)._atomdict:
-                raise ValueError("Atom \'"+atomname+"\' has not been registered yet.")
+                try:
+                    type(self).registerAtom(atomname)
+                except LookupError:
+                    raise Exeption("Element \'"+atomname+"\' cannot be found in the Chantler tables and has not been registered yet.")
+                except:
+                    raise
         if not isinstance(densityunitfactor, numbers.Real):
             raise TypeError("\'densityunitfactor\' has to be a real number.")
         
@@ -614,18 +620,23 @@ class AtomLayerObject(LayerObject):
     
     #classmethods                                               #are not related to an instance of a class and are here used to deal with the collection of all registered atoms
     @classmethod
-    def registerAtom(cls, name,formfactor):
+    def registerAtom(cls, name,formfactor=None):
         """
         Register an atom called **name** for later use to instantiate an AtomLayerObject.
         
         **formfactor** as to be an instance of :class:`.Formfactor` or of a derived class.
+        If no formfactor object is given, an instance of :class:`.FFfromChantler` will be created with **name** as element name. 
+        This can be used for an easy registration of atoms with just their tabulated formfactors from the Chantler tables.
+        
         """        
         if not isinstance(name,str):
             raise TypeError("The atom \'name\' has to be a string.")
-        if not isinstance(formfactor,Formfactor):
+        if formfactor is not None and not isinstance(formfactor,Formfactor):
             raise TypeError("\'formfactor\' has to be an instance of \'Formfactor\' or of a derived class.")
         if name in cls._atomdict:
             print "WARNING: Atom \'"+str(name)+"\' is replaced."
+        if formfactor is None:
+            formfactor=FFfromChantler(name)
         cls._atomdict.update({name: formfactor})
     
     @classmethod
@@ -894,19 +905,17 @@ class FFfromChantler(FFfromFile):
         
         filename = os.path.join(package_directory, chantler_directory, element_symbol+chantler_suffix)
         if not os.path.isfile(filename):
-            raise Exception("No database entry for element \'"+element_symbol+"\' existing.")
+            raise LookupError("No database entry for element \'"+element_symbol+"\' existing.")
         
         commentsymbol='#'
-        def chantler_linereader(line):
-            line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-            if not line.isspace() and line:                               #ignore empty lines        
-                linearray=line.split()
-                linearray=[float(item) for item in linearray]
-                return [linearray[0], linearray[1]+1j*linearray[2], 0, 0, 0, linearray[1]+1j*linearray[2], 0, 0,0, linearray[1]+1j*linearray[2]]
+        def wrapper(line):
+            output=chantler_linereader(line)                                                #make use of the chantler_linereader deliverd with the Chantler tables
+            if output is not None:
+                return [output[0], output[1], 0, 0, 0, output[1], 0, 0,0, output[1]]    
             else:
                 return None
         
-        super(FFfromChantler, self).__init__(filename, chantler_linereader, energyshift, minE, maxE)          #call constructor of parent class (FFfromFile)
+        super(FFfromChantler, self).__init__(filename, wrapper, energyshift, minE, maxE)          #call constructor of parent class (FFfromFile)
     
     #def _getMinE(self):
     #    return self._minE
@@ -931,11 +940,11 @@ class FFfromScaledAbsorption(Formfactor):
     It thereby deals only with the diagonal elements of the formfactor tensor. For the off-diagonal elements, the magnetic formfactors classes are used.
     """
     
-    def __init__(self, E1, E2, E3, scaling_factor, tabulated_filename, absorption_filename, tabulated_linereaderfunction=None, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
+    def __init__(self, element_symbol, E1, E2, E3, scaling_factor, absorption_filename,  absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None, tabulated_filename=None, tabulated_linereaderfunction=None):
         """Initializes the FFfromScaledAbsorption object with an energy-dependent imaginary part of the formfactor given as file.
         
-        To perform the Kramers-Kronig transformation without integrating to infinity, also theoretical/tabulated formfactors (f0) have to be given as file. Their imaginary part differs only close to resonance from the measured absorption and should have been used before to perform the fit of the measured absorption to off-resonant values. As these tabulated formfactors are usually not polarization dependent, they should be given here just as complex values (or two real ones).
-            
+        To perform the Kramers-Kronig transformation without integrating to infinity, theoretical/tabulated formfactors (Chantler tabels from https://dx.doi.org/10.18434/T4HS32) are used. Their imaginary part differs only close to resonance from the measured absorption and should have been used before to perform the fit of the measured absorption to off-resonant values. 
+                    
         
         The imaginary part of each element of the formfactor is:
         
@@ -948,6 +957,8 @@ class FFfromScaledAbsorption(Formfactor):
         
         Parameters
         ----------
+        element_symbol : string
+            States the chemical element for which this formfactor is created as usual short version of its name. It is important to lookup the tabulated/theoretical reference formfactors from the Chantler tables. If you want to use your own formfactor as reference (see arguments **tabulated_filename** and **tabulated_linereaderfunction**) just enter an empty string here.
         E1 : float
             Energy in eV. From this energy on the energy-dependent imaginary part of the formfactor given as file is used and scaled.
         E2 : float
@@ -956,16 +967,8 @@ class FFfromScaledAbsorption(Formfactor):
             Energy in eV. From this energy on the imaginary part of the formactor is constant **Im_f_E3**.
         scaling_factor : :class:`Parameter.Parameter`
             Specifies the fittable scaling factor (called *a* in Martin Zwiebler PhD Thesis).
-        tabulated_filename : str
-            Path to the text file which contains the tabulated/theoretical formfactor for the corresponding element.
         absorption_filename : str
             Path to the text file which contains the imaginary part of the formfactor which results from an apsorption measurement and a subsequent fit to off-resonant tabulated values.
-        tabulated_linereaderfunction : callable
-            This function is used to convert one line from the *tabulated* text file to data.
-            It should be a function which takes a string and returns a tuple or list of 2 values: ``(energy,f)``,
-            where `energy` is measured in units of `eV` and the formfactor `f` is a complex value in units of `e/atom` (dimensionless).
-            It can also return `None` if it detects a comment line.
-            You can use :meth:`FFfromScaledAbsorption.createTheoreticalLinereader` to get a standard function, which just reads this array as whitespace separated from the line.
         absorption_linereaderfunction : callable
             This function is used to convert one line from the *absorption* text file to data.
             It should be a function which takes a string and returns a tuple or list of 4 values: ``(energy, Im f_xx, Im f_yy, Im f_zz)``,
@@ -978,8 +981,21 @@ class FFfromScaledAbsorption(Formfactor):
         minE : float
         maxE : float
             Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **tabulated_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
+        tabulated_filename : str
+            Path to the text file which contains the tabulated/theoretical formfactor for the corresponding element.
+            You can use this argument if you dont't want to use the standard Chantler tables. But therefore **element_symbol** has to be an empty string
+        tabulated_linereaderfunction : callable
+            This function is used to convert one line from the *tabulated* text file to data.
+            It should be a function which takes a string and returns a tuple or list of 2 values: ``(energy,f)``,
+            where `energy` is measured in units of `eV` and the formfactor `f` is a complex value in units of `e/atom` (dimensionless).
+            It can also return `None` if it detects a comment line.
+            You can use :meth:`FFfromScaledAbsorption.createTheoreticalLinereader` to get a standard function, which just reads this array as whitespace separated from the line.
+            You can use this argument if you dont't want to use the standard Chantler tables and want to create your own linereader.
         """
+        
         #check parameters
+        if not isinstance(element_symbol,str):
+            raise TypeError("\'element_symbol\' needs to be a string.")
         if not isinstance(E1, numbers.Real):
             raise TypeError("\'E1\' needs to be a real number.")
         if not isinstance(E2, numbers.Real):
@@ -992,18 +1008,10 @@ class FFfromScaledAbsorption(Formfactor):
             raise ValueError("Energies \'E1\', \'E2\' and \'E3\' have to have ascending values.")
         if not isinstance(scaling_factor,Parameters.Parameter):
             raise TypeError("\'scaling_factor\' has to be of type Parameters.Parameter.")    
-        if not isinstance(tabulated_filename,str):
-            raise TypeError("\'tabulated_filename\' needs to be a string.")
-        if not os.path.isfile(tabulated_filename):
-            raise Exception("File \'"+tabulated_filename+"\' does not exist.")
         if not isinstance(absorption_filename,str):
             raise TypeError("\'absorption_filename\' needs to be a string.")
         if not os.path.isfile(absorption_filename):
             raise Exception("File \'"+absorption_filename+"\' does not exist.")
-        if tabulated_linereaderfunction is None:
-            tabulated_linereaderfunction=self.createTheoreticalLinereader()
-        if not callable(tabulated_linereaderfunction):
-            raise TypeError("\'tabulated_linereaderfunction\' needs to be a callable object.")
         if absorption_linereaderfunction is None:
             absorption_linereaderfunction=self.createAbsorptionLinereader()
         if not callable(absorption_linereaderfunction):
@@ -1016,6 +1024,19 @@ class FFfromScaledAbsorption(Formfactor):
             raise TypeError("\'maxE\' must be a positive real number.")
         if maxE is not None and minE is not None and not minE<maxE:
             raise ValueError("\'minE\' must be smaller than \'maxE\'.")
+        if not ( (element_symbol <> '' and tabulated_filename is None) or (element_symbol == '' and tabulated_filename is not None) ):
+            raise ValueError("Either \'tabulated_filename\' has to be None or \'element_symbol\' has to be an empty string.")
+        if tabulated_filename is not None:
+            if not isinstance(tabulated_filename,str):
+                raise TypeError("\'tabulated_filename\' needs to be a string.")       
+            if not os.path.isfile(tabulated_filename):
+                raise Exception("File \'"+tabulated_filename+"\' does not exist.")
+            if tabulated_linereaderfunction is None:
+                tabulated_linereaderfunction=self.createTheoreticalLinereader()
+            if not callable(tabulated_linereaderfunction):
+                raise TypeError("\'tabulated_linereaderfunction\' needs to be a callable object.")
+ 
+        
         
         #store parameters
         self._E1=E1
@@ -1023,6 +1044,13 @@ class FFfromScaledAbsorption(Formfactor):
         self._E3=E3
         self._scaling_factor=scaling_factor       #Attention: this is supposed to be an instance of "Parameters.Parameter". So a value can be obtained with self._scaling_factor.getValue(fitparraray)
         self._energyshift=energyshift             #Attention: this is supposed to be an instance of "Parameters.Parameter". So a value can be obtained with self._energyshift.getValue(fitparraray)
+        
+        #setup acces to Chantler if neccessary
+        if element_symbol <> '':
+            tabulated_filename = os.path.join(package_directory, chantler_directory, element_symbol+chantler_suffix)            # filename of corresponding Chantler Table
+            tabulated_linereaderfunction = chantler_linereader                                                                  # make use of the chantler_linereader deliverd with the Chantler tables
+            if not os.path.isfile(tabulated_filename):
+                raise LookupError("No database entry for element \'"+element_symbol+"\' existing.")
         
         #read theoretica/tabulated formfactors from file
         tab_energies=[]
@@ -1214,8 +1242,6 @@ class FFfromScaledAbsorption(Formfactor):
         If **complex_numbers** = *False* then the reader reads real and imaginary part of the formfactor seperately, i.e. every line has to consist of 3 numbers seperated by whitespaces::
             
             energy ff_real ff_im 
-        
-        If you want to read the complete complex formfactor tensor, you have to build your own linereader.
         """
         commentsymbol='#'
         if complex_numbers==True:
@@ -1278,6 +1304,10 @@ class FFfromScaledAbsorption(Formfactor):
     """Upper limit of stored energy range. Read-only."""
     minE=property(_getMinE)
     """Lower limit of stored energy range. Read-only."""
+    
+
+
+
     
     
 #-----------------------------------------------------------------------------------------------------------------------------

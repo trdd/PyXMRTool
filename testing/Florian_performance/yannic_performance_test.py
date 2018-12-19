@@ -77,9 +77,9 @@ SampleRepresentation.AtomLayerObject.registerAtom("Ru",SampleRepresentation.FFfr
 SampleRepresentation.AtomLayerObject.registerAtom("Ti",SampleRepresentation.FFfromFile("Chantler/Ti.cff", chantler_linereader))
 SampleRepresentation.AtomLayerObject.registerAtom("O",SampleRepresentation.FFfromFile("Chantler/O.cff", chantler_linereader))
 SampleRepresentation.AtomLayerObject.registerAtom("La",SampleRepresentation.FFfromFile("Chantler/La.cff", chantler_linereader))
-SampleRepresentation.AtomLayerObject.registerAtom("Mn",SampleRepresentation.FFfromFile("Chantler/Mn.cff", chantler_linereader))
 SampleRepresentation.AtomLayerObject.registerAtom("C",SampleRepresentation.FFfromFile("Chantler/C.cff", chantler_linereader))
 Mn_FF=SampleRepresentation.FFfromScaledAbsorption(E1=600,E2=700,E3=710,scaling_factor=pp.newParameter("Mn_scaling"),tabulated_filename="Chantler/Mn.cff" ,absorption_filename="Mn.xas_aniso",energyshift=pp.newParameter("Mn_eneryshift"),tabulated_linereaderfunction=tabulated_linereader, absorption_linereaderfunction=absorption_linereader,minE=500,maxE=1000)
+SampleRepresentation.AtomLayerObject.registerAtom("Mn",Mn_FF)
 
 ### build layers from bottom
 print "... build layers"

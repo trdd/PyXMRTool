@@ -5,7 +5,7 @@
 0.128018                 0                        0.08                     0.15                    UCV_MnO2                 
 0                        0                        0                        10                       density_C                
 1                        0                        1e-06                    1000000                  Mn_scaling               
-0                        0                        -10                      10                       Mn_eneryshift            
+0                        0                        -10                      10                       Mn_energyshift            
 0.349                    0                        0                        0.5                      substrate_roughness      
 5.506                    0                        5.45                     5.55                     SrRuO3_thickness         
 0.081                    0                        0                        0.2                      SrRuO3_roughness         

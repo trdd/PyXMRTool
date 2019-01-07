@@ -26,9 +26,12 @@ Derived parameters which are arbitrary functions of other parameters can be defi
 
 All parameter classes support also the creation of simple derived paramters by arithmetic operations.
 
+Functions of one variable which are parametrized can be defined with instances of :class:` ParametrizedFunction`. It is not derived from the class :class:`.Parameter`.
+
+
 .. doctest::
 
-    >>> import Parameters
+    >>> from PyXMRTool import Parameters
     >>> import math
     >>> const=Parameters.Parameter(30.7)
     >>> const.getValue()
@@ -50,6 +53,15 @@ All parameter classes support also the creation of simple derived paramters by a
     25.833159233602423
     >>> print (derived_par**2).getValue(fitpararray)
     667.352115989
+    >>> def growth(t, A, rate): return A*math.exp(t/float(rate))
+    >>> par_func_growth = Parameters.ParametrizedFunction(growth, const, par_real)
+    >>> print par_func_growth.getValue(5.3,fitpararray)
+    6150.34006623
+    >>> f_growth = par_func_growth.getFunction(fitpararray)
+    >>> print f_growth(5.3)
+    6150.34006623
+    
+    
     
 """
 

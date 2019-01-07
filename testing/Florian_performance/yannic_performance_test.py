@@ -55,14 +55,6 @@ print "... set up formfactors"
    
 #at first create linereader functions to read the files
 commentsymbol='#'
-def chantler_linereader(line):
-    line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-    if not line.isspace() and line:                               #ignore empty lines        
-        linearray=line.split()
-        linearray=[float(item) for item in linearray]
-        return [linearray[0], linearray[1]+1j*linearray[2], 0, 0, 0, linearray[1]+1j*linearray[2], 0, 0,0, linearray[1]+1j*linearray[2]]
-    else:
-        return None
     
 def absorption_linereader(line):
     line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
@@ -73,17 +65,9 @@ def absorption_linereader(line):
     else:
         return None
  
-def tabulated_linereader(line):
-    line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-    if not line.isspace() and line:                               #ignore empty lines        
-        linearray=line.split()
-        linearray=[float(item) for item in linearray]
-        return (linearray[0], linearray[1]+1j*linearray[2])
-    else:
-        return None
     
 #now create formfactor objects / register them at AtomLayerObject
-f2=lambda energy,absorbtion, a, b, c: absorbtion*a+b+c*energy
+f2=lambda energy,absorbtion, a, b, c: absorbtion*a+b+c*energy     #function for imaginary part of formfactor from absorption measurement, which will be fitted to the off-resonant tabulated values
 Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,scaling_factor=pp.newParameter("Mn_scaling"),absorption_filename="Mn.xas_aniso",energyshift=pp.newParameter("Mn_energyshift"), absorption_linereaderfunction=absorption_linereader,minE=500,maxE=1000, autofitfunction=f2, autofitrange=20)
     
 print "... plot Mn formfactor to let user check"
@@ -118,7 +102,7 @@ hs.setLayer(5,carbon_contamination)
     
 #### set up experiment ###########################################################################
     
-# instantiate experiemten for linear polarization ("l")
+# instantiate experiment for linear polarization ("l")
 simu=Experiment.ReflDataSimulator("lL")
     
     
@@ -151,7 +135,7 @@ def wrapper():
     simu.getSSR(start)
 zeitspanne=timeit.timeit(wrapper,number=1000)
 
-#print "--->Berechnung von Chi^2 dauert "+str(zeitspanne/1000)+"s"    #---->dauert ca 0.22 s pro Anfrage auf meinem Laptop
+print "--->Berechnung von Chi^2 dauert "+str(zeitspanne/1000)+"s"    #---->dauert ca 0.22 s pro Anfrage auf meinem Laptop
 
 #### perform fit and plot status
 
@@ -163,6 +147,13 @@ def rescost(fitpararray):
     return simu.getResidualsSSR(fitpararray)
 starttime=time.time()
 best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, l, u), 20 ,number_of_cores=4, strict=False, control_file=None,plotfunction=simu.plotData)
+
+
+def cost(fitpararray):
+    return simu.getSSR(fitpararray)
+#best, ssr = Fitters.Evolution(cost, (start, l, u) , iterations=10, number_of_cores=4,mutation_strength=0.4,plotfunction=simu.plotData)
+
+
 
 print "---> Duration of fit procedure: "+ str(time.time()-starttime)+"s"
 

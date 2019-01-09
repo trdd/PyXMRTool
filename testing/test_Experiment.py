@@ -33,7 +33,7 @@ hs.setLayer(7,l)
 
 FF_Co=SampleRepresentation.FFfromFile("Co.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
 FF_Sr=SampleRepresentation.FFfromFile("Sr.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
-FF_Ya=SampleRepresentation.FFfromScaledAbsorption(E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),tabulated_filename="C_tabul.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False),minE=150,maxE=1000)
+FF_Ya=SampleRepresentation.FFfromScaledAbsorption("",E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),tabulated_filename="C_tabul.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False),minE=150,maxE=1000)
 
 
 SampleRepresentation.AtomLayerObject.registerAtom("Co",FF_Co)

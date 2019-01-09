@@ -1353,7 +1353,8 @@ class MagneticFormfactor(Formfactor):
         m_prime : :class:Parameters.ParametrizedFunction
         m_primeprime : :class:Parameters.ParametrizedFunction
             Real and imaginary parts of the magnetic term. Given as parametrized functions of energy.
-        theta_M, phi_M : :class:Parameters.Parameter
+        theta_M : :class:Parameters.Parameter
+        phi_M : :class:Parameters.Parameter
             Angles which describe the direction of the magnetization measured in degrees.
         minE : float
         maxE : float

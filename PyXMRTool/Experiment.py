@@ -50,7 +50,7 @@ import SampleRepresentation
 
 
 class ReflDataSimulator(object):
-    """Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver the sum of squared residuals (:meth:`.getSimData`) and the residuals themselfs (:meth:`.getResidualsSSR`), which both describe the difference between data and simulation at a certain parameter set. It can be in different modes which determins which data or which derived data is stored and simulated."""
+    """Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver the sum of squared residuals (:meth:`.getSSR`) and the residuals themselfs (:meth:`.getResidualsSSR`), which both describe the difference between data and simulation at a certain parameter set. It can be in different modes which determins which data or which derived data is stored and simulated."""
     
     def __init__(self, mode, length_scale=1e-9):
         """
@@ -607,13 +607,13 @@ class ReflDataSimulator(object):
     
     def getSSR(self,fitpararray):
         """
-        Return sum of squared residuals as float according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
+        Return sum of squared residuals between measured and simulated data as float according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
         """
         return numpy.sum( numpy.square( numpy.array(self._getSimDataFlat(fitpararray)) -  numpy.array(self._getExpDataFlat()) )  )
     
     def getResidualsSSR(self,fitpararray):
         """
-        Return the residuals and the sum of squared residuals according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
+        Return the residuals and the sum of squared residuals between measured and simulated data according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
         
         The information is returned as tuple: array of differences between simulated and measured data, sum of squared residuals.
         """
@@ -621,6 +621,12 @@ class ReflDataSimulator(object):
         ssr = numpy.sum( numpy.square( residuals  ))
         return residuals,ssr
     
+    def getResiduals(self, fitpararray):
+        """
+        Return the residuals between measured and simulated data according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
+        """
+        return numpy.array(self._getSimDataFlat(fitpararray)) - numpy.array(self._getExpDataFlat())
+        
     def plotData(self, fitpararray,simcolor='r',expcolor='b',simlabel='simulated',explabel='experimental',energy_angles=None):
         """
         Plot simulated and experimental data.

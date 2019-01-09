@@ -2,7 +2,7 @@
 0.061402                 0                        0.03                     0.1                      UCV_SrTiO3               
 0.2423                   0                        0.1                      0.35                     UCV_SrRuO3               
 0.05823                  0                        0.05                     0.065                    UCV_LSMO                 
-0.128018                 0                        0.08                     0.15                    UCV_MnO2                 
+0.128018                 0                         0.08                     0.15                    UCV_MnO2                 
 0                        0                        0                        10                       density_C                
 1                        0                        1e-06                    1000000                  Mn_scaling               
 0                        0                        -10                      10                       Mn_energyshift            

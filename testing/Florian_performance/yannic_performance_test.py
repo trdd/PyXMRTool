@@ -3,6 +3,7 @@ import numpy
 import timeit
 import time
 from matplotlib import pyplot as plt
+import scipy.optimize
 
 
 
@@ -61,7 +62,7 @@ def absorption_linereader(line):
     if not line.isspace() and line:                               #ignore empty lines        
         linearray=line.split()
         linearray=[float(item) for item in linearray]
-        return (linearray[0], linearray[1], linearray[3], linearray[5])
+        return (linearray[0], linearray[2], linearray[4], linearray[6])
     else:
         return None
  
@@ -82,7 +83,7 @@ substrate_layer = SampleRepresentation.AtomLayerObject({"Sr":density_SrTiO3, "Ti
     
 layer_SrRuO3 = SampleRepresentation.AtomLayerObject({"Sr":density_SrRuO3, "Ru": density_SrRuO3, "O": 3* density_SrRuO3} ,d=pp.newParameter("SrRuO3_thickness"),sigma=pp.newParameter("SrRuO3_roughness"))
     
-layer_LSMO = SampleRepresentation.AtomLayerObject({"La":0.7*density_LSMO, "Sr":0.3*density_LSMO, "Mn":0.3*density_LSMO, "O": 3* density_LSMO}, d=pp.newParameter("LSMO_thickness"), sigma=pp.newParameter("LSMO_roughness"))
+layer_LSMO = SampleRepresentation.AtomLayerObject({"La":0.7*density_LSMO, "Sr":0.3*density_LSMO, "Mn":density_LSMO, "O": 3* density_LSMO}, d=pp.newParameter("LSMO_thickness"), sigma=pp.newParameter("LSMO_roughness"))
     
 layer_MnO2 = SampleRepresentation.AtomLayerObject({"Mn":density_MnO2, "O": 2* density_SrRuO3}, d=pp.newParameter("MnO2_thickness"), sigma=pp.newParameter("MnO2_roughness"))
     
@@ -114,8 +115,8 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
     
 print "... read experimental data"
 #read measured data from files (using pointmodifier and namerreader)
-simu.ReadData("Exp_Umgeformt",simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
-    
+#simu.ReadData("Exp_Umgeformt",simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
+simu.ReadData(["Exp_Umgeformt/sro_lsmo_630.0.dat"],simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader) 
     
 # connect model with experiment
 b=pp.newParameter("background")
@@ -142,18 +143,24 @@ print "--->Berechnung von Chi^2 dauert "+str(zeitspanne/1000)+"s"    #---->dauer
 print "... plotting according to start values"
 simu.plotData(start)
 
-print "... performing Levenberg-Marquard-Fit"
+
+print "... performing Fit"
+starttime=time.time()
+
+#eigener Levenberg_Marquardt_Fitter
 def rescost(fitpararray):
     return simu.getResidualsSSR(fitpararray)
-starttime=time.time()
-best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, l, u), 20 ,number_of_cores=4, strict=False, control_file=None,plotfunction=simu.plotData)
 
+#best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, l, u), 20 ,number_of_cores=4, strict=False, control_file=None,plotfunction=simu.plotData)
 
+#eigener Evolution-Fitter
 def cost(fitpararray):
     return simu.getSSR(fitpararray)
 #best, ssr = Fitters.Evolution(cost, (start, l, u) , iterations=10, number_of_cores=4,mutation_strength=0.4,plotfunction=simu.plotData)
 
-
+#scipy least_squares Fit
+res= scipy.optimize.least_squares(simu.getResiduals, start, bounds=(l,u), method='trf', x_scale='jac',verbose=2)
+best=res.x
 
 print "---> Duration of fit procedure: "+ str(time.time()-starttime)+"s"
 

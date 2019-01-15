@@ -41,6 +41,11 @@ __status__ = "beta"
 chantler_commentsymbol='#'
 
 def chantler_linereader(line):
+    """Return the tuple (energy, f1, f2) from one line of a Chantler Table.
+       BEWARE: While the imaginary part of the formfactor Im(f)=f2, the real part contains also corrections
+       Re(f)=f1+f_rel+f_NT   for the forward direction. See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
+       f_rel and f_NT are small corrections for light atoms but get relevant with increasing mass.
+    """
     if not isinstance(line,str):
         raise TypeError("\'line\' needs to be a string.")
     line=(line.split(chantler_commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
@@ -49,6 +54,22 @@ def chantler_linereader(line):
         if not len(linearray)==3:
             raise Exception("File for tabulated formfactor file has wrong format.")
         linearray=[ast.literal_eval(item) for item in linearray]
-        return [linearray[0], linearray[1]+1j*linearray[2]]
+        return [linearray[0], linearray[1], linearray[2]]
     else:
         return None
+    
+def chantler_frel_reader(filename):
+    """DUMMY!!!
+       Read the relativistic correction to the real part of the formfactor from the chantler table given with **filename**.
+       Re(f)=f1+f_rel+f_NT   for the forward direction. See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
+       f_rel and f_NT are small corrections for light atoms but get relevant with increasing mass.
+    """
+    return 0.0
+
+def chantler_fNT_reader(filename):
+    """DUMMY!!!
+       Read the nuclear Thomson correction to the real part of the formfactor from the chantler table given with **filename**.
+       Re(f)=f1+f_rel+f_NT   for the forward direction. See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
+       f_rel and f_NT are small corrections for light atoms but get relevant with increasing mass.
+    """
+    return 0.0

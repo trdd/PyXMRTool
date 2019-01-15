@@ -192,7 +192,6 @@ if __name__ == '__main__':
     #Instead is has to be wrapped into another function "rescost" which is defined here. (Usual functions are ok instead of instance methods.)
     #plotfunction=simu.plotData leads to a plot of the current state after every iteration. Can also be set to \'None\' (default) if not needed.
     def rescost(fitpararray):
-        print "gerufen"
         return simu.getResidualsSSR(fitpararray)
 
     best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,pp.getStartLowerUpper(), parallel_points=20 ,number_of_cores=used_cores, strict=False, control_file=None,plotfunction=simu.plotData)

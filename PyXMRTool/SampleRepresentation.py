@@ -67,13 +67,13 @@ import Parameters
 
 chantler_directory = "resources/ChantlerTables"  # directory which contains Chantler tables relative to this module's directory
 chantler_suffix = ".cff"  # suffix of files containing a Chantler table
-chantler_linereader_file = "ChantlerLinereader.pyt"  # filename of the file containing the function chantler_linereader()
+chantler_reader_file = "ChantlerReader.pyt"  # filename of the file containing the function chantler_linereader()
 
 # -----------------------------------------------------------------------------------------------------------------------------
-# some stuff happening at exectution of the module
+# some stuff happening at execution of the module
 
 package_directory = os.path.dirname(os.path.abspath(__file__))  # store the absolute path of this  module
-execfile(os.path.join(package_directory, chantler_directory, chantler_linereader_file))
+execfile(os.path.join(package_directory, chantler_directory, chantler_reader_file))
 
 
 # -----------------------------------------------------------------------------------------------------------------------------
@@ -580,8 +580,8 @@ class AtomLayerObject(LayerObject):
         """Return the density dictionary either with evaluated paramters (needs **fitpararray**) or with the raw :class:`Parameters.Parameter` objects (use **fitparraray** = *None*)."""
         if fitpararray == None:
             return self._densitydict.copy()
-        elif not isinstance(fitpararray, list):
-            raise TypeError("\fitparray\' has to be a list.")
+        elif not isinstance(fitpararray, (list,tuple,numpy.ndarray)):
+            raise TypeError("\'fitparray\' has to be a list, tuple or numpy array.")
         else:
             return dict(zip(self._densitydict.keys(), [item.getValue(fitpararray) for item in
                                                        self._densitydict.values()]))  # pack new dictionary from atomnames and "unpacked" parameters (actual values instead of abstract parameter)
@@ -593,15 +593,24 @@ class AtomLayerObject(LayerObject):
         **energy** is measured in units of eV.
         """
         # gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
+        # ffsum = sum_i( number_density_atom_i * ff_tensor_atom_i)
         ffsum = sum([item[1].getValue(fitpararray) * self._densityunitfactor * (type(self)._atomdict[item[0]]).getFF(energy, fitpararray) for item in self._densitydict.items()])
 
         # Return the susceptibility tensor chi
         # As chi is very small, the linear approximation can be used.
         # If there is no densityunitfactor defined, the densities are assumed to be in units of mol/cm^3.
         # Energy is assumed to be in units of eV.
-        # The susceptibility is therefore given as: chi= 4* pi * h_bar^2 [eV*s]^2 * c^2 [m/s]^2 * r_e [m] * N_A [1/mol] * (100cm)^3/m^3 * ffsum (mol/cm^3) / E^2 (eV)^2
+        # The susceptibility is given  as chi = 4*pi/k_0^2*r_e*ffsum  (see Macke and Goering 2014, J.Pyhs.:Condens.Matter 26 363201, Eq.15)
+        # With k_0=E/(h_bar*c), energy in eV, h_bar in eV*s, c in m r_e in m, densities in mol/cm^2 (and therefore also ffsum)
+        # Th susceptibility can be calculated as: chi= 4* pi * h_bar^2 [eV*s]^2 * c^2 [m/s]^2 * r_e [m] * N_A [1/mol] * (100cm)^3/m^3 * ffsum (mol/cm^3) / E^2 (eV)^2
         # N_A: Arvogardros number, r_e: thomson scattering length/classical electron radius
-        return list(ffsum * 830.3584763651544 / energy ** 2)
+        # With values:
+        # h_bar = 6.582119514e-16
+        # c = 299792458
+        # r_e = 2.8179403227e-15
+        # N_A= 6.02214086e+23
+        return list(ffsum * 830.3582374351398 / energy ** 2)      
+
 
         # classvariables
 
@@ -897,33 +906,24 @@ class FFfromChantler(FFfromFile):
         filename = os.path.join(package_directory, chantler_directory, element_symbol + chantler_suffix)
         if not os.path.isfile(filename):
             raise LookupError("No database entry for element \'" + element_symbol + "\' existing.")
-
-        commentsymbol = '#'
+        
+        f_rel= chantler_frel_reader(filename)
+        f_NT= chantler_fNT_reader(filename)
 
         def wrapper(line):
             output = chantler_linereader(line)  # make use of the chantler_linereader deliverd with the Chantler tables
             if output is not None:
-                return [output[0], output[1], 0, 0, 0, output[1], 0, 0, 0, output[1]]
+                #only diagonal elements with equal entries f
+                #Re(f)= f1 + f_rel + f_NT ; Im(f)=f2
+                #f1 and f2 are energy-dependent (read for each line), the corrections f_rel, f_NT are given in the header of the Chantler tables
+                #See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
+                energy,f1,f2 = output
+                f=f1+f_rel+f_NT+1j*f2
+                return [energy, f, 0, 0, 0, f, 0, 0, 0, f]
             else:
                 return None
 
         super(FFfromChantler, self).__init__(filename, wrapper, energyshift, minE,maxE)  # call constructor of parent class (FFfromFile)
-
-    # def _getMinE(self):
-    #    return self._minE
-
-    # def _getMaxE(self):
-    #    return self._maxE
-
-    # public methods
-    # ---> all inherited from FFformFile
-
-    # properties
-    # maxE=property(_getMaxE)
-    """Upper limit of stored energy range. Read-only."""
-    # minE=property(_getMinE)
-    """Lower limit of stored energy range. Read-only."""
-
 
 class FFfromScaledAbsorption(Formfactor):
     """
@@ -940,7 +940,7 @@ class FFfromScaledAbsorption(Formfactor):
         The imaginary part of each element of the formfactor is:
         
         * the value given by **Im_f0_E1**, for energy < **E1**.
-        * the value given by the file scaled by **scaling_factor** (roughly, see PhD Thesis of Martin Zwiebler for details), for E1 <= energy <= E2
+        * the value given by the file scaled by **scaling_factor** (roughly, see PhD Thesis of Martin Zwiebler,section 3.3, for details), for E1 <= energy <= E2
         * linear inperpolation between the scaled value at E2 and the value given for E3 by **Im_f0_E3**, for E2 < energy < E3
         * the value given by **Im_f0_E3**, for E3 < energy       
         
@@ -1051,11 +1051,28 @@ class FFfromScaledAbsorption(Formfactor):
 
         # setup acces to Chantler if neccessary
         if element_symbol <> '':
-            tabulated_filename = os.path.join(package_directory, chantler_directory,
-                                              element_symbol + chantler_suffix)  # filename of corresponding Chantler Table
-            tabulated_linereaderfunction = chantler_linereader  # make use of the chantler_linereader deliverd with the Chantler tables
+            #use Chantler tables from database and the functions delivered with it to read them
+            tabulated_filename = os.path.join(package_directory, chantler_directory,element_symbol + chantler_suffix)  # filename of corresponding Chantler Table
             if not os.path.isfile(tabulated_filename):
                 raise LookupError("No database entry for element \'" + element_symbol + "\' existing.")
+            
+            f_rel= chantler_frel_reader(tabulated_filename)
+            f_NT= chantler_fNT_reader(tabulated_filename)
+
+            def wrapper(line):
+                output = chantler_linereader(line)  # make use of the chantler_linereader deliverd with the Chantler tables
+                if output is not None:
+                    #only diagonal elements with equal entries f
+                    #Re(f)= f1 + f_rel + f_NT ; Im(f)=f2
+                    #f1 and f2 are energy-dependent (read for each line), the corrections f_rel, f_NT are given in the header of the Chantler tables
+                    #See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
+                    energy,f1,f2 = output
+                    f=f1+f_rel+f_NT+1j*f2
+                    return [energy, f]
+                else:
+                    return None            
+            tabulated_linereaderfunction = wrapper
+
 
         # read theoretica/tabulated formfactors from file
         tab_energies = []
@@ -1166,37 +1183,36 @@ class FFfromScaledAbsorption(Formfactor):
         im_f0_E1 = numpy.array([im, im, im])  # imaginary part of formfactors  at E1  (does not depend on "a")
         re, im = self._tab_interpolator(self._E3)
         im_f0_E3 = numpy.array([im, im, im])  # imaginary part of formfactors  at E3  (does not depend on "a")
-        i = 0
+        tab_i = 0
         for energy in tab_energies:
             if energy < self._E1:
                 energies.append(energy)
-                im_f1.append(numpy.array([tab_formfactors[i].imag, tab_formfactors[i].imag, tab_formfactors[i].imag]))  # below E1, formfactor tensor is a diagonal tensor, values are the given "tabulated" ones
+                im_f1.append(numpy.array([tab_formfactors[tab_i].imag, tab_formfactors[tab_i].imag, tab_formfactors[tab_i].imag]))  # below E1, formfactor tensor is a diagonal tensor, values are the given "tabulated" ones
                 d_im_f1.append(numpy.array([0, 0, 0]))
                 diff_im_f1.append(numpy.array([0, 0, 0]))
-            i += 1
-        i = 0
+            tab_i += 1
+        abs_i=0
         for energy in abs_energies:
             if energy >= self._E1 and energy <= self._E2:
                 energies.append(energy)
-                im_f1.append(abs_im_formfactors[i])  # between E1 and E2, it is just the measured imaginary part of the formfactor
-                d_im_f1.append(abs_im_formfactors[i] - im_f0_E1)  # between E1 and E2, the derivative is the difference between "measured" imaginary part of the formfactor and the "tabulated" value at E1
+                im_f1.append(abs_im_formfactors[abs_i])  # between E1 and E2, it is just the measured imaginary part of the formfactor
+                d_im_f1.append(abs_im_formfactors[abs_i] - im_f0_E1)  # between E1 and E2, the derivative is the difference between "measured" imaginary part of the formfactor and the "tabulated" value at E1
                 re, im = self._tab_interpolator(energy)
-                diff_im_f1.append(abs_im_formfactors[i] - numpy.array([im, im,
-                                                                       im]))  # between E1 and E2, just the difference between "measured" imaginary part of the formfactor and the "tabulated" value
-            i += 1
-        i = 0
+                diff_im_f1.append(abs_im_formfactors[abs_i] - numpy.array([im, im, im]))  # between E1 and E2, just the difference between "measured" imaginary part of the formfactor and the "tabulated" value
+            abs_i += 1
+        tab_i=0
         for energy in tab_energies:
             if energy > self._E2:
                 energies.append(energy)
             if energy > self._E2 and energy < self._E3:
                 im_f1.append(im_f1_E2 + (energy - self._E2) / float(self._E3 - self._E2) * (im_f0_E3 - im_f1_E2))  # between E2 and E3, it is a linear interpolation
                 d_im_f1.append((self._E3 - energy) / float(self._E3 - self._E2) * (im_f1_E2 - im_f0_E1))  # between E2 and E3, the imaginary part is a linear interpolation, the derivative correspondingly
-                diff_im_f1.append(im_f1[i] - numpy.array([tab_formfactors[i].imag, tab_formfactors[i].imag,tab_formfactors[i].imag]))  # between E1 and E2, just the difference between linearly interpolated imaginary part of the formfactor and the "tabulated" value
+                diff_im_f1.append(im_f1[-1] - numpy.array([tab_formfactors[tab_i].imag, tab_formfactors[tab_i].imag,tab_formfactors[tab_i].imag]))  # between E1 and E2, just the difference between linearly interpolated imaginary part of the formfactor and the "tabulated" value
             elif energy >= self._E3:
-                im_f1.append(numpy.array([tab_formfactors[i].imag, tab_formfactors[i].imag,tab_formfactors[i].imag]))  # above E3, values are the given "tabulated" ones
+                im_f1.append(numpy.array([tab_formfactors[tab_i].imag, tab_formfactors[tab_i].imag,tab_formfactors[tab_i].imag]))  # above E3, values are the given "tabulated" ones
                 d_im_f1.append(numpy.array([0, 0, 0]))
                 diff_im_f1.append(numpy.array([0, 0, 0]))
-            i += 1
+            tab_i += 1
 
         im_f1 = numpy.array(im_f1)
         d_im_f1 = numpy.array(d_im_f1)
@@ -1209,8 +1225,8 @@ class FFfromScaledAbsorption(Formfactor):
         trans_kk_diff_im_f1 = []
         trans_kk_d_im_f1 = []
         for i in range(3):
-            trans_kk_diff_im_f1.append(KramersKronig(energies, trans_diff_im_f1[i]))
-            trans_kk_d_im_f1.append(KramersKronig(energies, trans_d_im_f1[i]))
+            trans_kk_diff_im_f1.append(-KramersKronig(energies, trans_diff_im_f1[i]))               #somehow it is necessary to use negative KramersKronig. Don't know why, but works nice.
+            trans_kk_d_im_f1.append(-KramersKronig(energies, trans_d_im_f1[i]))
         trans_kk_diff_im_f1 = numpy.array(trans_kk_diff_im_f1)
         trans_kk_d_im_f1 = numpy.array(trans_kk_d_im_f1)
 
@@ -1322,8 +1338,8 @@ class FFfromScaledAbsorption(Formfactor):
 
         ImFF = (scaling_factor - 1.0) * self._d_im_f1_interpolator(energy) + self._im_f1_interpolator(energy)
         tab_real = self._tab_interpolator(energy)[0]
-        RealFF = numpy.array([tab_real, 0, 0, 0, tab_real, 0, 0, 0, tab_real]) + self._kk_diff_im_f1_interpolator(
-            energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
+        #RealFF = numpy.array([tab_real, 0, 0, 0, tab_real, 0, 0, 0, tab_real]) + self._kk_diff_im_f1_interpolator(energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
+        RealFF = numpy.array([tab_real, 0, 0, 0, tab_real, 0, 0, 0, tab_real]) + self._kk_diff_im_f1_interpolator(energy) + (scaling_factor - 1) * self._kk_d_im_f1_interpolator(energy)
 
         return RealFF + 1j * ImFF
 
@@ -1631,8 +1647,8 @@ class DensityProfile(object):
         # parameter checking
         if not isinstance(z, numbers.Real):
             raise TypeError("\'z\' has to be a real number.")
-        elif not isinstance(fitpararray, list):
-            raise TypeError("\fitparray\' has to be a list.")
+        elif not isinstance(fitpararray, (list,tuple,numpy.ndarray)):
+            raise TypeError("\'fitparray\' has to be a list, tuple or numpy array.")
 
         return self._profile_function.getValue(z, fitpararray)
 
@@ -1701,8 +1717,8 @@ def plotAtomDensity(hs, fitpararray, colormap=[], atomnames=None):
     """
     if not isinstance(hs, Heterostructure):
         raise TypeError("\'hs\' has to be of type \'SampleRepresentation.Heterostructure\'.")
-    elif not isinstance(fitpararray, list):
-        raise TypeError("\fitparray\' has to be a list.")
+    elif not isinstance(fitpararray, (list,tuple,numpy.ndarray)):
+        raise TypeError("\'fitparray\' has to be a list, tuple or numpy array.")
     elif not isinstance(colormap, list):
         raise TypeError("\'colormap\' has to be a list.")
     elif not (isinstance(atomnames, list) or atomnames is None):

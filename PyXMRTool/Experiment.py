@@ -929,4 +929,6 @@ class ReflDataSimulator(object):
     mode = property(_getMode)
     """The current mode. See :meth:`.__init__` for possible modes. Read-only."""
     hcfactor = property(_getHCFactor)
-    """Planck constant times the speed of light in units of *eV* times the unit of length which was defined by **length_scale** with :meth:`.__init__`. Read-only."""
+    """Planck constant times the speed of light in units of *eV* times the unit of length which was defined by **length_scale** with :meth:`.__init__`. Read-only.
+       BEWARE: It is *h* times *c* not *h_bar* times *c*.
+    """

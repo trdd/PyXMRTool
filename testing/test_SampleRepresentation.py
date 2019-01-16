@@ -6,8 +6,7 @@ from matplotlib import pyplot as plt
 
 import Pythonreflectivity
 
-import sys
-sys.path.append('../')       #this statement makes it possible for the script to find the PyXMRTool package relative to the Tutorials folder. For your own projects rather copy the PyXMRTool-Folder which contains the modules to your project folder which contains the script
+
 from PyXMRTool import SampleRepresentation
 from PyXMRTool import Parameters
 

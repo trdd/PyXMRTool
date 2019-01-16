@@ -617,13 +617,13 @@ class ParameterPool(object):
                 return
         headerarray=["<start_value>","<fixed>","<lower_limit>","<upper_limit>","<name>"]
         with open(parfilename,'w') as f:
-            f.write((self._commentsymbol+headerarray[self._lineorder[0]]).ljust(columnwidth)+headerarray[self._lineorder[1]].ljust(columnwidth)+headerarray[self._lineorder[2]].ljust(columnwidth)+headerarray[self._lineorder[3]].ljust(columnwidth)+headerarray[self._lineorder[4]]+"\n")
+            f.write((self._commentsymbol+headerarray[self._lineorder[0]]).ljust(columnwidth)+" "+headerarray[self._lineorder[1]].ljust(columnwidth) + " " + headerarray[self._lineorder[2]].ljust(columnwidth)+ " " +headerarray[self._lineorder[3]].ljust(columnwidth) + " " +headerarray[self._lineorder[4]]+"\n")
             for p in self._parPool:
                 entryarray=[p.start_val,int(p.fixed),p.lower_lim,p.upper_lim,p.name]
                 if fitpararray is not None:
                     entryarray[0]=p.getValue(fitpararray)
                 parray=[self._convertNumberToStr(item) for item in entryarray]
-                f.write(parray[self._lineorder[0]].ljust(columnwidth)+parray[self._lineorder[1]].ljust(columnwidth)+parray[self._lineorder[2]].ljust(columnwidth)+parray[self._lineorder[3]].ljust(columnwidth)+parray[self._lineorder[4]].ljust(columnwidth)+"\n")
+                f.write(parray[self._lineorder[0]].ljust(columnwidth)+ " " +parray[self._lineorder[1]].ljust(columnwidth)+ " " +parray[self._lineorder[2]].ljust(columnwidth)+ " " +parray[self._lineorder[3]].ljust(columnwidth)+ " " +parray[self._lineorder[4]].ljust(columnwidth)+"\n")
     
     def getStartLowerUpper(self):
         """Return a tupel of `fitpararrays` of parameter start values, lower and upper limits for usage with :meth:`.Fitparameter.getValue`.

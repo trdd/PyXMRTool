@@ -595,6 +595,7 @@ class AtomLayerObject(LayerObject):
         # gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
         # ffsum = sum_i( number_density_atom_i * ff_tensor_atom_i)
         ffsum = sum([item[1].getValue(fitpararray) * self._densityunitfactor * (type(self)._atomdict[item[0]]).getFF(energy, fitpararray) for item in self._densitydict.items()])
+        
 
         # Return the susceptibility tensor chi
         # As chi is very small, the linear approximation can be used.

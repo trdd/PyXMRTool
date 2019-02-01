@@ -1798,4 +1798,4 @@ def KramersKronig(energy, f_imag):
     f_imag :
         a list/array of real numbers and length L with absorption data
     """
-    return Pythonreflectivity.KramersKronig(numpy.array(energy), numpy.array(absorption))
+    return Pythonreflectivity.KramersKronig(numpy.array(energy), numpy.array(f_imag))

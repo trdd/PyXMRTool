@@ -662,6 +662,8 @@ class Formfactor(object):
     
     This base class is an abstract class an cannot be used directly.
     The user should derive from this class if he wants to build his own models.
+    
+    See :doc:`/definitions/formfactors` for sign conventions.
     """
 
     def __init__(self):
@@ -717,7 +719,7 @@ class Formfactor(object):
 
 class FFfromFile(Formfactor):
     """
-    Class to deal with energy-dependent atomic form-factors (entire tensor) which are tabulated in files.
+    Class to deal with energy-dependent atomic form-factors (entire tensor) which are tabulated in files. See :doc:`/definitions/formfactors` for sign conventions.
     """
 
     def __init__(self, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
@@ -919,7 +921,7 @@ class FFfromChantler(FFfromFile):
                 #f1 and f2 are energy-dependent (read for each line), the corrections f_rel, f_NT are given in the header of the Chantler tables
                 #See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
                 energy,f1,f2 = output
-                f=f1+f_rel+f_NT+1j*f2
+                f=-(f1+f_rel+f_NT)+1j*f2           #convert to the PyXMRTool sign convention. See :doc:`/definitions/formfactors` for details
                 return [energy, f, 0, 0, 0, f, 0, 0, 0, f]
             else:
                 return None
@@ -930,6 +932,8 @@ class FFfromScaledAbsorption(Formfactor):
     """
     A formfactor class which uses the imaginary part of the formfactor (experimentally determined absorption signal which has been fitted to off-resonant values) given as a file, scales it with a fittable factor and calculates the real part by the Kramers-Kronig transformation. It realizes the procedure described in section 3.3 of Martin Zwiebler PhD-Thesis.
     It thereby deals only with the diagonal elements of the formfactor tensor. For the off-diagonal elements, the magnetic formfactors classes are used.
+    
+    See :doc:`/definitions/formfactors` for sign conventions.
     """
 
     def __init__(self, element_symbol, E1, E2, E3, scaling_factor, absorption_filename, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None, autofitfunction=None, autofitrange=None, tabulated_filename=None, tabulated_linereaderfunction=None):
@@ -1068,7 +1072,7 @@ class FFfromScaledAbsorption(Formfactor):
                     #f1 and f2 are energy-dependent (read for each line), the corrections f_rel, f_NT are given in the header of the Chantler tables
                     #See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
                     energy,f1,f2 = output
-                    f=f1+f_rel+f_NT+1j*f2
+                    f=-(f1+f_rel+f_NT)+1j*f2   #convert to the PyXMRTool sign convention. See :doc:`/definitions/formfactors`
                     return [energy, f]
                 else:
                     return None            
@@ -1226,8 +1230,8 @@ class FFfromScaledAbsorption(Formfactor):
         trans_kk_diff_im_f1 = []
         trans_kk_d_im_f1 = []
         for i in range(3):
-            trans_kk_diff_im_f1.append(-KramersKronig(energies, trans_diff_im_f1[i]))               #somehow it is necessary to use negative KramersKronig. Don't know why, but works nice.
-            trans_kk_d_im_f1.append(-KramersKronig(energies, trans_d_im_f1[i]))
+            trans_kk_diff_im_f1.append(KramersKronig(energies, trans_diff_im_f1[i]))               #somehow it is necessary to use negative KramersKronig. Don't know why, but works nice.
+            trans_kk_d_im_f1.append(KramersKronig(energies, trans_d_im_f1[i]))
         trans_kk_diff_im_f1 = numpy.array(trans_kk_diff_im_f1)
         trans_kk_d_im_f1 = numpy.array(trans_kk_d_im_f1)
 
@@ -1776,15 +1780,22 @@ def plotAtomDensity(hs, fitpararray, colormap=[], atomnames=None):
     return densitylistdict  # contains a dictionary, which has an entry for every atom, with its name as key and as value a list. These lists are as long as there are numbers of layers and filled with
 
 
-def KramersKronig(energy, absorption):
+def KramersKronig(energy, f_imag):
     """
-    Convinience funtion. Performs the Kramers Kronig transformation. It is just a wrapper for :func:`Pythonreflectivity.KramersKroning` from Martins Zwieblers :mod:`Pythonreflectivity` package.
+    Convinience funtion. Performs the Kramers Kronig transformation
+    
+    .. math::
+        f^\\prime(E)= - \\frac{2}{\\pi}\\mathrm{CH}\\int_0^\\infty \\frac{\\eta \\cdot f^{\\prime\\prime}(\\eta)}{\\eta^2-E^2} \\, d\\eta
+        
+    It is just a wrapper for :func:`Pythonreflectivity.KramersKroning` from Martins Zwieblers :mod:`Pythonreflectivity` package.
+    
+    
     
     Parameters
     ----------
     energy : 
         an ordered list/array of L energies (in eV). The energies do not have to be envenly spaced, but they should be ordered.
-    absorption :
+    f_imag :
         a list/array of real numbers and length L with absorption data
     """
     return Pythonreflectivity.KramersKronig(numpy.array(energy), numpy.array(absorption))

@@ -45,6 +45,7 @@ def chantler_linereader(line):
        BEWARE: While the imaginary part of the formfactor Im(f)=f2, the real part contains also corrections
        Re(f)=f1+f_rel+f_NT   for the forward direction. See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
        f_rel and f_NT are small corrections for light atoms but get relevant with increasing mass.
+       BEWARE: The sign convention differs from the one used within PyXMRTool. See also :doc:`/definitions/formfactors`. This linereader still delivers the "raw data" without sign conversion.
     """
     if not isinstance(line,str):
         raise TypeError("\'line\' needs to be a string.")

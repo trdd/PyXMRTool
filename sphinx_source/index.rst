@@ -16,6 +16,7 @@ PyXMRTool's documentation
    install
    usage
    api
+   definitions
    development
 
 

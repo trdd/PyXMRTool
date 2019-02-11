@@ -44,6 +44,7 @@ import matplotlib.patches as mpatches
 import Pythonreflectivity
 
 import SampleRepresentation
+import Parameters
 
 
 
@@ -128,19 +129,25 @@ class ReflDataSimulator(object):
     
     def _getSimDataFlat(self,fitpararray, energy_angles=None):
         """
-        Return simulated data according to the bevor set-up model, the energies/angles of the stored experimental data and the parameter values given with fitpararray as flat array.
+        Return simulated data according to the bevor set-up model, the energies/angles of the stored experimental data (substracted by *exp_energyshift* and *exp_angleshift, see :meth:`.setModel`) and and the parameter values given with fitpararray as flat array.
         
-        If energy_angles is given, the energies and angles specified there are used instead.
+        If energy_angles is given, the energies and angles specified there are used instead (and also substracted by *exp_energyshift* and *exp_angleshift, see :meth:`.setModel`)
         """
         # leave out parameter test, and test for existance of heterostructure to speed things up (this function will be called often in fit routines)
         flatsimdata=[]
+        exp_energyshift=self._exp_energyshift.getValue(fitpararray)             #shift (fitparameter) used to shift the experimentally measured energies (see :meth:`.setModel`)
+        exp_angleshift=self._exp_angleshift.getValue(fitpararray)                #shift (fitparameter) used to shift the experimentally measured angles (see :meth:`.setModel`)
         if energy_angles is None:
             energy_angles=self._expdata
         for item in energy_angles:
             #item[0] is the energy, item[1] is the list of angles at this energy
-            singeE_HS=self._hs.getSingleEnergyStructure(fitpararray,item[0])      
-            wavelength=self._hcfactor/item[0]
-            rcalc=Pythonreflectivity.Reflectivity(singeE_HS, item[1],wavelength, Output="T", MultipleScattering=self._multiplescattering, MagneticCutoff=self._magneticcutoff)
+            #shift energies and angles
+            energy=item[0]-exp_energyshift
+            angles=numpy.array(item[1])-exp_angleshift
+            #get reflectivities with the help of Martins Pythonreflectivity package
+            singleE_HS=self._hs.getSingleEnergyStructure(fitpararray,energy)      
+            wavelength=self._hcfactor/energy
+            rcalc=Pythonreflectivity.Reflectivity(singleE_HS, angles,wavelength, Output="T", MultipleScattering=self._multiplescattering, MagneticCutoff=self._magneticcutoff)
             
             #if non-magnetic, Pythonreflectivity.Reflectivity delivers only pi and sigma polarization!
             #check for this case and get left and right circular as average of pi and sigma if necessary
@@ -362,7 +369,7 @@ class ReflDataSimulator(object):
                 raise ValueError("\'"+name+"\' is not an existing directory.")
         if not callable(linereaderfunction):
             raise TypeError("\'linereaderfunction\' has to be callable.")
-        if not (isinstance(energies,(list,tuple)) or energies is None):
+        if not (isinstance(energies,(list,tuple,numpy.ndarray)) or energies is None):
             raise TypeError("\energies\' has to be a list of numbers.")
         if isinstance(energies,(tuple,list)):
             for en in energies:
@@ -477,12 +484,18 @@ class ReflDataSimulator(object):
         self._setData(dest_datapoints)
         self._datasource="array"            #store where the data comes from
     
-    def setModel(self, heterostructure, reflmodifierfunction=None, MultipleScattering=True, MagneticCutoff=1e-50):
+    def setModel(self, heterostructure, exp_energyshift=Parameters.Parameter(0), exp_angleshift=Parameters.Parameter(0), reflmodifierfunction=None, MultipleScattering=True, MagneticCutoff=1e-50):
         """
         Set up the model for the simulation of the reflectivity data. 
         
-        The simulation of the reflectivities is in prinicple done by using the information about the sample stored in **heterostructure** (of type :class:`SampleRepresentation.Heterostructure`).
-        The calculated reflectivities are then given to the **reflmodifierfunction** (takes one number or numpy array and the fitpararray; returns one number or a numpy array). This function has to be defined 
+        The simulation of the reflectivities is in prinicple done by using the information about the sample stored in **heterostructure** (of type :class:`SampleRepresentation.Heterostructure`). But to connect the simulation with the experiment it is also important to take into account systematic errors in energy and angles and to be able to adjust the simulated reflectivities to measured ones with offset and scaling.
+        
+        A first step concerns the independent variables energy and angles. We assume, the experiment does not measure the true quantities. Instead they measure shifted quantities: :math:`E_{exp}=E_{true}+\\mathrm{exp\_energyshift}` and :math:`\\theta_{exp}=\\theta_{true}+\\mathrm{exp\_angleshift}`.
+        The simulated reflectivities will be calculated for the *true* quantities which correspond to the measured ones. (by substraction of the shifts)
+        **exp_energyshift** and **exp_angleshift** are measured in *eV* and *degrees* resp.
+        
+    
+        The calculated reflectivities are then given to the **reflmodifierfunction** for further modification of the reflectivity values (takes one number or numpy array and the fitpararray; returns one number or a numpy array). This function has to be defined 
         by the user and can be used for example to multiply the reflectivity by a global number and/or to add a common background. To make these numbers fittable, use the fitparameters registerd at an instance of :class:`Paramters.ParamterPool`.
         Example::
         
@@ -505,13 +518,20 @@ class ReflDataSimulator(object):
         
         if not isinstance(heterostructure,SampleRepresentation.Heterostructure):
             raise TypeError("\'heterostructure\' must be of type \'SampleRepresentation.Heterostructure\'.")
+        if not isinstance(exp_energyshift,Parameters.Parameter):
+            raise TypeError("\'exp_energyshift\' must be an instance of  \'Parameters.Parameter\' or of an derived class.")
+        if not isinstance(exp_angleshift,Parameters.Parameter):
+            raise TypeError("\'exp_angleshift\' must be an instance of  \'Parameters.Parameter\' or of an derived class.")
         if reflmodifierfunction is not None and not callable(reflmodifierfunction):
             raise TypeError("\'reflmodifierfunction\' has to be callable.")
         if not isinstance(MultipleScattering, bool):
             raise TypeError("\'MultipleScattering\' has to be a boolean value.")
         if not isinstance(MagneticCutoff, numbers.Real):
             raise TypeError("MagneticCutoff has to be a real number.")            
+        
         self._hs=heterostructure
+        self._exp_energyshift=exp_energyshift
+        self._exp_angleshift=exp_angleshift
         if reflmodifierfunction is None:                                            #if no reflmodifierfunction is given, set hier the "identity function" to avoid testing for None in getSimData
             self._reflmodifierfunction = lambda r,fitpararray: r
         else:
@@ -531,7 +551,9 @@ class ReflDataSimulator(object):
     def getSimData(self,fitpararray, energy_angles=None):
         """
         Return simulated data according to the bevor set-up model and the parameter values given with **fitpararray** (see also :mod:`Parameters`).
-        Usually, the data is simulated for the energies and angles of the stored experimental data. If you specify **energy_angles**, then the data is simulated for the energy/angle combinations given there.
+        Usually, the data is simulated for the energies and angles of the stored experimental data (substracted by *exp_energyshift* and *exp_angleshift*, see :meth:`.setModel`).
+        
+        If you specify **energy_angles**, then the data is simulated for the energy/angle combinations given there (also substracted by *exp_energyshift* and *exp_angleshift*, see :meth:`.setModel`).
         
         **energy_angles** has to have the following shape::
         
@@ -556,7 +578,7 @@ class ReflDataSimulator(object):
                     raise ValueError("`energy_angles` has a wrong shape.")
                 if not isinstance(item[0],numbers.Real):
                     raise ValueError("`energy_angles` has a wrong shape.")
-                if not isinstance(item[1],(list,tuple)):
+                if not isinstance(item[1],(list,tuple,numpy.ndarray)):
                     raise ValueError("`energy_angles` has a wrong shape.")
             simdata=energy_angles
         simdata_flat=self._getSimDataFlat(fitpararray,energy_angles)
@@ -670,7 +692,7 @@ class ReflDataSimulator(object):
                     raise ValueError("`energy_angles` has a wrong shape.")
                 if not isinstance(item[0],numbers.Real):
                     raise ValueError("`energy_angles` has a wrong shape.")
-                if not isinstance(item[1],(list,tuple)):
+                if not isinstance(item[1],(list,tuple,numpy.ndarray)):
                     raise ValueError("`energy_angles` has a wrong shape.")
         
         

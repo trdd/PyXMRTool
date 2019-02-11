@@ -1,0 +1,21 @@
+ 
+Hi Yannic,
+
+hier mal die Parameter und Fitresultate für irgendeinen Fit, den ich mal gemacht habe. Reflektivitäten sind in der ref Datei, die Energies stehen in der Kommentarzeile (ist alles sigma polarisation). Die optischen Konstanten sollten dieselben sein, aber vorsichtshalber nochmal angehangen als Mn.aniso2
+
+Hoffentlich stimmt das alles ;).
+
+Bis später,
+Florian
+
+
+
+
+
+
+
+
+
+
+Mitteilung von Florian mündlich:
+  zu jeder Energie gibt es in "ref" jeweils 3 Spalten: q_z, experimentelle Sigma-Reflektivität, berechnete Sigma-Reflektivität

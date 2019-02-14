@@ -143,7 +143,7 @@ b=pp.newParameter("background")
 m=pp.newParameter("multiplier")
 reflmodifier=lambda r, fitpararray: b.getValue(fitpararray) + r * m.getValue(fitpararray)
 simu.setModel(hs,exp_energyshift=pp.newParameter("exp_Eshift"), exp_angleshift=pp.newParameter("exp_thetashift"),reflmodifierfunction=reflmodifier)
-#note on exp_angleshift: Florian uses a "q_z-shift" of 0.0078187. I translate it to an angleshift at an energy of 630eV (in fact an q_z-shift does not make to much sense, as the instrument works with energy-independent angles)
+
 
 
 

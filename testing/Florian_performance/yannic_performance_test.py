@@ -37,7 +37,7 @@ mol_mass_La=138.91
 #derived_parameters
 density_SrTiO3=mdensity_SrTiO3/(mol_mass_Sr+ mol_mass_Ti+3*mol_mass_O)   #number density of formula unit in mol/cm^3
 density_SrRuO3=mdensity_SrRuO3/(mol_mass_Sr+mol_mass_Ru+3*mol_mass_O)
-density_LSMO=mdensity_LSMO/(0.7*mol_mass_La+0.3*mol_mass_Sr+mol_mass_Mn+3*mol_mass_O)
+density_LSMO=mdensity_LSMO/(0.66667*mol_mass_La+0.33333*mol_mass_Sr+mol_mass_Mn+3*mol_mass_O)
 #density_MnO2=mdensity_MnO2/(mol_mass_Mn+2*mol_mass_O)
 density_C=mdensity_C/mol_mass_C
     
@@ -83,8 +83,8 @@ def ff_file_linereader(line):
 #now create formfactor objects / register them at AtomLayerObject
 f2=lambda energy,absorbtion, a, b, c: absorbtion*a+b+c*energy     #function for imaginary part of formfactor from absorption measurement, which will be fitted to the off-resonant tabulated values
 #usually f2 should rather be absorption*energy*a+b+c*energy. But what I used here for "absorption" has already been fit with this procedure and should not be scaled by energy again
-#Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,scaling_factor=pp.newParameter("Mn_scaling"),absorption_filename="Mn.xas_aniso",energyshift=pp.newParameter("Mn_energyshift"), absorption_linereaderfunction=absorption_linereader,minE=500,maxE=1000, autofitfunction=f2, autofitrange=20)
-Mn_FF=SampleRepresentation.FFfromFile("Mn.xas_aniso", ff_file_linereader,energyshift=pp.newParameter("Mn_energyshift"))
+Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,scaling_factor=pp.newParameter("Mn_scaling"),absorption_filename="Mn.xas_aniso",energyshift=pp.newParameter("Mn_energyshift"), absorption_linereaderfunction=absorption_linereader,minE=500,maxE=1000, autofitfunction=f2, autofitrange=20)
+#Mn_FF=SampleRepresentation.FFfromFile("Mn.xas_aniso", ff_file_linereader,energyshift=pp.newParameter("Mn_energyshift"))
 
     
 print "... plot Mn formfactor to let user check"
@@ -99,7 +99,7 @@ substrate_layer = SampleRepresentation.AtomLayerObject({"Sr":density_SrTiO3, "Ti
     
 layer_SrRuO3 = SampleRepresentation.AtomLayerObject({"Sr":density_SrRuO3, "Ru": density_SrRuO3, "O": 3* density_SrRuO3} ,d=pp.newParameter("SrRuO3_thickness"),sigma=pp.newParameter("SrRuO3_roughness"))
     
-layer_LSMO = SampleRepresentation.AtomLayerObject({"La":0.7*density_LSMO, "Sr":0.3*density_LSMO, "Mn_XAS":density_LSMO, "O": 3* density_LSMO}, d=pp.newParameter("LSMO_thickness"), sigma=pp.newParameter("LSMO_roughness"))
+layer_LSMO = SampleRepresentation.AtomLayerObject({"La":0.66667*density_LSMO, "Sr":0.33333*density_LSMO, "Mn_XAS":density_LSMO, "O": 3* density_LSMO}, d=pp.newParameter("LSMO_thickness"), sigma=pp.newParameter("LSMO_roughness"))
     
 #layer_MnO2 = SampleRepresentation.AtomLayerObject({"Mn_XAS":density_MnO2, "O": 2* density_MnO2}, d=pp.newParameter("MnO2_thickness"), sigma=pp.newParameter("MnO2_roughness"))
     
@@ -132,14 +132,14 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
     
 print "... read experimental data"
 #read measured data from files (using pointmodifier and namerreader)
-#simu.ReadData("Exp_Umgeformt",simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
-simu.ReadData(["Exp_Umgeformt/sro_lsmo_630.0.dat"],simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader) 
+simu.ReadData("Exp_Umgeformt",simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
+#simu.ReadData(["Exp_Umgeformt/sro_lsmo_630.0.dat"],simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader) 
     
 # connect model with experiment
 b=pp.newParameter("background")
 m=pp.newParameter("multiplier")
 reflmodifier=lambda r, fitpararray: b.getValue(fitpararray) + r * m.getValue(fitpararray)
-simu.setModel(hs,reflmodifier)
+simu.setModel(hs,exp_energyshift=pp.newParameter("exp_Eshift"), exp_angleshift=pp.newParameter("exp_thetashift"),reflmodifierfunction=reflmodifier)
     
 
 
@@ -167,7 +167,7 @@ starttime=time.time()
 #eigener Levenberg_Marquardt_Fitter
 def rescost(fitpararray):
     return simu.getResidualsSSR(fitpararray)
-#best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, l, u), 20 ,number_of_cores=4, strict=False, control_file=None,plotfunction=simu.plotData)
+best_lev, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, l, u), 20 ,number_of_cores=4, strict=False, control_file=None,plotfunction=None)
 
 #eigener Evolution-Fitter
 def cost(fitpararray):
@@ -175,8 +175,22 @@ def cost(fitpararray):
 #best, ssr = Fitters.Evolution(cost, (start, l, u) , iterations=10, number_of_cores=4,mutation_strength=0.4,plotfunction=simu.plotData)
 
 #scipy least_squares Fit
-res= scipy.optimize.least_squares(simu.getResiduals, start, bounds=(l,u), method='trf', x_scale='jac',verbose=2)
-best=res.x
+#res= scipy.optimize.least_squares(simu.getResiduals, start, bounds=(l,u), method='trf', x_scale=,verbose=2)
+#best=res.x
+
+#scipy least_squares Fit, scalierte paramater
+start=numpy.array(start)
+l=numpy.array(l)
+u=numpy.array(u)
+start_sc=(start-l)/(u-l)
+def wrapper(pars):
+    return simu.getResiduals(pars*(u-l)+l)
+res= scipy.optimize.least_squares(wrapper, start_sc, bounds=(numpy.zeros(len(l)),numpy.ones(len(u))), method='trf', jac='3-point', x_scale='jac',verbose=2)
+best= res.x*(u-l)+l
+
+
+#zufaellige startwerte
+
 
 print "---> Duration of fit procedure: "+ str(time.time()-starttime)+"s"
 

@@ -122,9 +122,7 @@ def Explore(residualsfunction,  parameter_settings, number_of_seeds, verbose=2,n
     if number_of_clusters is None:
         print("... clustering "+str(number_of_seeds) +" fixpoints in an optimal number of clusters")
         scores=[]
-        print len(fixpoints)
         for i in numpy.arange(2,min([50,len(fixpoints)])):
-            print i
             km=sklearn.cluster.KMeans(n_clusters=i).fit(fixpoints_scaled)
             scores.append(sklearn.metrics.silhouette_score(fixpoints_scaled, km.labels_))
         number_of_clusters=2+scores.index(max(scores))

@@ -195,14 +195,6 @@ def setup(app):
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-# -- needed to avoid problems regarding numpy and other imports with Readthedocs
-import sys
-from mock import Mock as MagicMock
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return MagicMock()
-
-MOCK_MODULES = ['numpy','Pythonreflectivity','scipy','scipy.linalg','scipy.constants','matplotlib.pyplot','joblib','mpl_toolkits.mplot3d','matplotlib.patches','matplotlib']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+# -- Mocking Imports: needed to avoid problems regarding numpy and other imports with Readthedocs
+#    (Mocking means: do not import the listed packaged during compilation of the documentation)
+autodoc_mock_imports = ['numpy','Pythonreflectivity','scipy','scipy','matplotlib','joblib','mpl_toolkits','sklearn']

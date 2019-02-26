@@ -23,6 +23,9 @@
    
    The algorithms are not well developed yet. It is better to use existing optimizers. E.g. *scipy.optimize.least_squares*.
    
+   Only :func:`Explore` and related functions are recommended to use.
+   :func:`Explore` uses *scipy.optimize.least_squares* to explore the complete parameter range and :func:`list_clusters`, :func:`plot_parameter_spread` and :func:`plot_allparameters_spread` are used to visualize the result.
+   
    
 """
 
@@ -38,22 +41,300 @@ __email__ = "yannic.utz@tu-dresden.de"
 __status__ = "beta"
 
 
+
 import numbers
-import numpy
-import scipy.linalg
-import scipy.optimize
-import os.path
 import joblib
 import types
 import copy
-import sklearn.preprocessing
-import sklearn.cluster
 from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches
+import scipy.linalg
+import numpy
+import os.path
+import sklearn.preprocessing
+import sklearn.cluster
+import scipy.optimize
+
+from PyXMRTool import Parameters
 
 #settings############################
 numerical_derivative_factor=1.0e-9                          #defines in principle the the magnitude of  "Delta x" for the aproximation of a derivative by "Delta y/Delta x"
 #####################################
+
+def Explore(residualsfunction,  parameter_settings, number_of_seeds, verbose=2,number_of_clusters=None,):
+    """
+    A scanning function which should be usefull to explore the parameter space.
+    
+    It chooses **number_of_seeds** different random start parameter vectors (seeds) within the given paramteter range. Each seed is used as start parameter set for a least_square fitter to find the minimum of the sum of squared residuals (*ssr*) (using :func:`scipy.optimize.least_squares` with the *trust region reflective algorithm). This will lead to **number_of_seeds** fixpoints. They will then be analysed with a (k-means) clustering algorithm to group these fixpoint in **number_of_clusters** different clusters. If **number_of_clusters** = *None* (default), the clustering with the best sillouette coefficient will be used. These clusters will then be analysed: What is the SSR corresponding to the cluster centers? How many seeds lead to the corresponding clusters? What are the means and spreads of parameter values within each cluster?
+    
+    The return value will be a structure containing the results.
+    
+    Parameters
+    ----------
+    residualsfunction : callable
+        A function which returns the differences between simulated and measured data points (residuals) as list/array. It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getResiduals` of an instance of :class:`SampleRepresentation.ReflDataSimulator`.        
+    parameter_settings : tuple of lists/arrays of floats
+        Sets start values, lower and upper limit of the parameters as *(startfitparameters, lower_limits, upper_limits )*, where each of the entries is an list/array of values of same length. The *startfitparameters* are not used (can be *None*) and just necessaray for compatibility.
+    number_of_seeds : int 
+        number of random seeds which should be generated
+    verbose : {0, 1, 2}
+        determines the level of the optimizer's algorithm's verbosity:
+            0 : work silently.
+            1 : display a termination report for each seed.
+            2 (default) : display progress during iterations.
+    number_of_clusters : int 
+        number of clusters in which the resulting fixpoints shall be grouped
+
+
+    """
+    
+    #unpack parameter settings
+    (startfitparameters, lower_limits, upper_limits )=parameter_settings
+    
+    #check parameters
+    if not callable(residualsfunction):
+        raise TypeError("\'residualsfunction\' has to be callable.")
+    if not len(lower_limits)==len(upper_limits):
+        raise ValueError("Constraints does not match in length.")
+    if not isinstance(number_of_seeds, numbers.Integral):
+        raise TypeError("Invalid parameter. \'number_of_seeds\' has to be integer.")
+    if number_of_seeds<3:
+        raise ValueError("\'number_of_seeds\' has to be 3 at least.")
+    if number_of_clusters is not None:
+        if not isinstance(number_of_clusters, numbers.Integral):
+            raise TypeError("Invalid parameter. \'number_of_clusters\' has to be integer.")
+        if number_of_clusters<0:
+            raise ValueError("\'number_of_clusters\'  has to be positive.")
+
+    #performing the least squares optimizations
+    print("... performing least squares optimization for "+str(number_of_seeds) +" seeds")
+    fixpoints=[]
+    upper_limits=numpy.array(upper_limits)
+    lower_limits=numpy.array(lower_limits)
+    for i in range(number_of_seeds):
+        res = scipy.optimize.least_squares(residualsfunction, numpy.random.rand(len(upper_limits))*(upper_limits-lower_limits)+lower_limits, bounds=(lower_limits,upper_limits), method='trf', x_scale=upper_limits-lower_limits, jac='3-point',verbose=verbose)
+        fixpoints.append(res.x)
+    fixpoints=numpy.array(fixpoints)
+    
+    #performing cluster analysis
+    scaler=sklearn.preprocessing.StandardScaler()       #parameters have to be scaled to allow for a reasonable clustering
+    fixpoints_scaled=scaler.fit_transform(fixpoints)
+    if number_of_clusters is None:
+        print("... clustering "+str(number_of_seeds) +" fixpoints in an optimal number of clusters")
+        scores=[]
+        print len(fixpoints)
+        for i in numpy.arange(2,min([50,len(fixpoints)])):
+            print i
+            km=sklearn.cluster.KMeans(n_clusters=i).fit(fixpoints_scaled)
+            scores.append(sklearn.metrics.silhouette_score(fixpoints_scaled, km.labels_))
+        number_of_clusters=2+scores.index(max(scores))
+    else:        
+        print("... clustering "+str(number_of_seeds) +" fixpoints in "+str(number_of_clusters)+" clusters")
+
+    km=sklearn.cluster.KMeans(n_clusters=number_of_clusters).fit(fixpoints_scaled)
+    clusters=[]
+    clusters_members=[]
+    for i,v in enumerate(km.cluster_centers_):
+        number_fp=list(km.labels_).count(i)
+        cluster_center=scaler.inverse_transform(v)
+        members=fixpoints[numpy.where(km.labels_==i)]
+        std_dev=numpy.std(members,axis=0)
+        max_spread=numpy.max(members,axis=0)-numpy.min(members,axis=0)
+        clusters.append({'center': cluster_center, 'std_dev': std_dev, 'rel_std_dev': std_dev/cluster_center, 'max_spread': max_spread, 'rel_max_spread': max_spread/cluster_center  , 'number_of_members': number_fp, 'ratio_of_seeds': float(number_fp)/len(fixpoints), 'ssr_of_center': numpy.sum(numpy.square(numpy.array(residualsfunction(cluster_center))))})
+        clusters_members.append(members)
+    print "... printing overview"
+    scan_output={'fixpoints': fixpoints, 'clusters': clusters, 'clusters_members': clusters_members}
+    list_clusters(scan_output)
+    return scan_output
+
+
+    
+def list_clusters(scan_output):
+    """
+    Function to deal with output of :func:`Explore`.
+    
+    Lists all found clusters (which should correspond to fixpoints) and their properties.
+    """
+    clusters=scan_output['clusters']
+    for i,v in enumerate(clusters):
+        print "cluster "+str(i)+": catches "+str(v['ratio_of_seeds']*100)+"% of seeds, ssr_of_center="+str(v['ssr_of_center'])
+        
+def plot_parameter_spread(scan_output, p, parameter_pool=None):
+    """
+    Function to deal with output of :func:`Explore` (**scan_output**).
+    
+    Shows the parameter values of the centers of the found clusters of one parameter.
+    On the y axis the corresponding sum of squared residuals of the fit are shown.
+    The size (area) of the bubles corresponds to the ratio of seeds which converged to this fixpoint.
+    The bars show the range of parameter values which were assigned to this cluster/fixpoint.
+    
+    Parameters
+    ----------
+    scan_output : struct
+        Structure as returned by :func:`Explore`.
+    p : int or str
+        Selects the parameter. Either with its index or its name. In the second case **parameter_pool** has to be given.
+    parameter_pool : :class:`Parameters.ParameterPool`
+        The paramter pool containing the parameters, which are under consideration. If given, parameter names are plotted and the x axis is adjusted to lower and upper limits stored in **parameter_pool**.
+    """
+    #parameter checking
+    if parameter_pool is not None and not isinstance(parameter_pool,Parameters.ParameterPool):
+        raise TypeError('\'parameter_pool\' has to be an instance of \'Parameters.ParameterPool\'.')
+    if not isinstance(p, numbers.Integral):
+        if isinstance(p, str):
+            if isinstance(parameter_pool,Parameters.ParameterPool):
+                pname=p
+                pnumber=parameter_pool.getNames().index(pname)
+                ll=parameter_pool.getParameter(pname).lower_lim
+                ul=parameter_pool.getParameter(pname).upper_lim
+        else:
+            TypeError('\'p\' has to be either integer (index of parameter) or a string (name of parameter).')
+    else:
+        if isinstance(parameter_pool,Parameters.ParameterPool):
+            pnumber=p
+            pname=parameter_pool.getNames()[pnumber]
+            ll=parameter_pool.getParameter(pname).lower_lim
+            ul=parameter_pool.getParameter(pname).upper_lim
+        else:
+            pnumber=p
+            pname='Parameter Index '+str(p)
+            ll=None
+            ul=None
+    
+    #create a color for each cluster
+    cmap=plt.get_cmap('gist_rainbow')
+    n_clusters=len(scan_output['clusters'])
+    colors=[cmap(i/float(n_clusters-1),0.5) for i in range(n_clusters)]
+    #get center values
+    centers=[]
+    for cl in scan_output['clusters']:
+        centers.append(cl['center'][pnumber])
+    #get sums of squared residuals
+    ssrs=[]
+    for cl in scan_output['clusters']:
+        ssrs.append(cl['ssr_of_center'])
+    #get ratios of seeds (meaning: how many of the seeds convered to a certain cluster)
+    rofs=[]
+    for cl in scan_output['clusters']:
+        rofs.append(cl['ratio_of_seeds'])
+    rofs=numpy.array(rofs)
+    #get spreads of the parameter values (min and max)
+    spreads_lower=[]
+    spreads_upper=[]
+    for i,cl in enumerate(scan_output['clusters_members']):
+        spreads_lower.append(centers[i]-min(cl[:,pnumber]))
+        spreads_upper.append(max(cl[:,pnumber])-centers[i])
+    spreads=[spreads_lower,spreads_upper]
+    spreads=numpy.array(spreads)
+    #plotting
+    fig=plt.figure()
+    ax=plt.subplot(111)
+    #ploting circles with size related to the ratio of seeds, position=(center,ssr)
+    ax.scatter(centers,ssrs,s=rofs*5000,c=colors,edgecolors='face')
+    #plotting errorbars related to the spread
+    ax.errorbar(centers,ssrs, xerr=spreads,fmt='.',color='black')
+    #legend
+    patches=[]
+    for i,c in enumerate(colors):
+        patches.append(mpatches.Patch(color=c, label=str(i)))
+    ax.legend(handles=patches,loc='upper left',bbox_to_anchor=(1,1))
+    box=ax.get_position()
+    ax.set_position([box.x0,box.y0,box.width*0.9,box.height])
+    #label xaxis
+    ax.set_xlabel(pname)
+    #set limits of xaxis
+    ax.set_xlim([ll,ul])
+    plt.show()
+    
+def plot_allparameters_spread(scan_output, parameter_pool=None):
+    """
+    Function to deal with output of :func:`Explore` (**scan_output**).
+    
+    Shows the parameter values of the centers of the found clusters of all parameter in a multiplot.
+    On the y axis the corresponding sum of squared residuals of the fit are shown.
+    The size (area) of the bubles corresponds to the ratio of seeds which converged to this fixpoint.
+    The bars show the range of parameter values which were assigned to this cluster/fixpoint.
+    
+    Parameters
+    ----------
+    scan_output : struct
+        Structure as returned by :func:`Explore`.
+    parameter_pool : :class:`Parameters.ParameterPool`
+        The paramter pool containing the parameters, which are under consideration. If given, parameter names are plotted and the x axes are adjusted to lower and upper limits stored in **parameter_pool**.
+    """
+    
+    #parameter checking
+    if parameter_pool is not None and not isinstance(parameter_pool,Parameters.ParameterPool):
+        raise TypeError('\'parameter_pool\' has to be an instance of \'Parameters.ParameterPool\'.')
+    
+    #create a color for each cluster
+    cmap=plt.get_cmap('gist_rainbow')
+    n_clusters=len(scan_output['clusters'])
+    colors=[cmap(i/float(n_clusters-1),0.5) for i in range(n_clusters)]
+    
+    #create figure
+    fig=plt.figure(figsize= tuple(numpy.array(plt.rcParams["figure.figsize"])*2))
+    
+    #get number of parameters
+    number_of_parameters=len(scan_output['clusters'][0]['center'])
+    grid=numpy.ceil(numpy.sqrt(number_of_parameters))
+    
+    #looping trough parameters
+    for pnumber in range(number_of_parameters):
+        if isinstance(parameter_pool,Parameters.ParameterPool):
+            pname=parameter_pool.getNames()[pnumber]
+            ll=parameter_pool.getParameter(pname).lower_lim
+            ul=parameter_pool.getParameter(pname).upper_lim
+        else:
+            pname='Parameter Index '+str(pnumber)
+            ll=None
+            ul=None
+    
+    
+        #get center values
+        centers=[]
+        for cl in scan_output['clusters']:
+            centers.append(cl['center'][pnumber])
+        #get sums of squared residuals
+        ssrs=[]
+        for cl in scan_output['clusters']:
+            ssrs.append(cl['ssr_of_center'])
+        #get ratios of seeds (meaning: how many of the seeds convered to a certain cluster)
+        rofs=[]
+        for cl in scan_output['clusters']:
+            rofs.append(cl['ratio_of_seeds'])
+        rofs=numpy.array(rofs)
+        #get spreads of the parameter values (min and max)
+        spreads_lower=[]
+        spreads_upper=[]
+        for i,cl in enumerate(scan_output['clusters_members']):
+            spreads_lower.append(centers[i]-min(cl[:,pnumber]))
+            spreads_upper.append(max(cl[:,pnumber])-centers[i])
+        spreads=[spreads_lower,spreads_upper]
+        spreads=numpy.array(spreads)
+        #plotting
+
+        ax=plt.subplot(grid,grid,pnumber+1)
+        #ploting circles with size related to the ratio of seeds, position=(center,ssr)
+        ax.scatter(centers,ssrs,s=rofs*5000,c=colors,edgecolors='face')
+        #plotting errorbars related to the spread
+        ax.errorbar(centers,ssrs, xerr=spreads,fmt='.',color='black')
+        #label xaxis
+        ax.set_xlabel(pname)
+        #set limits of xaxis
+        ax.set_xlim([ll,ul])
+ 
+    #legend
+    patches=[]
+    lbls=[]
+    for i,c in enumerate(colors):
+            patches.append(mpatches.Patch(color=c, label=str(i)))
+            lbls.append(str(i))
+    fig.legend(handles=patches,labels=lbls,loc=7)
+    plt.show()
+
+
+
 
 def Evolution(costfunction, parameter_settings , iterations, number_of_cores=1, generation_size=300, mutation_strength=0.01, elite=2, parent_percentage=0.25, control_file=None, plotfunction=None):
     """
@@ -390,117 +671,3 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , pa
             
         ite+=1
         
-def explore(residualsfunction,  parameter_settings, number_of_seeds, number_of_clusters=8, verbose=2):
-    """
-    A scanning function which should be usefull to explore the parameter space.
-    
-    It chooses **number_of_seeds** different random start parameter vectors (seeds) within the given paramteter range. Each seed is used as start parameter set for a least_square fitter to find the minimum of the sum of squared residuals (*ssr*) (using :func:`scipy.optimize.least_squares` with the *trust region reflective algorithm). This will lead to **number_of_seeds** fixpoints. They will then be analysed with a (k-means) clustering algorithm to group these fixpoint in **number_of_clusters** different clusters. These clusters will then be analysed: What is the SSR corresponding to the cluster centers? How many seeds lead to the corresponding clusters? What are the means and spreads of parameter values within each cluster?
-    
-    Parameters
-    ----------
-    residualsfunction : callable
-        A function which returns the differences between simulated and measured data points (residuals) as list/array. It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getResiduals` of an instance of :class:`SampleRepresentation.ReflDataSimulator`.        
-    parameter_settings : tuple of lists/arrays of floats
-        Sets start values, lower and upper limit of the parameters as *(startfitparameters, lower_limits, upper_limits )*, where each of the entries is an list/array of values of same length. The *startfitparameters* are not used (can be *None*) and just necessaray for compatibility.
-    number_of_seeds : int 
-        number of random seeds which should be generated
-    number_of_clusters : int 
-        number of clusters in which the resulting fixpoints shall be grouped
-    verbose : {0, 1, 2}
-        determines the level of the optimizer's algorithm's verbosity:
-        
-            0 : work silently.
-            1 : display a termination report for each seed.
-            2 (default) : display progress during iterations.
-
-
-    """
-    
-    #unpack parameter settings
-    (startfitparameters, lower_limits, upper_limits )=parameter_settings
-    
-    #check parameters
-    if not callable(residualsfunction):
-        raise TypeError("\'residualsfunction\' has to be callable.")
-    if not len(lower_limits)==len(upper_limits):
-        raise ValueError("Constraints does not match in length.")
-    pos_integer_pars=[number_of_seeds,number_of_clusters]
-    for p in pos_integer_pars:
-        if not isinstance(p, numbers.Integral):
-            raise TypeError("Invalid parameter. Has to be integer.")
-        if p<0:
-            raise ValueError("Parameter has to be positive.")
-
-    #performing the least squares optimizations
-    print("... performing least squares optimization for "+str(number_of_seeds) +" seeds")
-    fixpoints=[]
-    upper_limits=numpy.array(upper_limits)
-    lower_limits=numpy.array(lower_limits)
-    for i in range(number_of_seeds):
-        res = scipy.optimize.least_squares(residualsfunction, numpy.random.rand(len(upper_limits))*(upper_limits-lower_limits)+lower_limits, bounds=(lower_limits,upper_limits), method='trf', x_scale=upper_limits-lower_limits, jac='3-point',verbose=1)
-        fixpoints.append(res.x)
-    fixpoints=numpy.array(fixpoints)
-    
-    #performing cluster analysis
-    print("... clustering "+str(number_of_seeds) +" fixpoints in "+str(number_of_clusters)+" clusters")
-    scaler=sklearn.preprocessing.StandardScaler()       #parameters have to be scaled to allow for a reasonable clustering
-    fixpoints_scaled=scaler.fit_transform(fixpoints)
-    km=sklearn.cluster.KMeans(n_clusters=number_of_clusters).fit(fixpoints_scaled)
-    clusters=[]
-    clusters_members=[]
-    for i,v in enumerate(km.cluster_centers_):
-        number_fp=list(km.labels_).count(i)
-        cluster_center=scaler.inverse_transform(v)
-        members=fixpoints[numpy.where(km.labels_==i)]
-        std_dev=numpy.std(members,axis=0)
-        max_spread=numpy.max(members,axis=0)-numpy.min(members,axis=0)
-        clusters.append({'center': cluster_center, 'std_dev': std_dev, 'rel_std_dev': std_dev/cluster_center, 'max_spread': max_spread, 'rel_max_spread': max_spread/cluster_center  , 'number_of_members': number_fp, 'ratio_of_seeds': float(number_fp)/len(fixpoints), 'ssr_of_center': numpy.sum(numpy.square(numpy.array(residualsfunction(cluster_center))))})
-        clusters_members.append(members)
-    print "... printing overview"
-    scan_output={'fixpoints': fixpoints, 'clusters': clusters, 'clusters_members': clusters_members}
-    list_clusters(scan_output)
-    return scan_output
-
-
-    
-def list_clusters(scan_output):
-    clusters=scan_output['clusters']
-    for i,v in enumerate(clusters):
-        print "cluster "+str(i)+": catches "+str(v['ratio_of_seeds']*100)+"% of seeds, ssr_of_center="+str(v['ssr_of_center'])
-        
-def plot_parameter_spread(scan_output, pnumber):
-    #create a color for each cluster
-    cmap=plt.get_cmap('gist_rainbow')
-    n_clusters=len(scan_output['clusters'])
-    colors=[cmap(i/float(n_clusters-1),0.5) for i in range(n_clusters)]
-    #get center values
-    centers=[]
-    for cl in scan_output['clusters']:
-        centers.append(cl['center'][pnumber])
-    #get sums of squared residuals
-    ssrs=[]
-    for cl in scan_output['clusters']:
-        ssrs.append(cl['ssr_of_center'])
-    #get ratios of seeds (meaning: how many of the seeds convered to a certain cluster)
-    rofs=[]
-    for cl in scan_output['clusters']:
-        rofs.append(cl['ratio_of_seeds'])
-    rofs=numpy.array(rofs)
-    #get spreads of the parameter values (min and max)
-    spreads_lower=[]
-    spreads_upper=[]
-    for i,cl in enumerate(scan_output['clusters_members']):
-        spreads_lower.append(centers[i]-min(cl[:,pnumber]))
-        spreads_upper.append(max(cl[:,pnumber])-centers[i])
-    spreads=[spreads_lower,spreads_upper]
-    spreads=numpy.array(spreads)
-    #ploting circles with size related to the ratio of seeds, position=(center,ssr)
-    plt.scatter(centers,ssrs,s=rofs*5000,c=colors,edgecolors='face')
-    #plotting errorbars related to the spread
-    plt.errorbar(centers,ssrs, xerr=spreads,fmt='.',color='black')
-    #legend
-    patches=[]
-    for i,c in enumerate(colors):
-        patches.append(mpatches.Patch(color=c, label=str(i)))
-    plt.legend(handles=patches)
-    plt.show()

@@ -167,7 +167,7 @@ starttime=time.time()
 #eigener Levenberg_Marquardt_Fitter
 def rescost(fitpararray):
     return simu.getResidualsSSR(fitpararray)
-best_lev, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, l, u), 20 ,number_of_cores=4, strict=False, control_file=None,plotfunction=None)
+#best_lev, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, l, u), 20 ,number_of_cores=4, strict=False, control_file=None,plotfunction=None)
 
 #eigener Evolution-Fitter
 def cost(fitpararray):
@@ -179,28 +179,34 @@ def cost(fitpararray):
 #best=res.x
 
 #scipy least_squares Fit, scalierte paramater
-start=numpy.array(start)
-l=numpy.array(l)
-u=numpy.array(u)
-start_sc=(start-l)/(u-l)
-def wrapper(pars):
-    return simu.getResiduals(pars*(u-l)+l)
-res= scipy.optimize.least_squares(wrapper, start_sc, bounds=(numpy.zeros(len(l)),numpy.ones(len(u))), method='trf', jac='3-point', x_scale='jac',verbose=2)
-best= res.x*(u-l)+l
+#start=numpy.array(start)
+#l=numpy.array(l)
+#u=numpy.array(u)
+#start_sc=(start-l)/(u-l)
+#def wrapper(pars):
+#    return simu.getResiduals(pars*(u-l)+l)
+#res= scipy.optimize.least_squares(wrapper, start_sc, bounds=(numpy.zeros(len(l)),numpy.ones(len(u))), method='trf', jac='3-point', x_scale='jac',verbose=2)
+#best= res.x*(u-l)+l
 
 
 #zufaellige startwerte
 
 
-print "---> Duration of fit procedure: "+ str(time.time()-starttime)+"s"
+#print "---> Duration of fit procedure: "+ str(time.time()-starttime)+"s"
 
-simu.plotData(best)
+#simu.plotData(best)
 
 #write found parameter set to a file
-pp.setStartValues(best)
-pp.writeToFile("parameters_best.txt")
+#pp.setStartValues(best)
+#pp.writeToFile("parameters_best.txt")
 
 
-se=hs.getSingleEnergyStructure(best,630)
-for i in range(len(se)):
-    print se[i].chixx()
+#se=hs.getSingleEnergyStructure(best,630)
+#for i in range(len(se)):
+#    print se[i].chixx()
+
+import pickle
+
+out = pickle.load(open("explore_out.p"))
+Fitters.plot_allparameters_spread(out,pp)
+out3=Fitters.Explore(simu.getSSR,pp.getStartLowerUpper(),3)

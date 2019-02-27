@@ -60,17 +60,23 @@ def chantler_linereader(line):
         return None
     
 def chantler_frel_reader(filename):
-    """DUMMY!!!
-       Read the relativistic correction to the real part of the formfactor from the chantler table given with **filename**.
+    """Read the relativistic correction to the real part of the formfactor from the chantler table given with **filename**.
        Re(f)=f1+f_rel+f_NT   for the forward direction. See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
        f_rel and f_NT are small corrections for light atoms but get relevant with increasing mass.
     """
-    return 0.0
+    with open(filename) as file:
+        for line in file:
+            if "f_rel" in line: 
+                return float(line.split()[3])
+    raise Exception("Relativistic correction estimate not found!!")
 
 def chantler_fNT_reader(filename):
-    """DUMMY!!!
-       Read the nuclear Thomson correction to the real part of the formfactor from the chantler table given with **filename**.
+    """Read the nuclear Thomson correction to the real part of the formfactor from the chantler table given with **filename**.
        Re(f)=f1+f_rel+f_NT   for the forward direction. See "Chantler, Journal fo Physical and Chemical Reference Data 24,71 (1995)" Eq.3 and following.
        f_rel and f_NT are small corrections for light atoms but get relevant with increasing mass.
     """
-    return 0.0
+    with open(filename) as file:
+        for line in file:
+            if "f_NT" in line: 
+                return float(line.split()[3])
+    raise Exception("Nuclear Thomson correction not found!!")

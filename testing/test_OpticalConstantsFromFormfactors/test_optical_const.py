@@ -174,6 +174,11 @@ plt.plot(energies, quot_beta_x, label="quot_beta_x")
 plt.legend()
 plt.show()
 
+plt.plot(energies, diff_beta_x, label="diff_beta_x")
+plt.legend()
+plt.show()
+
+
 
 plt.plot(energies, delta_x, label="delta_x")
 plt.plot(energies, comp_delta_x, label="comp_delta_x")
@@ -183,4 +188,9 @@ plt.show()
 plt.plot(energies, quot_delta_x, label="quot_delta_x")
 plt.legend()
 plt.show()
+
+plt.plot(energies, diff_delta_x, label="diff_delta_x")
+plt.legend()
+plt.show()
+
 

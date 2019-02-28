@@ -66,7 +66,7 @@ def chantler_frel_reader(filename):
     """
     with open(filename) as file:
         for line in file:
-            if "f_rel" in line: 
+            if "f_rel" in line and "=" in line and "(Relativistic correction estimate)" in line: 
                 return float(line.split()[3])
     raise Exception("Relativistic correction estimate not found!!")
 
@@ -77,6 +77,6 @@ def chantler_fNT_reader(filename):
     """
     with open(filename) as file:
         for line in file:
-            if "f_NT" in line: 
+            if "f_NT" in line and "=" in line and "(Nuclear Thomson correction)" in line: 
                 return float(line.split()[3])
     raise Exception("Nuclear Thomson correction not found!!")

@@ -799,8 +799,7 @@ class FFfromFile(Formfactor):
         # After that the array of N arrays of 18 element is transformed to an array of 18 arrays of N elements as needed by the interp1d function.
         # Therefore, this function will return an array of length 18 wich has to be transformed back to 9 complex valued elements.
         # Energies and formfactors don't have to be stored explicitly , because they are contained in the "self._interpolator" function.
-        self._interpolator = interpolate.interp1d(energies, numpy.transpose(
-            numpy.concatenate((formfactors.real, formfactors.imag), 1)))
+        self._interpolator = interpolate.interp1d(energies, numpy.transpose(numpy.concatenate((formfactors.real, formfactors.imag), 1)))
 
     def _getMinE(self):
         return self._minE
@@ -1160,6 +1159,9 @@ class FFfromScaledAbsorption(Formfactor):
             fit_indices=numpy.concatenate((numpy.nonzero( numpy.logical_and( tab_energies>=self._E1-autofitrange , tab_energies<=self._E1 ) )[0] ,numpy.nonzero( numpy.logical_and(tab_energies>=self._E3 , tab_energies<=self._E3+autofitrange))[0]))
             fit_tab_energies=tab_energies[fit_indices]
             fit_tab_formfactors_imag=tab_formfactors[fit_indices].imag
+            if len(fit_tab_energies) < N_fitfunction_arguments:      #check for the case that there are none or not enough values for f'' within the autofitrange and interpolate if neccessary
+                fit_tab_energies = numpy.concatenate( ( numpy.linspace(self._E1-autofitrange, self._E1, N_fitfunction_arguments) , numpy.linspace(self._E3, self._E3+autofitrange, N_fitfunction_arguments) ) )
+                fit_tab_formfactors_imag = self._tab_interpolator(fit_tab_energies)[1]
             for i in range(3):
                 def f2_wrapper(energy, *args):
                     return autofitfunction(energy,abs_interpolator(energy)[i],*args) 

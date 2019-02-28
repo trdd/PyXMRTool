@@ -1,10 +1,14 @@
 # Ta
 # Form Factors from Chantler Tables
 # DOI: https://dx.doi.org/10.18434/T4HS32
-# automatically retrived 2019-02-27 using URL https://physics.nist.gov/cgi-bin/ffast/ffast.pl
-#
+# automatically retrived 2019-02-28 using URL https://physics.nist.gov/cgi-bin/ffast/ffast.pl
+
+# For f_rel the second term, which is 3/5th of the Cromer-Liberman value, is used as suggested by Chantler.
+# Real and imaginary part of the formfactors are: f'(E)=f1(E)+f_rel+f_NT and f''(E)=f2(E)
+# see also original publication:  https://doi.org/10.1063/1.555974
+
 # Z = 73
-# f_rel = -1.4008 e/atom  (Relativistic correction estimate)
+# f_rel = -0.831 e/atom  (Relativistic correction estimate)
 # f_NT = -0.016156 e/atom (Nuclear Thomson correction)
 
 

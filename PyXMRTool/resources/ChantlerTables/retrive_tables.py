@@ -28,7 +28,12 @@ commentsymbol='#'
 
 NIST_URL="https://physics.nist.gov/cgi-bin/ffast/ffast.pl"
 
-header_text=commentsymbol+" Form Factors from Chantler Tables\n"+commentsymbol+" DOI: https://dx.doi.org/10.18434/T4HS32\n"+commentsymbol+" automatically retrived "+ datetime.date.today().isoformat()+ " using URL "+NIST_URL
+header_text= commentsymbol+" Form Factors from Chantler Tables\n"+commentsymbol+" DOI: https://dx.doi.org/10.18434/T4HS32\n" \
+            +commentsymbol+" automatically retrived "+ datetime.date.today().isoformat()+ " using URL "+NIST_URL + "\n\n" \
+            +commentsymbol+" For f_rel the second term, which is 3/5th of the Cromer-Liberman value, is used as suggested by Chantler.\n" \
+            +commentsymbol+" Real and imaginary part of the formfactors are: f'(E)=f1(E)+f_rel+f_NT and f''(E)=f2(E)\n" \
+            +commentsymbol+" see also original publication:  https://doi.org/10.1063/1.555974\n\n"
+
 
 
 
@@ -41,6 +46,7 @@ for i in range(92):             #looping through the peridic table
     #extract Element Symbol
     bolds=tree.xpath("//b")
     elsymbol=str(bolds[0].text.split()[0])
+    
     #extract f_rel and f_NT
     texts=tree.xpath("//text()")
     inds=[j for j, s in enumerate(texts) if "Relativistic correction estimate" in s]
@@ -51,8 +57,8 @@ for i in range(92):             #looping through the peridic table
     else:
         ind=inds[0]
         sub_element=texts[ind+3].getparent()
-        if texts[ind+1]=='f' and texts[ind+2]=='rel' and sub_element.tag=='sub':
-            f_rel=float( (texts[ind+3].split()[2]).split(',')[0] )                 #use first value for f_rel (there is one alternative!!!)
+        if texts[ind+1]=='f' and texts[ind+2]=='rel' and sub_element.tag=='sub' and texts[ind+3].split()[0]=='(H82,3/5CL)':
+            f_rel=float( texts[ind+3].split()[3] )                 #use the second value for f_rel (3/5CL), which is recommended, see original publication
         else:
             raise Exception("Relativistic correction estimate not found: Unexpected HTML structur.")
     inds=[j for j, s in enumerate(texts) if "Nuclear Thomson correction" in s]
@@ -88,12 +94,12 @@ for i in range(92):             #looping through the peridic table
     #save to file
     filename=elsymbol+".cff"
     if os.path.isfile(filename):
-        answer=raw_input("Do you want to replace \'"+filename+"\'? (Y/n)")
+        answer=raw_input("Do you realy want to replace \'"+filename+"\'? (Y/n)")
         if not(answer=="Y" or answer=="y" or answer==''):
             continue            
     with open(filename,"w") as file:
         file.write(commentsymbol+" "+ elsymbol+"\n")
-        file.write(header_text+"\n"+commentsymbol+"\n")
+        file.write(header_text)
         file.write(commentsymbol+ " Z = "+ str(Z)+"\n")
         file.write(commentsymbol+ " f_rel = "+ str(f_rel)+" e/atom  (Relativistic correction estimate)\n")
         file.write(commentsymbol+ " f_NT = "+ str(f_NT)+" e/atom (Nuclear Thomson correction)\n")

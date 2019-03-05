@@ -83,7 +83,8 @@ def ff_file_linereader(line):
 #now create formfactor objects / register them at AtomLayerObject
 f2=lambda energy,absorbtion, a, b, c: absorbtion*a+b+c*energy     #function for imaginary part of formfactor from absorption measurement, which will be fitted to the off-resonant tabulated values
 #usually f2 should rather be absorption*energy*a+b+c*energy. But what I used here for "absorption" has already been fit with this procedure and should not be scaled by energy again
-Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,scaling_factor=pp.newParameter("Mn_scaling"),absorption_filename="Mn.xas_aniso",energyshift=pp.newParameter("Mn_energyshift"), absorption_linereaderfunction=absorption_linereader,minE=500,maxE=1000, autofitfunction=f2, autofitrange=20)
+#Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,scaling_factor=pp.newParameter("Mn_scaling"),absorption_filename="Mn.xas_aniso",energyshift=pp.newParameter("Mn_energyshift"), absorption_linereaderfunction=absorption_linereader,minE=500,maxE=1000, autofitfunction=f2, autofitrange=20)
+Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,scaling_factor=pp.newParameter("Mn_scaling"),absorption_filename="Mn.xas_aniso",energyshift=pp.newParameter("Mn_energyshift"), absorption_linereaderfunction=absorption_linereader, autofitfunction=f2, autofitrange=20)
 #Mn_FF=SampleRepresentation.FFfromFile("Mn.xas_aniso", ff_file_linereader,energyshift=pp.newParameter("Mn_energyshift"))
 
     
@@ -207,6 +208,7 @@ def cost(fitpararray):
 
 import pickle
 
-out = pickle.load(open("explore_out.p"))
-Fitters.plot_allparameters_spread(out,pp)
-out3=Fitters.Explore(simu.getSSR,pp.getStartLowerUpper(),3)
+#out = pickle.load(open("explore_out.p"))
+#Fitters.plot_allparameters_spread(out,pp)
+
+out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),3)

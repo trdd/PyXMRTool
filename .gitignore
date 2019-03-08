@@ -1,0 +1,5 @@
+PyXMRTool.egg-info/
+build/
+dist/
+*.c
+*.cpp

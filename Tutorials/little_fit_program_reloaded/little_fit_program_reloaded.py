@@ -150,7 +150,7 @@ if __name__ == '__main__':
     
     
     #set the model for the experiment: connect the before defined Heterostructure model "hs" and the above created "reflmodifier" function to "simu"  
-    simu.setModel(hs,reflmodifier)
+    simu.setModel(hs,reflmodifierfunction=reflmodifier)
 
     
     #####################################################################################

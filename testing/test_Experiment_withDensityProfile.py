@@ -13,7 +13,6 @@ from PyXMRTool import SampleRepresentation
 
 
 
-
 #############################
 #Model Parameters (not fitted!!)
 #############################
@@ -54,7 +53,7 @@ hs=SampleRepresentation.Heterostructure(1+number_of_trans_layers)
 #create some formfactor object and register atoms
 FF_Co=SampleRepresentation.FFfromFile("Co.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
 FF_Sr=SampleRepresentation.FFfromFile("Sr.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
-FF_Ya=SampleRepresentation.FFfromScaledAbsorption(E1=250,E2=400,E3=500,scaling_factor=pp.newParameter("Ya_scaling"),tabulated_filename="C_tabul.F",absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False),minE=150,maxE=1000)
+FF_Ya=SampleRepresentation.FFfromScaledAbsorption('', E1=250, E2=400, E3=500, scaling_factor=pp.newParameter("Ya_scaling"), absorption_filename="C_imag.F",energyshift=pp.newParameter("Ya_eneryshift"),tabulated_filename="C_tabul.F",tabulated_linereaderfunction=SampleRepresentation.FFfromScaledAbsorption.createTabulatedLinereader(complex_numbers=False))
 SampleRepresentation.AtomLayerObject.registerAtom("Co",FF_Co)
 SampleRepresentation.AtomLayerObject.registerAtom("Sr",FF_Sr)
 SampleRepresentation.AtomLayerObject.registerAtom("Ya",FF_Ya)
@@ -127,7 +126,7 @@ simu.setData(datapoints)
 b=pp.newParameter("background")
 m=pp.newParameter("multiplier")
 reflmodifier=lambda r, ar: b.getValue(ar) + r * m.getValue(ar)
-simu.setModel(hs,reflmodifier)
+simu.setModel(hs,reflmodifierfunction=reflmodifier)
 
 
 #pp.writeToFile("partest_experiment_dens.txt")

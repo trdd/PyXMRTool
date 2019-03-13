@@ -722,7 +722,7 @@ class FFfromFile(Formfactor):
     Class to deal with energy-dependent atomic form-factors (entire tensor) which are tabulated in files. See :doc:`/definitions/formfactors` for sign conventions.
     """
 
-    def __init__(self, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
+    def __init__(self, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0)):
         """Initializes the FFfromFile object with an energy-dependent formfactor given as file.
         
         Parameters
@@ -738,9 +738,6 @@ class FFfromFile(Formfactor):
         energyshift : :class:`Parameters.Parameter`
             Species a fittable energyshift between the energy-dependent formfactor from **filename** and the `real` one in the reflectivity measurement.
             So the formfactor delivered from :meth:`FFfromFile.getFF` will not be `formfactor_from_file(E)` but `formfactor_from_file(E-energyshift)`.
-        minE : float
-        maxE : float
-            State lower/upper limit energy-range which should be used. Not necessary to state, but can reduce the amount of stored data.
         """
         if not isinstance(filename, str):
             raise TypeError("\'filename\' needs to be a string.")
@@ -752,12 +749,6 @@ class FFfromFile(Formfactor):
             raise Exception("File \'" + filename + "\' does not exist.")
         if not isinstance(energyshift, Parameters.Parameter):
             raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
-        if minE is not None and (not isinstance(minE, numbers.Real) or minE < 0):
-            raise TypeError("\'minE\' must be a positive real number.")
-        if maxE is not None and (not isinstance(maxE, numbers.Real) or maxE < 0):
-            raise TypeError("\'maxE\' must be a positive real number.")
-        if maxE is not None and minE is not None and not minE < maxE:
-            raise ValueError("\'minE\' must be smaller than \'maxE\'.")
 
         energies = []
         formfactors = []
@@ -775,21 +766,9 @@ class FFfromFile(Formfactor):
                         raise ValueError("Linereader function hast to return a list/tuple of numbers.")
                 if isinstance(linereaderoutput[0], complex):
                     raise ValueError("Linereader function hast to return a real value for the energy.")
-                if (minE is None and maxE is None):
-                    energies.append(linereaderoutput[0])  # store energies in one list
-                    formfactors.append(linereaderoutput[1:])  # store corresponding formfactors in another list
-                elif minE is None:
-                    if linereaderoutput[0] <= maxE:
-                        energies.append(linereaderoutput[0])  # store energies in one list
-                        formfactors.append(linereaderoutput[1:])  # store corresponding formfactors in another list
-                elif maxE is None:
-                    if minE <= linereaderoutput[0]:
-                        energies.append(linereaderoutput[0])  # store energies in one list
-                        formfactors.append(linereaderoutput[1:])  # store corresponding formfactors in another list
-                else:
-                    if minE <= linereaderoutput[0] and linereaderoutput[0] <= maxE:
-                        energies.append(linereaderoutput[0])  # store energies in one list
-                        formfactors.append(linereaderoutput[1:])  # store corresponding formfactors in another list
+                energies.append(linereaderoutput[0])  # store energies in one list
+                formfactors.append(linereaderoutput[1:]) # store corresponding formfactors in another list
+
 
         formfactors = numpy.array(formfactors)  # convert list formfactors to a numpy array for convinience
         self._minE = min(energies)
@@ -886,7 +865,7 @@ class FFfromChantler(FFfromFile):
     Class to create an atomic formfactor for an element from  Database (Chantler Tables taken from https://dx.doi.org/10.18434/T4HS32).
     """
 
-    def __init__(self, element_symbol, energyshift=Parameters.Parameter(0), minE=None, maxE=None):
+    def __init__(self, element_symbol, energyshift=Parameters.Parameter(0)):
         """Initializes the FFfromChantler object with an energy-dependent formfactor corresponding to the element given with **element_symbol**.
         
         Parameters
@@ -896,9 +875,6 @@ class FFfromChantler(FFfromFile):
         energyshift : :class:`Parameters.Parameter`
             Species a fittable energyshift between the energy-dependent formfactor from Chantler Tables and the `real` one in the reflectivity measurement.
             So the formfactor delivered from :meth:`FFfromChantler.getFF` will not be `formfactor_from_database(E)` but `formfactor_from_databayse(E-energyshift)`.
-        minE : float
-        maxE : float
-            State lower/upper limit energy-range which should be used. Not necessary to state, but can reduce the amount of stored data.
         """
         if not isinstance(element_symbol, str):
             raise TypeError("\'element_symbol\' needs to be a string.")
@@ -925,7 +901,7 @@ class FFfromChantler(FFfromFile):
             else:
                 return None
 
-        super(FFfromChantler, self).__init__(filename, wrapper, energyshift, minE,maxE)  # call constructor of parent class (FFfromFile)
+        super(FFfromChantler, self).__init__(filename, wrapper, energyshift)  # call constructor of parent class (FFfromFile)
 
 class FFfromScaledAbsorption(Formfactor):
     """
@@ -935,7 +911,7 @@ class FFfromScaledAbsorption(Formfactor):
     See :doc:`/definitions/formfactors` for sign conventions.
     """
 
-    def __init__(self, element_symbol, E1, E2, E3, scaling_factor, absorption_filename, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), minE=None, maxE=None, autofitfunction=None, autofitrange=None, tabulated_filename=None, tabulated_linereaderfunction=None):
+    def __init__(self, element_symbol, E1, E2, E3, scaling_factor, absorption_filename, absorption_linereaderfunction=None, energyshift=Parameters.Parameter(0), autofitfunction=None, autofitrange=None, tabulated_filename=None, tabulated_linereaderfunction=None):
         """Initializes the FFfromScaledAbsorption object with an energy-dependent imaginary part of the formfactor given as file.
         
         To perform the Kramers-Kronig transformation without integrating to infinity, theoretical/tabulated formfactors (Chantler tabels from https://dx.doi.org/10.18434/T4HS32) are used. Their imaginary part differs only close to resonance from the measured absorption and should have been used before to perform the fit of the measured absorption to off-resonant values. 
@@ -969,13 +945,10 @@ class FFfromScaledAbsorption(Formfactor):
             It should be a function which takes a string and returns a tuple or list of 4 values: ``(energy, Im f_xx, Im f_yy, Im f_zz)``,
             where `energy` is measured in units of `eV` and imaginary parts of formfactors are real values in units of `e/atom` (dimensionless).
             It can also return `None` if it detects a comment line.
-            You can use :meth:`FFfromScaledAbsorption.createAbsorptionLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.
+            You can use :meth:`FFfromScaledAbsorption.createAbsorptionLinereader` to get a standard function, which just reads this array as whitespace seperated from the line. This is actually the default if you give 'None'.
         energyshift : :class:`Parameters.Parameter`
             Species a fittable energyshift between the energy-dependent formfactor calculated by the whole above mentioned procedure and the `real` one in the reflectivity measurement.
             As a consequence the peak but also E1,E2 and E3 are shifted.
-        minE : float
-        maxE : float
-            Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **tabulated_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
         autofitfunction : callable
         autofitrange : float
             If given together with **autofitfunction**, the absorbtion from **absorbtion_filename** will be fitted to the imaginary part of the formfactors from Chantler tables or **tabulated_filename** just below/above **E1**/**E3** in a range given by **autofitrange** in eV.
@@ -991,7 +964,7 @@ class FFfromScaledAbsorption(Formfactor):
             It should be a function which takes a string and returns a tuple or list of 2 values: ``(energy,f)``,
             where `energy` is measured in units of `eV` and the formfactor `f` is a complex value in units of `e/atom` (dimensionless).
             It can also return `None` if it detects a comment line.
-            You can use :meth:`FFfromScaledAbsorption.createTheoreticalLinereader` to get a standard function, which just reads this array as whitespace separated from the line.
+            You can use :meth:`FFfromScaledAbsorption.createTabulatedLinereader` to get a standard function, which just reads this array as whitespace separated from the line. This is actually the default if you give 'None'.
             You can use this argument if you dont't want to use the standard Chantler tables and want to create your own linereader.
         """
 
@@ -1020,12 +993,6 @@ class FFfromScaledAbsorption(Formfactor):
             raise TypeError("\'absorption_linereaderfunction\' needs to be a callable object.")
         if not isinstance(energyshift, Parameters.Parameter):
             raise TypeError("\'energyshift\' has to be of type Parameters.Parameter.")
-        if minE is not None and (not isinstance(minE, numbers.Real) or minE < 0):
-            raise TypeError("\'minE\' must be a positive real number.")
-        if maxE is not None and (not isinstance(maxE, numbers.Real) or maxE < 0):
-            raise TypeError("\'maxE\' must be a positive real number.")
-        if maxE is not None and minE is not None and not minE < maxE:
-            raise ValueError("\'minE\' must be smaller than \'maxE\'.")
         if (autofitrange is not None or autofitfunction is not None) and not (autofitrange is not None and autofitfunction is not None):
             raise ValueError("You have to give both, \'autofitfunction\' and \'autofitrange\' or none of them.")
         if autofitrange is not None and  (not isinstance(autofitrange, numbers.Real) or autofitrange < 0):
@@ -1042,7 +1009,7 @@ class FFfromScaledAbsorption(Formfactor):
             if not os.path.isfile(tabulated_filename):
                 raise Exception("File \'" + tabulated_filename + "\' does not exist.")
             if tabulated_linereaderfunction is None:
-                tabulated_linereaderfunction = self.createTheoreticalLinereader()
+                tabulated_linereaderfunction = self.createTabulatedLinereader()
             if not callable(tabulated_linereaderfunction):
                 raise TypeError("\'tabulated_linereaderfunction\' needs to be a callable object.")
 
@@ -1095,21 +1062,8 @@ class FFfromScaledAbsorption(Formfactor):
                         raise ValueError("Linereader function hast to return a list/tuple of numbers.")
                 if isinstance(linereaderoutput[0], complex):
                     raise ValueError("Linereader function hast to return a real value for the energy.")
-                if (minE is None and maxE is None):
-                    tab_energies.append(linereaderoutput[0])  # store energies in one list
-                    tab_formfactors.append(linereaderoutput[1])  # store corresponding formfactors in another list
-                elif minE is None:
-                    if linereaderoutput[0] <= maxE:
-                        tab_energies.append(linereaderoutput[0])  # store energies in one list
-                        tab_formfactors.append(linereaderoutput[1])  # store corresponding formfactors in another list
-                elif maxE is None:
-                    if minE <= linereaderoutput[0]:
-                        tab_energies.append(linereaderoutput[0])  # store energies in one list
-                        tab_formfactors.append(linereaderoutput[1])  # store corresponding formfactors in another list
-                else:
-                    if minE <= linereaderoutput[0] and linereaderoutput[0] <= maxE:
-                        tab_energies.append(linereaderoutput[0])  # store energies in one list
-                        tab_formfactors.append(linereaderoutput[1])  # store corresponding formfactors in another list
+                tab_energies.append(linereaderoutput[0])  # store energies in one list
+                tab_formfactors.append(linereaderoutput[1])  # store corresponding formfactors in another list
 
         tab_formfactors = numpy.array(tab_formfactors)  # convert list formfactors to a numpy array for convinience
         self._minE = min(tab_energies)
@@ -1457,7 +1411,7 @@ class MFFfromXMCD(MagneticFormfactor):
     BEWARE: The absolut values are only correct if you scaled the XMCD signal to tabulated absorbtion data. But usually it is enough to get relative values, which can give you magnetization profiles.
     """
 
-    def __init__(self, theta_M, phi_M, filename, linereaderfunction=None, minE=None, maxE=None, energyshift=Parameters.Parameter(0)):
+    def __init__(self, theta_M, phi_M, filename, linereaderfunction=None, energyshift=Parameters.Parameter(0)):
         """Initializes the MFF from an XMCD measurement given as textfile.
         
         The XMCD values are directly used to create the **m_primeprime** function.
@@ -1479,9 +1433,6 @@ class MFFfromXMCD(MagneticFormfactor):
             where `energy` is measured in units of `eV` and 'xmcd' is a real value in units of `e/atom` (dimensionless) (if it is scaled correctly).
             It can also return `None` if it detects a comment line.
             You can use :meth:`MFFfromXMCD.createLinereader` to get a standard function, which just reads this array as whitespace seperated from the line.
-        minE : float
-        maxE : float
-            Specify minimum and maximum energy if you don't want to use the whole energy-range given in the file **xmcd_filename**. Reducing the energy-range speeds up the Kramers-Kronig transformations significantly.
         """
         # check parameters
         if not isinstance(filename, str):
@@ -1492,14 +1443,7 @@ class MFFfromXMCD(MagneticFormfactor):
             linereaderfunction = self.createLinereader()
         if not callable(linereaderfunction):
             raise TypeError("\'linereaderfunction\' needs to be a callable object.")
-        if (minE is None and maxE is not None) or (minE is not None and maxE is None):
-            raise Exception("You have to set both, \'minE\' and \'maxE\'.")
-        if minE is not None and (not isinstance(minE, numbers.Real) or minE < 0):
-            raise TypeError("\'minE\' must be a positive real number.")
-        if maxE is not None and (not isinstance(maxE, numbers.Real) or maxE < 0):
-            raise TypeError("\'maxE\' must be a positive real number.")
-        if maxE is not None and minE is not None and not minE < maxE:
-            raise ValueError("\'minE\' must be smaller than \'maxE\'.")
+        
 
         # read theoretica/tabulated formfactors from file
         energies = []
@@ -1516,21 +1460,9 @@ class MFFfromXMCD(MagneticFormfactor):
                 for item in linereaderoutput:
                     if not isinstance(item, numbers.Real):
                         raise ValueError("Linereader function hast to return a list/tuple of real numbers.")
-                if (minE is None and maxE is None):
-                    energies.append(linereaderoutput[0])  # store energies in one list
-                    xmcd.append(linereaderoutput[1])  # store corresponding formfactors in another list
-                elif minE is None:
-                    if linereaderoutput[0] <= maxE:
-                        energies.append(linereaderoutput[0])  # store energies in one list
-                        xmcd.append(linereaderoutput[1])  # store corresponding formfactors in another list
-                elif maxE is None:
-                    if minE <= linereaderoutput[0]:
-                        energies.append(linereaderoutput[0])  # store energies in one list
-                        xmcd.append(linereaderoutput[1])  # store corresponding formfactors in another list
-                else:
-                    if minE <= linereaderoutput[0] and linereaderoutput[0] <= maxE:
-                        energies.append(linereaderoutput[0])  # store energies in one list
-                        xmcd.append(linereaderoutput[1])  # store corresponding formfactors in another list
+                energies.append(linereaderoutput[0])  # store energies in one list
+                xmcd.append(linereaderoutput[1])  # store corresponding formfactors in another list
+
 
         xmcd = numpy.array(xmcd)  # convert list xmcd to a numpy array for convinience
         minE = min(energies)

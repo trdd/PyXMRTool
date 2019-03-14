@@ -910,16 +910,21 @@ class ReflDataSimulator(object):
                
         
     @staticmethod
-    def createLinereader(energy_column=None,angle_column=None,rsigma_column=None,rpi_column=None,rleft_column=None,rright_column=None,xmcd_column=None,total_column=None,commentsymbol='#'):
+    def createLinereader(energy_column=None,angle_column=None, rsigma_angle_column=None, rsigma_column=None, rpi_angle_column=None, rpi_column=None, rleft_angle_column=None, rleft_column=None, rright_angle_column=None, rright_column=None, xmcd_angle_column=None, xmcd_column=None, total_angle_column=None, total_column=None,commentsymbol='#'):
         """
-        Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers *[energy,angle,rsigma,rpi,rleft,rright,xmcd,sum]* (or *None* for a uncommented line).
+        Return a linereader function which can read lines from whitespace-seperated files and returns a datapoint, which is a lists of real numbers *[energy,angle,rsigma,rpi,rleft,rright,xmcd,sum]* (or *None* for a uncommented line).
+        Values can also be *None*.
+        The linereader function returns a list of datapoints if several angles are defined within one line.
         
         With the parameters *..._column* you can determin wich column is interpreted how.
+        Instead of one angle for all reflectivities within one line (**angle_column**), one can also define columns for angles which are specifically for one reflectivity polarization.
         Column numbers are starting from 0.
         """
         #check parameters
-        parameterlist=[energy_column,angle_column,rsigma_column,rpi_column,rleft_column,rright_column,xmcd_column,total_column]
-        for item in parameterlist:
+        indep_pars_columns=[energy_column,angle_column]
+        values_columns=[rsigma_column, rpi_column, rleft_column, rright_column, xmcd_column, total_column]                                                      #BEWARE: values_columns and additional_angles_columns have to have corresponding entries with the same order!!!
+        additional_angles_columns=[rsigma_angle_column, rpi_angle_column, rleft_angle_column, rright_angle_column, xmcd_angle_column, total_angle_column]
+        for item in indep_pars_columns+values_columns+additional_angles_columns:
             if not (isinstance(item, int) or item is None):
                 raise TypeError("Columns have to be given as integer numbers.")
             if item is not None:
@@ -927,23 +932,60 @@ class ReflDataSimulator(object):
                     raise ValueError("Columns have to be positive numbers.")
         if not isinstance(commentsymbol,str):
             raise TypeError("\'commentsymbol\' has to be a string.")
-        #define the linereader function
-        def linereader(line):
-                if not isinstance(line,str):
-                    raise TypeError("\'line\' needs to be a string.")
-                line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-                if not line.isspace() and line:                               #ignore empty lines        
-                    linearray=line.split()
-                    linelist=[]
-                    i=0
-                    for item in parameterlist:
-                        if item is None:
-                            linelist.append(None)
-                        else:
-                            linelist.append(float(linearray[item]))
-                    return linelist
-                else:
-                    return None
+        
+        #define the linereader function without additional angles
+        if all(item is None for item in additional_angles_columns):
+            def linereader(line):
+                    if not isinstance(line,str):
+                        raise TypeError("\'line\' needs to be a string.")
+                    line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+                    if not line.isspace() and line:                               #ignore empty lines        
+                        linearray=line.split()
+                        linelist=[]
+                        for item in indep_pars_columns:
+                            if item is None:
+                                linelist.append(None)
+                        for item in values_columns:
+                            if item is None:
+                                linelist.append(None)
+                            else:
+                                linelist.append(float(linearray[item]))
+                        return linelist
+                    else:
+                        return None
+       
+        else:
+            def linereader(line):
+                    if not isinstance(line,str):
+                        raise TypeError("\'line\' needs to be a string.")
+                    line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+                    if not line.isspace() and line:                               #ignore empty lines        
+                        linearray=line.split()
+                        pointlist=[]
+                        for i, angle_column, value_column in zip(range(len(additional_angles_columns)), additional_angles_columns, values_columns):
+                            if angle_column is not None:
+                                point=[]
+                                #energy
+                                if energy_column is None:
+                                    point.append(None)
+                                else:
+                                    point.append(float(linearray[energy_column]))
+                                #angle
+                                point.append(float(linearray[angle_column]))
+                                #values
+                                for j in range(i):
+                                    point.append(None)
+                                if value_column is None:
+                                    point.append(None)
+                                else:
+                                    point.append(float(linearray[value_column]))
+                                for j in range(len(value_columns)-i-1):
+                                    point.append(None)
+                                pointlist.append(point)
+                        return pointlist
+                    else:
+                        return None
+        
         return linereader
     
     

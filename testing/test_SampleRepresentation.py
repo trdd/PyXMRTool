@@ -43,9 +43,18 @@ hs=SampleRepresentation.Heterostructure(13,[0,1,2,[10,[3,4,5,6]],7,8,9,10,11,12]
 
 #populate Heterostructure with simple LayerObjects
 
-for i in range(7):
+for i in range(6):
     hs.setLayer(i,SampleRepresentation.LayerObject([pp.newParameter("chi"+str(i))],pp.newParameter("d"+str(i))))
-hs.setLayer(7,l)
+hs.setLayer(6,l)
+
+#plug in magnetic layer object
+chi_diag=pp.newParameter("mag_chi_diag")
+mp=pp.newParameter("m_prime")
+mpp=pp.newParameter("m_primeprime")
+thM=pp.newParameter("theta_mag")
+phM=pp.newParameter("phi_mag")
+ml=SampleRepresentation.MagneticLayerObject([chi_diag], mp,mpp,thM,phM, pp.newParameter("d_mag"), pp.newParameter("sigma_mag"))
+hs.setLayer(7,ml)
 
 
 #hs.removeLayer([3,4,5,6])
@@ -83,6 +92,9 @@ SampleRepresentation.AtomLayerObject.registerAtom("Al",SampleRepresentation.FFfr
 SampleRepresentation.AtomLayerObject.registerAtom("Yannicium", FF_Ya)
 SampleRepresentation.AtomLayerObject.registerAtom("Yannicium_Magnetization", MFF_Ya)
 
+
+
+#pp.writeToFile("partest-samplerep.txt")
 
 #test ploting
 print "Plot Formfactor FF_Ya"
@@ -130,7 +142,7 @@ for i in range(9,13):
     hs.setLayer(i, SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al"+str(i-7)+"_density_Sr"), "Al":pp.newParameter("al"+str(i-7)+"_density_Al"), "Yannicium":pp.newParameter("al"+str(i-7)+"_density_Ya"), "Yannicium_Magnetization":pp.newParameter("al"+str(i-7)+"_magnetization") }, pp.newParameter("al"+str(i-7)+"_d")))
 
 
-#pp.writeToFile("partest-samplerep.txt")
+
 
 print "Densitydict: " + str(al1.getDensitydict(ar))
 

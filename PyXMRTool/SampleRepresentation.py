@@ -520,7 +520,6 @@ class MagneticLayerObject(LayerObject):
             chitensor[4]=chi_diag[1]
             chitensor[8]=chi_diag[2]
         
-        print chitensor
             
         #now off-diagonal elements    
         theta_M = numpy.pi / 180.0 * theta_M  #in Bogenmass umwandeln (es entstehen abgeleitete Parameter)

@@ -340,7 +340,7 @@ class LayerObject(object):
             for item in chitensor:
                 if not isinstance(item, Parameters.Parameter):
                     raise TypeError(
-                        "Elements of \'d\' must be instances of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
+                        "Elements of \'chitensor\' must be instances of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
         if not isinstance(sigma, Parameters.Parameter) and not sigma is None:
             raise TypeError(
                 "\'sigma\' must be an instance of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
@@ -453,6 +453,94 @@ class LayerObject(object):
     """Magnetization direction for MOKE. Possible values are *\"x\"*, *\"y\"*, *\"z\"* and *\"0\"* (no magnetization)."""
 
 
+class MagneticLayerObject(LayerObject):
+    """Specialized layer to deal with a magnetic layer without energy-dependence. 
+    
+    The electrical suszeptibility tensor (Chi) consists of an energy-independent diagonal part and of off-diagonal elements which are given as a magnetization and their direction (angles).
+    """
+    
+    def __init__(self, chi_diag, m_prime, m_primeprime, theta_M, phi_M, d=None, sigma=None):       
+        """Initializes the MagneticLayerObject with both diagonal-elements and off-diagonal elements given as magnetic terms **m_prime** and **m_primeprime** and the angles **theta_M** and **phi_M** which describe the direction of the magnetization.
+        
+        See *Macke and Goering 2014, J.Phys.: Condens. Matter 26, 363201.* Eq. 11-14 for details.
+        
+        
+        Parameters
+        ----------
+        chi_diag : list of :class:`Parameters.Parameter`
+            Diagonal elements of electric susceptibility tensor of the layer.
+            
+            * *[chi]* sets *chi_xx = chi_yy = chi_zz = chi*
+            * *[chi_xx,chi_yy,chi_z]* sets *chi_xx,chi_yy,chi_zz*
+            
+        m_prime : :class:`Parameters.Parameter`
+        m_primeprime : :class:`Parameters.Parameter`
+            Real and imaginary parts of the magnetic term. 
+        theta_M : :class:`Parameters.Parameter`
+        phi_M : :class:`Parameters.Parameter`
+            Angles which describe the direction of the magnetization measured in degrees.
+        d : :class:`Parameters.Parameter`
+            Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
+            *None* or *0* mean infinitively thick.
+        sigma : :class:`Parameters.Parameter`
+            The roughness of the upper surface of the layer. Has dimension of length. Unit: see **d**.
+        """
+
+        # check parameters
+        if chi_diag is not None:
+            if not (len(chi_diag) == 1 or len(chi_diag)==3):
+                raise TypeError("\'chi_diag\' must be either of length 1 or length 3")
+            for item in chi_diag:
+                if not isinstance(item, Parameters.Parameter):
+                    raise TypeError(
+                        "Elements of \'chi_diag \' must be instances of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
+        if not isinstance(m_prime, Parameters.Parameter) and not m_prime is None:
+            raise TypeError(
+                "\'m_prime\' must be an instance of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
+        if not isinstance(m_primeprime, Parameters.Parameter) and not m_primeprime is None:
+            raise TypeError(
+                "\'m_primeprime\' must be an instance of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
+        if not isinstance(theta_M, Parameters.Parameter) and not theta_M is None:
+            raise TypeError(
+                "\'theta_M\' must be an instance of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
+        if not isinstance(phi_M, Parameters.Parameter) and not phi_M is None:
+            raise TypeError(
+                "\'phi_M\' must be an instance of class \'Parameters.Parameter\' or of an derived class (e.g. \'Parameters.Fitparameter\'")
+ 
+
+        #create chitensor with off-diagonal elements as derived parameters of m_prime, m_primeprime, theta_M and phi_M
+        #diagonal elements first
+        chitensor=numpy.array([Parameters.Parameter(0),Parameters.Parameter(0),Parameters.Parameter(0),
+                              Parameters.Parameter(0),Parameters.Parameter(0),Parameters.Parameter(0),
+                              Parameters.Parameter(0),Parameters.Parameter(0),Parameters.Parameter(0)])
+        if len(chi_diag)==1:
+            chitensor[0]=chitensor[4]=chitensor[8]=chi_diag[0]
+        elif len(chi_diag)==3:
+            chitensor[0]=chi_diag[0]
+            chitensor[4]=chi_diag[1]
+            chitensor[8]=chi_diag[2]
+        
+        print chitensor
+            
+        #now off-diagonal elements    
+        theta_M = numpy.pi / 180.0 * theta_M  #in Bogenmass umwandeln (es entstehen abgeleitete Parameter)
+        phi_M = numpy.pi / 180.0 * phi_M
+        off_chitensor=  numpy.array([Parameters.Parameter(0), 
+                           Parameters.DerivedParameter(numpy.cos , theta_M) * (1j * m_prime - m_primeprime),
+                           -Parameters.DerivedParameter(numpy.sin,theta_M) * Parameters.DerivedParameter(numpy.sin,phi_M) * (1j * m_prime - m_primeprime),
+                           -Parameters.DerivedParameter(numpy.cos,theta_M) * (1j * m_prime - m_primeprime),
+                           Parameters.Parameter(0),
+                           Parameters.DerivedParameter(numpy.sin,theta_M) * Parameters.DerivedParameter(numpy.cos,phi_M) * (1j * m_prime - m_primeprime),
+                           Parameters.DerivedParameter(numpy.sin,theta_M) * Parameters.DerivedParameter(numpy.sin,phi_M) * (1j * m_prime - m_primeprime),
+                           -Parameters.DerivedParameter(numpy.sin,theta_M) * Parameters.DerivedParameter(numpy.cos,phi_M) * (1j * m_prime - m_primeprime),
+                           Parameters.Parameter(0)])
+        
+        chitensor=chitensor + off_chitensor
+                    
+        # call constructor of the base class
+        super(type(self), self).__init__(chitensor, d, sigma)
+
+
 class ModelChiLayerObject(LayerObject):
     """Speciallized layer to deal with an electrical suszeptibility tensor (Chi) which is modelled as function of energy.
     
@@ -520,8 +608,11 @@ class ModelChiLayerObject(LayerObject):
                 raise TypeError("Elements of the array returnd by \'chitensorfunction\' have to be numbers.")
         # return the checked list
         return chitensor
-
-
+    
+    # exposed properties (feel like instance variables but are protected via getter and setter methods)
+    chitensor = property(_getChitensor_, _setChitensor_)
+    """Electric susceptibility tensor of the layer. Is an instance of :class:`Parameters.ParametrizedFunction`. See :meth:`.__init__` for details."""
+    
 class AtomLayerObject(LayerObject):
     """
     Speciallized layer class to deal with compositions of atoms and their energy dependent formfactors (which can be obtained from absorption spectra).
@@ -530,6 +621,8 @@ class AtomLayerObject(LayerObject):
     The atoms and their formfactors have to be registered a the class (with registerAtom) before they can be used to instantiate a new AtomLayerObject.
     The atom density can be plotted with :func:`.plotAtomDensity`.
     Density is measured in mol/cm$^3$ (as long as no **densityunitfactor** is applied)
+    
+    Used formfactors can also be "magnetic formfactors" which only deal with diagonal elements of a formfactor tensor and simulate magnetic moments. See :class:`MagneticFormfactor` and derived classes.
     """
 
     def __init__(self, densitydict={}, d=None, sigma=None, magdir="0", densityunitfactor=1.0):
@@ -1330,8 +1423,8 @@ class MagneticFormfactor(Formfactor):
         m_prime : :class:Parameters.ParametrizedFunction
         m_primeprime : :class:Parameters.ParametrizedFunction
             Real and imaginary parts of the magnetic term. Given as parametrized functions of energy.
-        theta_M : :class:Parameters.Parameter
-        phi_M : :class:Parameters.Parameter
+        theta_M : :class:`Parameters.Parameter`
+        phi_M : :class:`Parameters.Parameter`
             Angles which describe the direction of the magnetization measured in degrees.
         minE : float
         maxE : float
@@ -1423,7 +1516,7 @@ class MFFfromXMCD(MagneticFormfactor):
         
         Parameters
         ----------
-        theta_M, phi_M : :class:Parameters.Parameter
+        theta_M, phi_M : :class:`Parameters.Parameter`
             Angles which describe the direction of the magnetization measured in degrees.
         filename : str
             Path to the text file which contains the XMCD signal as function of energy.

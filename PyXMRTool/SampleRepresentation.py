@@ -56,7 +56,7 @@ import ast
 from scipy import interpolate
 from scipy import optimize
 import scipy
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 import inspect
 import Pythonreflectivity
 
@@ -787,7 +787,7 @@ class Formfactor(object):
             ff.append(self.getFF(e, fitpararray))
         ff = numpy.array(ff)
         ff = numpy.transpose(ff)
-        fig = pyplot.figure(figsize=(10, 10))
+        fig = plt.figure(figsize=(10, 10))
         axes = []
         axes.append(fig.add_subplot(331))
         for i in range(1, 9):
@@ -800,7 +800,7 @@ class Formfactor(object):
             l2 = ax.plot(energies, ff[i].imag, label="imaginary")
             i += 1
         axes[6].legend()  # only place a legend in the lower left element. Not nice, but works.
-        pyplot.show()
+        plt.show()
 
     # properties
     maxE = property(_getMaxE)
@@ -1789,19 +1789,19 @@ def plotAtomDensity(hs, fitpararray, colormap=[], atomnames=None):
     w = 1
     for name in atomnames:
         if colorindex < len(colormap):
-            pyplot.bar(range(number_of_layers), densitylistdict[name], align='center', width=w, label=name,
+            plt.bar(range(number_of_layers), densitylistdict[name], align='center', width=w, label=name,
                                   color=colormap[colorindex], alpha=0.9)
             colorindex += 1
         else:
-            pyplot.bar(range(number_of_layers), densitylistdict[name], align='center', width=w, label=name,
+            plt.bar(range(number_of_layers), densitylistdict[name], align='center', width=w, label=name,
                                   alpha=0.9)
         w -= widthstep
 
-    pyplot.xlabel("Layer number")
-    pyplot.ylabel(r'Density in mol/cm$^3$')
-    pyplot.legend()
-    pyplot.xlim(0, number_of_layers)
-    pyplot.show()
+    plt.xlabel("Layer number")
+    plt.ylabel(r'Density in mol/cm$^3$')
+    plt.legend()
+    plt.xlim(0, number_of_layers)
+    plt.show()
 
     return densitylistdict  # contains a dictionary, which has an entry for every atom, with its name as key and as value a list. These lists are as long as there are numbers of layers and filled with
 

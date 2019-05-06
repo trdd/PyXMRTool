@@ -51,12 +51,9 @@ from matplotlib import patches as mpatches
 from scipy import linalg as scipy_linalg
 import numpy
 import os.path
-#import sklearn.preprocessing
-from sklearn import preprocessing as skpreprocessing
-#import sklearn.cluster
-from sklearn import cluster as skcluster
-#import scipy.optimize
-from scipy import optimize as scipy_optimize
+import sklearn.preprocessing
+import sklearn.cluster
+import scipy.optimize
 
 from PyXMRTool import Parameters
 
@@ -114,7 +111,7 @@ def Explore(residualsfunction,  parameter_settings, number_of_seeds, verbose=2,n
     upper_limits=numpy.array(upper_limits)
     lower_limits=numpy.array(lower_limits)
     for i in range(number_of_seeds):
-        res = scipy_optimize.least_squares(residualsfunction, numpy.random.rand(len(upper_limits))*(upper_limits-lower_limits)+lower_limits, bounds=(lower_limits,upper_limits), method='trf', x_scale=upper_limits-lower_limits, jac='3-point',verbose=verbose)
+        res = scipy.optimize.least_squares(residualsfunction, numpy.random.rand(len(upper_limits))*(upper_limits-lower_limits)+lower_limits, bounds=(lower_limits,upper_limits), method='trf', x_scale=upper_limits-lower_limits, jac='3-point',verbose=verbose)
         fixpoints.append(res.x)
         ssrs.append(2*res.cost)
     fixpoints=numpy.array(fixpoints)
@@ -147,19 +144,19 @@ def Cluster(scan_output,ssrfunction, number_of_clusters=None):
     fixpoints=scan_output['fixpoints']
     ssrs=scan_output['ssrs_of_fixpoints']
     #performing cluster analysis
-    scaler=skpreprocessing.StandardScaler()       #parameters have to be scaled to allow for a reasonable clustering
+    scaler=sklearn.preprocessing.StandardScaler()       #parameters have to be scaled to allow for a reasonable clustering
     fixpoints_scaled=scaler.fit_transform(fixpoints)
     if number_of_clusters is None:
         print("... clustering "+str(len(fixpoints)) +" fixpoints in an optimal number of clusters")
         scores=[]
         for i in numpy.arange(2,min([20,len(fixpoints)])):
-            km=skcluster.KMeans(n_clusters=i,init='random',n_init=100).fit(fixpoints_scaled)
+            km=sklearn.cluster.KMeans(n_clusters=i,init='random',n_init=100).fit(fixpoints_scaled)
             scores.append(sklearn.metrics.silhouette_score(fixpoints_scaled, km.labels_))
         number_of_clusters=2+scores.index(max(scores))
     else:        
         print("... clustering "+str(number_of_seeds) +" fixpoints in "+str(number_of_clusters)+" clusters")
 
-    km=skcluster.KMeans(n_clusters=number_of_clusters, init='random',n_init=100).fit(fixpoints_scaled)
+    km=sklearn.cluster.KMeans(n_clusters=number_of_clusters, init='random',n_init=100).fit(fixpoints_scaled)
     clusters=[]
     clusters_members=[]
     clusters_members_ssrs=[]

@@ -35,11 +35,12 @@ import numbers
 import os.path
 import os
 import numpy
-import scipy.constants
+from scipy import constants as scipy_constants
 import copy
-from mpl_toolkits.mplot3d import axes3d
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+#import matplotlib.patches as mpatches
+from matplotlib import patches as mpatches
 
 import Pythonreflectivity
 
@@ -97,7 +98,7 @@ class ReflDataSimulator(object):
         
         #set length scale. Has direct impact for the calculation of wavelengths from energies.
         self._lengthscale=length_scale                                                                  #need this property only for the methode setMode
-        self._hcfactor=scipy.constants.physical_constants["Planck constant in eV s"][0]*scipy.constants.physical_constants["speed of light in vacuum"][0]/length_scale
+        self._hcfactor=scipy_constants.physical_constants["Planck constant in eV s"][0]*scipy_constants.physical_constants["speed of light in vacuum"][0]/length_scale
         
         
         

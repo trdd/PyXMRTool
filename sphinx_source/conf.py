@@ -42,7 +42,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
 #    'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
@@ -173,7 +173,7 @@ texinfo_documents = [
 #autodoc
 
 #use both the class’ and the __init__ method’s docstring
-#autoclass_content = "both"
+autoclass_content = "both"
 #group members 
 #autodoc_member_order="groupwise"
 #order corresponding to code

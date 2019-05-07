@@ -199,80 +199,39 @@ class ReflDataSimulator(object):
                 flatsimdata.extend(self._xmcdfactor*xmcd)                                   #here the simulated xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
         return flatsimdata
     
-    def _destillDatapoint(self, datapoint,skipzeroreflectivities=True):
+    def _destillDatapoint(self, datapoint):
         """Takes a complete datapoint (which contains all possible entries) and destill a datapoint as it is needed for the current mode (see :meth:`.__init__`).
         
         This private method is used by :meth:`.ReadData` to convert the data returned by the *linereaderfunction* and the *pointmodifierfunction* and it is used by :meth:`.setData` to destill the given datapoints before they are given to :meth.`_setData`.
         """
         energy,angle,rsigma,rpi,rleft,rright,xmcd,total=datapoint    #unpack datapoint
+        
+        #set every value to NaN which is zero or None
+        if rsigma is None or rsigma==0: rsigma = numpy.nan
+        if rpi is None or rpi==0: rpi = numpy.nan
+        if rleft is None or rleft==0: rleft = numpy.nan
+        if rright is None or rright==0: rright = numpy.nan
+        if xmcd is None or xmcd==0: xmcd = numpy.nan
+        if total is None or total==0: total = numpy.nan
+        
         if self._mode=='l':
-            if rsigma is None or rpi is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,rsigma,rpi]
+            return [energy,angle,rsigma,rpi]
         elif self._mode=='lL':
-            if rsigma is None or rpi is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (rsigma==0 or rpi==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,numpy.log(rsigma),numpy.log(rpi)]                        #store logarithms of reflectivities
+            return [energy,angle,numpy.log(rsigma),numpy.log(rpi)]                        #store logarithms of reflectivities
         elif self._mode=='c':
-            if rleft is None or rright is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,rleft,rright]                       
+            return [energy,angle,rleft,rright]                       
         elif self._mode=='cL':
-            if rleft is None or rright is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,numpy.log(rleft),numpy.log(rright)]            #store logarithms of reflectivities
+            return [energy,angle,numpy.log(rleft),numpy.log(rright)]            #store logarithms of reflectivities
         elif self._mode=='t':
-            if total is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (total==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,total]
+            return [energy,angle,total]
         elif self._mode=='tL':
-            if total is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (total==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,numpy.log(total)]                  #store logarithms of sum of reflectivities
+            return [energy,angle,numpy.log(total)]                  #store logarithms of sum of reflectivities
         elif self._mode=='x':
-            if xmcd is None:
-                raise Exception("Needed data not in line")
             return [energy,angle,xmcd] 
         elif self._mode=='cx':
-            if rleft is None or rright is None or xmcd is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,rleft,rright,self._xmcdfactor*xmcd]                   #here the measured xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
+            return [energy,angle,rleft,rright,self._xmcdfactor*xmcd]                   #here the measured xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
         elif self._mode=='cLx':
-            if rleft is None or rright is None or xmcd is None:
-                raise Exception("Needed data not in line")
-            if skipzeroreflectivities==True and (rleft==0 or rright==0):
-                print "  *** Zero reflectivity at energy="+str(energy)+ " and angle="+str(angle)+". Skiping datapoint."
-                print "      See option \'skipzeroreflectivities\' of \'PyXMRTool.Experiment.ReflDataSimulator.ReadData()\'. ***"
-            else:
-                return [energy,angle,numpy.log(rleft),numpy.log(rright),self._xmcdfactor*xmcd]  #store logarithms of reflectivities
+            return [energy,angle,numpy.log(rleft),numpy.log(rright),self._xmcdfactor*xmcd]  #store logarithms of reflectivities
         
         
     
@@ -291,7 +250,9 @@ class ReflDataSimulator(object):
                                   or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
                                   or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
                                   or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [total1, .... totalK]] 
-                                  
+        
+        Values for rsigma, rpi etc. can be NaN. Angles occur several times for one energy.
+        
         This private method is used by :meth:`.ReadData` to convert the temporary list of datapoints and by :meth:`.SetData` which just adds an consistency check for the list of datapoints delivered by the user.
         """
         
@@ -312,9 +273,6 @@ class ReflDataSimulator(object):
             single_energy_datapoints=((numpy.array(single_energy_datapoints)).transpose()).tolist()                  #make a numpy array out of it,transpose it, and transform it again to a list of lists
             item=[energy]                                                                    #create one item for the list self._expdata
             item.extend(single_energy_datapoints)                                            #extend it, such that it looks like this [energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]  or equivalent
-            for ang in item[1]:                                                  #check if every angle occurs only once for this energy
-                if item[1].count(ang)>1:
-                    raise Exception("There is more than one datapoint with energy="+str(energy)+"eV and angle="+ str(ang)+"degrees.")
             self._expdata.append(item)
         self._expdata.sort(key=lambda item:item[0])                         #sort with ascending energy
             
@@ -327,7 +285,7 @@ class ReflDataSimulator(object):
     
     #public methods
     
-    def ReadData(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0, skipzeroreflectivities=True):
+    def ReadData(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0):
         """
         Read the data files and store the data corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`)
         
@@ -342,6 +300,7 @@ class ReflDataSimulator(object):
             Specifies the set of data files. Either a list of filenames or one foldername of a folder containing all the data files (and only them!).
         linereaderfunction : callable
             A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers *(energy,angle,rsigma,rpi,rleft,rright,xmcd)*. Entries can also be \'None\'. Exceptions will only be trown if the needed information for the specified **mode** is not delivered. An easy way to create such a function is to use the method :meth:`.createLinereader`.
+            The linereaderfunction can also return a list of lists if several datapoints are present in on line of the datafile.
         energies : list of floats
             Only possible to be different from *None* if **files** is a list of filenames and **angles** is `None`. Gives the energies which belong to the corresponding files (same order) as floats.
         angles : list of floats
@@ -352,8 +311,6 @@ class ReflDataSimulator(object):
             A user-definde function which is used to modify the obtained information. It takes the tuple/list of independent and dependent variables of a single data point and returns a modified one. It can be used for example if the data file contains qz values instead of angles. In this case you can read the qz values first as angles and replace them afterwards with the angles calculated out of it with the **pointmodifierfunction**. Of course you can also use a adopted **linereaderfunction** for this purpose (if all necessary information can be found in one line of the data files).
         headerlines : int
             specifies the number of lines which should be ignored at the top of each file.
-        skipzeroreflectivities : bool
-            Measured reflectivities should usually not be exactly zero. Sometimes zeros arise in a measurement file, when only one of the polarizations was measured at a certain angle-energy-combination. Usually this happens if this angle-energy-combination turns out not to be interesting after measuring one polarization and therefor the second one was not measured. For such cases you can set **skipzeroreflectivities** to *True* (default). Datapoints which contain reflectivities which are exactly zero will then be removed. If you don't want to have this behavior, set **skipzeroreflectivities** to *False*. But be aware that this can lead to problems. The program will try to fit these zero-values and if you use a logarithmic mode there will be errors.
         """
         
         #Parameter checking
@@ -426,18 +383,32 @@ class ReflDataSimulator(object):
             for line in lines:
                 output=linereaderfunction(line)
                 if output is not None:
-                    datapoint=output
-                    if file_energy is not None:                                                  #overwrite energy and/or angle if file-wide energy and/or angle is given
-                        datapoint[0]=file_energy                #set "energy" of the datapoint to "file_energy"
-                    if file_angle is not None:
-                        datapoint[1]=file_angle                 #set "angle" of the datapoint to "file_angle"
-                    if datapoint[0] is None or datapoint[1] is None:
-                        raise Exception("Needed data (energy or angle) not in line")
-                    if pointmodifierfunction is not None:
-                        datapoint=pointmodifierfunction(datapoint)   #apply pointmodifierfunction; datapoint should be an array like this [energy,angle,rsigma,rpi,rleft,rright,xmcd,total]
-                    dest_datapoint=self._destillDatapoint(datapoint,skipzeroreflectivities)
-                    if dest_datapoint is not None:
-                        datapoints.append(dest_datapoint)                    
+                    if isinstance(output[0],list) or isinstance(output[0],tuple):           #look if output consists of several datapoints
+                        for datapoint in output:
+                            if file_energy is not None:                                                  #overwrite energy and/or angle if file-wide energy and/or angle is given
+                                datapoint[0]=file_energy                #set "energy" of the datapoint to "file_energy"
+                            if file_angle is not None:
+                                datapoint[1]=file_angle                 #set "angle" of the datapoint to "file_angle"
+                            if datapoint[0] is None or datapoint[1] is None:
+                                raise Exception("Needed data (energy or angle) not in line")
+                            if pointmodifierfunction is not None:
+                                datapoint=pointmodifierfunction(datapoint)   #apply pointmodifierfunction; datapoint should be an array like this [energy,angle,rsigma,rpi,rleft,rright,xmcd,total]
+                            dest_datapoint=self._destillDatapoint(datapoint)
+                            if dest_datapoint is not None:
+                                datapoints.append(dest_datapoint)             
+                    else:                                                                     #if one line consists of one datapoint only
+                        datapoint=output
+                        if file_energy is not None:                                                  #overwrite energy and/or angle if file-wide energy and/or angle is given
+                            datapoint[0]=file_energy                #set "energy" of the datapoint to "file_energy"
+                        if file_angle is not None:
+                            datapoint[1]=file_angle                 #set "angle" of the datapoint to "file_angle"
+                        if datapoint[0] is None or datapoint[1] is None:
+                            raise Exception("Needed data (energy or angle) not in line")
+                        if pointmodifierfunction is not None:
+                            datapoint=pointmodifierfunction(datapoint)   #apply pointmodifierfunction; datapoint should be an array like this [energy,angle,rsigma,rpi,rleft,rright,xmcd,total]
+                        dest_datapoint=self._destillDatapoint(datapoint)
+                        if dest_datapoint is not None:
+                            datapoints.append(dest_datapoint)                    
             i+=1
         
         # up to now there is an intermediate data structure: a list of complete datapoints eg. [ [energy1,angle1,rsigma1,rpi1], ...., [energyN,angleN,rsigmaN,rpiN]]
@@ -478,7 +449,7 @@ class ReflDataSimulator(object):
         #destill datapoints (extract only needed entries)
         dest_datapoints=[]
         for point in datapoints:
-            dest_point=self._destillDatapoint(point,skipzeroreflectivities=False)
+            dest_point=self._destillDatapoint(point)
             if dest_point is not None:
                 dest_datapoints.append(dest_point)   
         #create internal structure for storage
@@ -632,7 +603,7 @@ class ReflDataSimulator(object):
         """
         Return sum of squared residuals between measured and simulated data as float according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
         """
-        return numpy.sum( numpy.square( numpy.array(self._getSimDataFlat(fitpararray)) -  numpy.array(self._getExpDataFlat()) )  )
+        return numpy.nansum( numpy.square( numpy.array(self._getSimDataFlat(fitpararray)) -  numpy.array(self._getExpDataFlat()) )  )      #numpy.nansum sets all NaN within the sum to zero and performs summation afterwards
     
     def getResidualsSSR(self,fitpararray):
         """
@@ -641,14 +612,17 @@ class ReflDataSimulator(object):
         The information is returned as tuple: array of differences between simulated and measured data, sum of squared residuals.
         """
         residuals = numpy.array(self._getSimDataFlat(fitpararray)) - numpy.array(self._getExpDataFlat())
-        ssr = numpy.sum( numpy.square( residuals  ))
+        ssr = numpy.nansum( numpy.square( residuals  ))
+        residuals=residuals[~numpy.isnan(residuals)]
         return residuals,ssr
     
     def getResiduals(self, fitpararray):
         """
         Return the residuals between measured and simulated data according to the parameterset given by **fitpararray** (see also :mod:`Parameters`).
         """
-        return numpy.array(self._getSimDataFlat(fitpararray)) - numpy.array(self._getExpDataFlat())
+        residuals = numpy.array(self._getSimDataFlat(fitpararray)) - numpy.array(self._getExpDataFlat())
+        residuals=residuals[~numpy.isnan(residuals)]
+        return residuals
         
     def plotData(self, fitpararray,simcolor='r',expcolor='b',simlabel='simulated',explabel='experimental',energy_angles=None):
         """
@@ -911,16 +885,21 @@ class ReflDataSimulator(object):
                
         
     @staticmethod
-    def createLinereader(energy_column=None,angle_column=None,rsigma_column=None,rpi_column=None,rleft_column=None,rright_column=None,xmcd_column=None,total_column=None,commentsymbol='#'):
+    def createLinereader(energy_column=None,angle_column=None, rsigma_angle_column=None, rsigma_column=None, rpi_angle_column=None, rpi_column=None, rleft_angle_column=None, rleft_column=None, rright_angle_column=None, rright_column=None, xmcd_angle_column=None, xmcd_column=None, total_angle_column=None, total_column=None,commentsymbol='#'):
         """
-        Return a linereader function which can read lines from whitespace-seperated files and returns lists of real numbers *[energy,angle,rsigma,rpi,rleft,rright,xmcd,sum]* (or *None* for a uncommented line).
+        Return a linereader function which can read lines from whitespace-seperated files and returns a datapoint, which is a lists of real numbers *[energy,angle,rsigma,rpi,rleft,rright,xmcd,sum]* (or *None* for a uncommented line).
+        Values can also be *None*.
+        The linereader function returns a list of datapoints if several angles are defined within one line.
         
         With the parameters *..._column* you can determin wich column is interpreted how.
+        Instead of one angle for all reflectivities within one line (**angle_column**), one can also define columns for angles which are specifically for one reflectivity polarization.
         Column numbers are starting from 0.
         """
         #check parameters
-        parameterlist=[energy_column,angle_column,rsigma_column,rpi_column,rleft_column,rright_column,xmcd_column,total_column]
-        for item in parameterlist:
+        indep_pars_columns=[energy_column,angle_column]
+        values_columns=[rsigma_column, rpi_column, rleft_column, rright_column, xmcd_column, total_column]                                                      #BEWARE: values_columns and additional_angles_columns have to have corresponding entries with the same order!!!
+        additional_angles_columns=[rsigma_angle_column, rpi_angle_column, rleft_angle_column, rright_angle_column, xmcd_angle_column, total_angle_column]
+        for item in indep_pars_columns+values_columns+additional_angles_columns:
             if not (isinstance(item, int) or item is None):
                 raise TypeError("Columns have to be given as integer numbers.")
             if item is not None:
@@ -928,23 +907,62 @@ class ReflDataSimulator(object):
                     raise ValueError("Columns have to be positive numbers.")
         if not isinstance(commentsymbol,str):
             raise TypeError("\'commentsymbol\' has to be a string.")
-        #define the linereader function
-        def linereader(line):
-                if not isinstance(line,str):
-                    raise TypeError("\'line\' needs to be a string.")
-                line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
-                if not line.isspace() and line:                               #ignore empty lines        
-                    linearray=line.split()
-                    linelist=[]
-                    i=0
-                    for item in parameterlist:
-                        if item is None:
-                            linelist.append(None)
-                        else:
-                            linelist.append(float(linearray[item]))
-                    return linelist
-                else:
-                    return None
+        
+        #define the linereader function without additional angles
+        if all(item is None for item in additional_angles_columns):
+            def linereader(line):
+                    if not isinstance(line,str):
+                        raise TypeError("\'line\' needs to be a string.")
+                    line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+                    if not line.isspace() and line:                               #ignore empty lines        
+                        linearray=line.split()
+                        linelist=[]
+                        for item in indep_pars_columns:
+                            if item is None:
+                                linelist.append(None)
+                            else: 
+                                linelist.append(float(linearray[item]))
+                        for item in values_columns:
+                            if item is None:
+                                linelist.append(None)
+                            else:
+                                linelist.append(float(linearray[item]))
+                        return linelist
+                    else:
+                        return None
+       
+        else:
+            def linereader(line):
+                    if not isinstance(line,str):
+                        raise TypeError("\'line\' needs to be a string.")
+                    line=(line.split(commentsymbol))[0]                            #ignore everything behind the commentsymbol  #
+                    if not line.isspace() and line:                               #ignore empty lines        
+                        linearray=line.split()
+                        pointlist=[]
+                        for i, angle_column, value_column in zip(range(len(additional_angles_columns)), additional_angles_columns, values_columns):
+                            if angle_column is not None:
+                                point=[]
+                                #energy
+                                if energy_column is None:
+                                    point.append(None)
+                                else:
+                                    point.append(float(linearray[energy_column]))
+                                #angle
+                                point.append(float(linearray[angle_column]))
+                                #values
+                                for j in range(i):
+                                    point.append(None)
+                                if value_column is None:
+                                    point.append(None)
+                                else:
+                                    point.append(float(linearray[value_column]))
+                                for j in range(len(values_columns)-i-1):
+                                    point.append(None)
+                                pointlist.append(point)
+                        return pointlist
+                    else:
+                        return None
+        
         return linereader
     
     

@@ -920,17 +920,22 @@ class ReflDataSimulator(object):
             * \'lL\', \'cL\', \'sL\', \'xL\', \'cLx<xfactor>\', - as before, but instead of the corresponding reflectivities themselfs their logarithms are stored and simulated. This is usefull for fitting as with the logarithm the errors of different data points are weighted in a comparable way, in spite of the strongly decaying intensitiy for higher angles (see J.Pyhs.: Condens. Matter 26 (2014) 363201, page 16).
         """
         
+        #have a look on  self._expdata and self._datasourcestorage before it is set to "zero" by initialization
+        if not self._expdata==[]:
+            existingdata=True
+        else:
+            existingdata=False
+        datasourcestorage=self._datasourcestorage
         #use the __init__ method to change mode to be sure to treat mode in the same way, even if changes occur in the futur
         self.__init__(mode,self._lengthscale)
         #read data again if already read
-        if not self._expdata==[]:
-            self._expdata=[]
+        if existingdata:
+            self._datasourcestorage=datasourcestorage
             for item in self._datasourcestorage:
                 if item["source"]=="files":
                     self._ReadDataCore(item["files"], item["linereaderfunction"], item["energies"], item["angles"], item["filenamereaderfunction"], item["pointmodifierfunction"], item["headerlines"])
                 elif item["source"]=="array":
                     self._setDataCore(item["datapoints"])
-        
                
         
     @staticmethod

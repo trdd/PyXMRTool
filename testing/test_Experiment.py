@@ -63,8 +63,10 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
     return point
 
 #read data from files
+print "... read files")
 simu.ReadData("data",simu.createLinereader(energy_column=1,angle_column=0,rsigma_column=2,rpi_column=3),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
 
+print "... read from array")
 #test to read data via array
 #create test array first
 datapoints=[]
@@ -91,7 +93,7 @@ simu.setModel(hs,reflmodifierfunction=reflmodifier)
 #pp.writeToFile("partest_Experiment.txt")
 
 #simulate
-
+print "... simulate"
 starttime=time.time()
 simdata=simu.getSimData(ar)
 print time.time()-starttime

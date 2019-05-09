@@ -100,6 +100,12 @@ class ReflDataSimulator(object):
         self._lengthscale=length_scale                                                                  #need this property only for the methode setMode
         self._hcfactor=scipy.constants.physical_constants["Planck constant in eV s"][0]*scipy.constants.physical_constants["speed of light in vacuum"][0]/length_scale
         
+        #initiate datasource storage, an array which stores datasources to be able to reread them when executin setMode
+        self._datasourcestorage=[]
+        
+        #initiate destilled storage of experimental data
+        self._expdata=[]
+        
         
         
         
@@ -232,68 +238,15 @@ class ReflDataSimulator(object):
             return [energy,angle,rleft,rright,self._xmcdfactor*xmcd]                   #here the measured xmcd signal is multiplied with a user defined factor. This is usefull if you want to give more or less weight to the xmcd while fitting
         elif self._mode=='cLx':
             return [energy,angle,numpy.log(rleft),numpy.log(rright),self._xmcdfactor*xmcd]  #store logarithms of reflectivities
-        
-        
-    
-    
-    def _setData(self, datapoints):
-        """Creates the internal structure self._expdata, without consistency check.
-        
-        The data is taken from the list of datapoints, which has e.g. the following shape:
-        [ [energy1,angle1,rsigma1,rpi1], ...., [energyN,angleN,rsigmaN,rpiN]]
-        So there are many datapoints with the same energies.
-        
-       
-        The data structure self._expdata is created for internal storage. It should be fast for delivering data belonging to single energies.
-        Therefore it looks like this:  self._expdata=[[energy1,[angle1,....angleN], [rsigma1, .... rsigmaN], [rpi1,...rpiN]], ...[energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]] 
-                                  or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 
-                                  or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
-                                  or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
-                                  or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [total1, .... totalK]] 
-        
-        Values for rsigma, rpi etc. can be NaN. Angles occur several times for one energy.
-        
-        This private method is used by :meth:`.ReadData` to convert the temporary list of datapoints and by :meth:`.SetData` which just adds an consistency check for the list of datapoints delivered by the user.
-        """
-        
-        self._expdata=[]
-        while(len(datapoints)>0):
-            element=datapoints.pop(0)
-            energy=element[0]
-            single_energy_datapoints=[element]
-            #fill single_energy_datapoints array
-            while(1):
-                try:
-                    index=[item[0] for item in datapoints].index(energy)
-                except:
-                    break
-                single_energy_datapoints.append(datapoints.pop(index))
-            single_energy_datapoints=[item[1:] for item in single_energy_datapoints]        #remove energy
-            single_energy_datapoints.sort(key=lambda item: item[0])                         #sort for increasing angles
-            single_energy_datapoints=((numpy.array(single_energy_datapoints)).transpose()).tolist()                  #make a numpy array out of it,transpose it, and transform it again to a list of lists
-            item=[energy]                                                                    #create one item for the list self._expdata
-            item.extend(single_energy_datapoints)                                            #extend it, such that it looks like this [energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]  or equivalent
-            self._expdata.append(item)
-        self._expdata.sort(key=lambda item:item[0])                         #sort with ascending energy
-            
     
     
     
-    def _getHCFactor(self):
-        return self._hcfactor
     
-    
-    #public methods
-    
-    def ReadData(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0):
+    def _ReadDataCore(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0):
         """
         Read the data files and store the data corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`)
         
-        This function enables a very flexible reading of the data files.
-        Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd,total).
-        So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
-        Where the values for the independent variables comes from can differ: either from lists (**energies**, **angles**), from the filenames (**filenamereaderfunction**) or from the lines in the data file (**linereaderfunction**).
-        
+        This is a core function not to be called by the user directly, but by :meth:`ReadData` and :meth:`setMode` to fullfill their tasks.
         Parameters
         ---------
         files : str or list of str
@@ -312,54 +265,6 @@ class ReflDataSimulator(object):
         headerlines : int
             specifies the number of lines which should be ignored at the top of each file.
         """
-        
-        #Parameter checking
-        if not isinstance(files,(tuple,list,str)):
-            raise TypeError("\'files\' has to be a list of filenames or a folder name.")
-        if isinstance(files,(tuple,list)):
-            for name in files:
-                if not isinstance(name,str):
-                    raise TypeError("Entries of \'files\' have to be strings.")
-                elif not os.path.isfile(name):
-                    raise ValueError("\'"+name+"\' (entry of \'files\' is not an existing file.")
-        if isinstance(files,str):
-            if not os.path.isdir(files):
-                raise ValueError("\'"+name+"\' is not an existing directory.")
-        if not callable(linereaderfunction):
-            raise TypeError("\'linereaderfunction\' has to be callable.")
-        if not (isinstance(energies,(list,tuple,numpy.ndarray)) or energies is None):
-            raise TypeError("\energies\' has to be a list of numbers.")
-        if isinstance(energies,(tuple,list)):
-            for en in energies:
-                if not isinstance(en,numbers.Real):
-                    raise TypeError("Entries of \'energies\' have to be real numbers.")
-        if isinstance(angles,(tuple,list)):
-            for an in angles:
-                if not isinstance(an,numbers.Real):
-                    raise TypeError("Entries of \'angles\' have to be real numbers.")
-        if not (callable(filenamereaderfunction) or filenamereaderfunction is None):
-            raise TypeError("\'filenamereaderfunction\' has to be callable.")
-        if pointmodifierfunction is not None and not callable(pointmodifierfunction):
-            raise TypeError("\'pointmodifierfunction\' has to be callable.")
-        if not isinstance(headerlines,int):
-            raise TypeError("\headerlines\' has to be an integer number.")
-        if headerlines<0:
-            raise ValueError("\headerlines\' has to be a positive number.")
-        if (energies is not None and angles is not None and filenamereaderfunction is not None) or (energies is not None and angles is not None) or (energies is not None and filenamereaderfunction is not None)  or (angles is not None and filenamereaderfunction is not None):
-            raise ValueError("Either use \'energies\', \'angles\' or \'filenamereaderfunction\' but not several of them.")
-        if (energies is not None or angles is not None) and isinstance(files,str):
-            raise ValueError("\'energies\' or \'angles\' can only be used if \'files\' is an array of filenames.")
-        
-        #store parameters for later use with setMode
-        self._datafiles=files
-        self._datalinereaderfunction=linereaderfunction
-        self._dataenergies=energies
-        self._dataangles=angles
-        self._datafilenamereaderfunction=filenamereaderfunction
-        self._datapointmodifierfunction=pointmodifierfunction
-        self._dataheaderlines=headerlines
-        
-        
         #get filenames of files in directory
         if isinstance(files,str):
             files=[files+"/"+name for name in os.listdir(files)]
@@ -419,9 +324,154 @@ class ReflDataSimulator(object):
         #                          or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 
         #                          or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
         #                          or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
+        self._setData(datapoints)  
+    
+    def _setDataCore(self, datapoints):
+        """
+        Core function which is used by :meth:`setData` and :meth:`setMode` to do their job.
+        Store the data given with **datapoints** corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`) instead of reading the data from data files (see :meth:`.ReadData`).
         
-        self._setData(datapoints)
-        self._datasource="files"            #store where the data comes from
+        **datapoints** has to be a list/array of datapoints of the following form:
+           [[energy1,angle1,rsigma1,rpi1,rleft1,rright1,xmcd1,total1], ..., [energyK,angleK,rsigmaK,rpiK,rleftK,rrightK,xmcdK,totalK]
+           
+        Each datapoint corresponds to a measurement of the reflectivity at a certain angle and energy. Entries are alowed to hold *None* if the corresponding entry is not needed for current **mode**.
+        """
+        
+        #destill datapoints (extract only needed entries)
+        dest_datapoints=[]
+        for point in datapoints:
+            dest_point=self._destillDatapoint(point)
+            if dest_point is not None:
+                dest_datapoints.append(dest_point)   
+        #create internal structure for storage
+        self._setData(dest_datapoints)
+    
+    
+    def _setData(self, datapoints):
+        """Creates the internal structure self._expdata (appends new datapoints), without consistency check.
+        
+        The data is taken from the list of datapoints, which has e.g. the following shape:
+        [ [energy1,angle1,rsigma1,rpi1], ...., [energyN,angleN,rsigmaN,rpiN]]
+        So there are many datapoints with the same energies.
+        
+       
+        The data structure self._expdata is created for internal storage. It should be fast for delivering data belonging to single energies.
+        Therefore it looks like this:  self._expdata=[[energy1,[angle1,....angleN], [rsigma1, .... rsigmaN], [rpi1,...rpiN]], ...[energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [xmcd1, .... xmcdK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [rleft1, .... rleftN], [rright1,...rrightN], [xmcd1, .... xmcdN]]], ...[energyL,[angle1,....angleK], [rleft1, .... rleftK], [rright1,...rrightK],[xmcd1, .... xmcdK]] 
+                                  or:  self._expdata=[[energy1,[angle1,....angleN], [xmcd1, .... xmcdN]], ...[energyL,[angle1,....angleK], [total1, .... totalK]] 
+        
+        Values for rsigma, rpi etc. can be NaN. Angles occur several times for one energy.
+        
+        This private method is used by :meth:`.ReadData` to convert the temporary list of datapoints and by :meth:`.SetData` which just adds an consistency check for the list of datapoints delivered by the user.
+        """
+        
+
+        while(len(datapoints)>0):
+            element=datapoints.pop(0)
+            energy=element[0]
+            single_energy_datapoints=[element]
+            #fill single_energy_datapoints array
+            while(1):
+                try:
+                    index=[item[0] for item in datapoints].index(energy)
+                except:
+                    break
+                single_energy_datapoints.append(datapoints.pop(index))
+            single_energy_datapoints=[item[1:] for item in single_energy_datapoints]        #remove energy
+            single_energy_datapoints.sort(key=lambda item: item[0])                         #sort for increasing angles
+            single_energy_datapoints=((numpy.array(single_energy_datapoints)).transpose()).tolist()                  #make a numpy array out of it,transpose it, and transform it again to a list of lists
+            item=[energy]                                                                    #create one item for the list self._expdata
+            item.extend(single_energy_datapoints)                                            #extend it, such that it looks like this [energyL,[angle1,....angleK], [rsigma1, .... rsigmaK], [rpi1,...rpiK]  or equivalent
+            self._expdata.append(item)
+        self._expdata.sort(key=lambda item:item[0])                         #sort with ascending energy
+            
+    
+    
+    
+    def _getHCFactor(self):
+        return self._hcfactor
+    
+    
+    #public methods
+    
+    def ReadData(self,files,linereaderfunction, energies=None, angles=None, filenamereaderfunction=None, pointmodifierfunction=None, headerlines=0):
+        """
+        Read the data files and store the data corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`)
+        
+        This function enables a very flexible reading of the data files.
+        Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd,total).
+        So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
+        Where the values for the independent variables comes from can differ: either from lists (**energies**, **angles**), from the filenames (**filenamereaderfunction**) or from the lines in the data file (**linereaderfunction**).
+        
+        The function allows for multiple data reads. Each execution adds new data to the already stored one.
+        
+        Parameters
+        ---------
+        files : str or list of str
+            Specifies the set of data files. Either a list of filenames or one foldername of a folder containing all the data files (and only them!).
+        linereaderfunction : callable
+            A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers *(energy,angle,rsigma,rpi,rleft,rright,xmcd)*. Entries can also be \'None\'. Exceptions will only be trown if the needed information for the specified **mode** is not delivered. An easy way to create such a function is to use the method :meth:`.createLinereader`.
+            The linereaderfunction can also return a list of lists if several datapoints are present in on line of the datafile.
+        energies : list of floats
+            Only possible to be different from *None* if **files** is a list of filenames and **angles** is `None`. Gives the energies which belong to the corresponding files (same order) as floats.
+        angles : list of floats
+            Only possible to be different from *None* if **files** is a list of filenames and **energies** is `None`. Gives the angles which belong to the corresponding files (same order) as floats.
+        filenamereaderfunction : callable
+            A user-defined function which reads energies and/or angles from the filenames of the data files. This function should take a string (a filename without path), extract energy and/or angle out of it and return this as a tuple/list *(energy,angle)*. Both entries can also be set to *None*, but their will be an exception if the needed information for the data points can also not be obtained from the **linereaderfunction**.
+        pointmodifierfunction : callable
+            A user-definde function which is used to modify the obtained information. It takes the tuple/list of independent and dependent variables of a single data point and returns a modified one. It can be used for example if the data file contains qz values instead of angles. In this case you can read the qz values first as angles and replace them afterwards with the angles calculated out of it with the **pointmodifierfunction**. Of course you can also use a adopted **linereaderfunction** for this purpose (if all necessary information can be found in one line of the data files).
+        headerlines : int
+            specifies the number of lines which should be ignored at the top of each file.
+        """
+        
+        #Parameter checking
+        if not isinstance(files,(tuple,list,str)):
+            raise TypeError("\'files\' has to be a list of filenames or a folder name.")
+        if isinstance(files,(tuple,list)):
+            for name in files:
+                if not isinstance(name,str):
+                    raise TypeError("Entries of \'files\' have to be strings.")
+                elif not os.path.isfile(name):
+                    raise ValueError("\'"+name+"\' (entry of \'files\' is not an existing file.")
+        if isinstance(files,str):
+            if not os.path.isdir(files):
+                raise ValueError("\'"+name+"\' is not an existing directory.")
+        if not callable(linereaderfunction):
+            raise TypeError("\'linereaderfunction\' has to be callable.")
+        if not (isinstance(energies,(list,tuple,numpy.ndarray)) or energies is None):
+            raise TypeError("\energies\' has to be a list of numbers.")
+        if isinstance(energies,(tuple,list)):
+            for en in energies:
+                if not isinstance(en,numbers.Real):
+                    raise TypeError("Entries of \'energies\' have to be real numbers.")
+        if isinstance(angles,(tuple,list)):
+            for an in angles:
+                if not isinstance(an,numbers.Real):
+                    raise TypeError("Entries of \'angles\' have to be real numbers.")
+        if not (callable(filenamereaderfunction) or filenamereaderfunction is None):
+            raise TypeError("\'filenamereaderfunction\' has to be callable.")
+        if pointmodifierfunction is not None and not callable(pointmodifierfunction):
+            raise TypeError("\'pointmodifierfunction\' has to be callable.")
+        if not isinstance(headerlines,int):
+            raise TypeError("\headerlines\' has to be an integer number.")
+        if headerlines<0:
+            raise ValueError("\headerlines\' has to be a positive number.")
+        if (energies is not None and angles is not None and filenamereaderfunction is not None) or (energies is not None and angles is not None) or (energies is not None and filenamereaderfunction is not None)  or (angles is not None and filenamereaderfunction is not None):
+            raise ValueError("Either use \'energies\', \'angles\' or \'filenamereaderfunction\' but not several of them.")
+        if (energies is not None or angles is not None) and isinstance(files,str):
+            raise ValueError("\'energies\' or \'angles\' can only be used if \'files\' is an array of filenames.")
+        
+        #store parameters for later use with setMode
+        self._datasourcestorage.append({"source" : "files", "files" : files, "linereaderfunction" : linereaderfunction, "energies": energies, "angles": angles, "filenamereaderfunction": filenamereaderfunction, "pointmodifierfunction" : pointmodifierfunction, "headerlines" : headerlines})
+        
+        #call _ReadDataCore
+        self._ReadDataCore(files,linereaderfunction, energies, angles, filenamereaderfunction, pointmodifierfunction, headerlines)
+    
+
+
+
         
     
     def setData(self, datapoints):
@@ -432,6 +482,8 @@ class ReflDataSimulator(object):
            [[energy1,angle1,rsigma1,rpi1,rleft1,rright1,xmcd1,total1], ..., [energyK,angleK,rsigmaK,rpiK,rleftK,rrightK,xmcdK,totalK]
            
         Each datapoint corresponds to a measurement of the reflectivity at a certain angle and energy. Entries are alowed to hold *None* if the corresponding entry is not needed for current **mode**.
+        
+        The function allows for multiple data reads. Each execution adds new data to the already stored one.
         """
         
         #convert to numpy array
@@ -443,18 +495,13 @@ class ReflDataSimulator(object):
             raise ValueError("Input data has wrong shape.")
         
         #store parameters for later use with setMode
-        self._datapoints=datapoints
+        self._datasourcestorage.append({"source" : "array", "datapoints" : datapoints})
+
+        self._setDataCore(datapoints)
 
         
-        #destill datapoints (extract only needed entries)
-        dest_datapoints=[]
-        for point in datapoints:
-            dest_point=self._destillDatapoint(point)
-            if dest_point is not None:
-                dest_datapoints.append(dest_point)   
-        #create internal structure for storage
-        self._setData(dest_datapoints)
-        self._datasource="array"            #store where the data comes from
+        
+        
     
     def setModel(self, heterostructure, exp_energyshift=Parameters.Parameter(0), exp_angleshift=Parameters.Parameter(0), reflmodifierfunction=None, MultipleScattering=True, MagneticCutoff=1e-50):
         """
@@ -876,11 +923,13 @@ class ReflDataSimulator(object):
         #use the __init__ method to change mode to be sure to treat mode in the same way, even if changes occur in the futur
         self.__init__(mode,self._lengthscale)
         #read data again if already read
-        if hasattr(self,"_expdata"):
-            if self._datasource=="files":
-                self.ReadData(self._datafiles,self._datalinereaderfunction, self._dataenergies, self._dataangles, self._datafilenamereaderfunction, self._datapointmodifierfunction, self._dataheaderlines)
-            elif self._datasource=="array":
-                self.setData(self._datapoints)
+        if not self._expdata==[]:
+            self._expdata=[]
+            for item in self._datasourcestorage:
+                if item["source"]=="files":
+                    self._ReadDataCore(item["files"], item["linereaderfunction"], item["energies"], item["angles"], item["filenamereaderfunction"], item["pointmodifierfunction"], item["headerlines"])
+                elif item["source"]=="array":
+                    self._setDataCore(item["datapoints"])
         
                
         

@@ -153,19 +153,33 @@ class Parameter:
         else: 
             new.getValue = lambda fitpararray=None:  other * self.getValue(fitpararray)
         return new
-    def __div__(self,other):
+    def __truediv__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
             new.getValue = lambda fitpararray=None: self.getValue(fitpararray) / other.getValue(fitpararray)
         else: 
             new.getValue = lambda fitpararray=None: self.getValue(fitpararray) / other
         return new
-    def __rdiv__(self,other):
+    def __rtruediv__(self,other):
         new = Parameter()
         if isinstance(other,Parameter):            
             new.getValue = lambda fitpararray=None: other.getValue(fitpararray) / self.getValue(fitpararray)  
         else: 
             new.getValue = lambda fitpararray=None:  other / self.getValue(fitpararray)
+        return new
+    def __floordiv__(self,other):
+        new = Parameter()
+        if isinstance(other,Parameter):            
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) // other.getValue(fitpararray)
+        else: 
+            new.getValue = lambda fitpararray=None: self.getValue(fitpararray) // other
+        return new
+    def __rfloordiv__(self,other):
+        new = Parameter()
+        if isinstance(other,Parameter):            
+            new.getValue = lambda fitpararray=None: other.getValue(fitpararray) // self.getValue(fitpararray)  
+        else: 
+            new.getValue = lambda fitpararray=None:  other // self.getValue(fitpararray)
         return new
     def __pow__(self,other):
         new = Parameter()

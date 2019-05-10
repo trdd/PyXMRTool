@@ -57,7 +57,7 @@ if __name__ == '__main__':
     b=pp.newParameter("background")
     m=pp.newParameter("multiplier")
     reflmodifier=lambda r, fitpararray: b.getValue(fitpararray) + r * m.getValue(fitpararray)
-    simu.setModel(hs,reflmodifier)
+    simu.setModel(hs,reflmodifierfunction=reflmodifier)
 
     #pp.WriteToFile("tmp.txt")
 

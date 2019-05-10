@@ -19,7 +19,7 @@ if __name__ == '__main__':
     l=SampleRepresentation.LayerObject([pp.newParameter("chi_xx"),pp.newParameter("chi_yy"),pp.newParameter("chi_zz")],pp.newParameter("d"),Parameters.Parameter(0))
 
     ar=[33,0.0094,-0.444]
-    ar+=range(36)
+    ar+=list(range(36))
 
     hs=SampleRepresentation.Heterostructure(9,[0,1,2,[10,[3,4,5,6]],7,8])
 
@@ -81,10 +81,10 @@ if __name__ == '__main__':
     
     simu.plotData(best)
     
-    print "Best Parameters"
+    print("Best Parameters")
     i=0
     for name in pp.getNames():
-        print str(i)+": "+ name + "=" +str(best[i])
+        print(str(i)+": "+ name + "=" +str(best[i]))
         i+=1
     
     

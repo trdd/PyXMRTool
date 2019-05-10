@@ -22,7 +22,7 @@ for i in range(1000):
     pp.newParameter("real"+str(i),False,i*0.3,-5000,5000)
 for i in range(1000):
     pp.newParameter("complex"+str(i),False,i*0.3j,-5000*(1+1j),5000*(1+1j)) 
-print "Creating paramters took "+str((time.clock()-starttime)/5000)+" per parameter."
+print("Creating paramters took "+str((time.clock()-starttime)/5000)+" per parameter.")
 
 
 
@@ -32,7 +32,7 @@ print "Creating paramters took "+str((time.clock()-starttime)/5000)+" per parame
 starttime=time.clock()
 (s,l,u)=pp.getStartLowerUpper()
 
-print "Reading took "+str(time.clock()-starttime)
+print("Reading took "+str(time.clock()-starttime))
 
 
 
@@ -41,7 +41,7 @@ fitpararray=[i*0.1 for i in range(3023)]
 starttime=time.clock()
 pp.setStartValues(fitpararray)
 
-print "Writing took "+str(time.clock()-starttime)
+print("Writing took "+str(time.clock()-starttime))
 
 
 #pp.writeToFile("partest4.txt")
@@ -49,12 +49,12 @@ print "Writing took "+str(time.clock()-starttime)
 starttime=time.clock()
 value=parh.getValue(fitpararray)
 
-print "Reading value took "+str(time.clock()-starttime)+"s. Value is "+ str(value)
+print("Reading value took "+str(time.clock()-starttime)+"s. Value is "+ str(value))
 
 
 summe=4+parh
 
-print "Summe ist: "+str(summe.getValue(fitpararray))
+print("Summe ist: "+str(summe.getValue(fitpararray)))
 
 
 
@@ -63,13 +63,13 @@ def sinus(A,w,t):
 
 auslenkung=Parameters.DerivedParameter(sinus,summe, parh, pp.getParameter("real456"))
 
-print "Die Auslenkung wird repraesentiert von: " + str(auslenkung)
+print("Die Auslenkung wird repraesentiert von: " + str(auslenkung))
 
-print "Die Auslenkung ist: "+ str(auslenkung.getValue(fitpararray))
+print("Die Auslenkung ist: "+ str(auslenkung.getValue(fitpararray)))
 
 intensity=auslenkung**2
 
-print "Die Intensitaet ist "+ str(intensity.getValue(fitpararray))
+print("Die Intensitaet ist "+ str(intensity.getValue(fitpararray)))
 
 
 def sinus2(t,A,w): 
@@ -78,14 +78,14 @@ def sinus2(t,A,w):
 
 sinusfunktion=Parameters.ParametrizedFunction(sinus2, summe, parh)
 
-print "Die Sinusfunktion wird repreasentiert von: " + str(sinusfunktion)
+print("Die Sinusfunktion wird repreasentiert von: " + str(sinusfunktion))
 
-print "Der Funktionswert an der Stelle \'t=pi\' ist mit den angegebenen Parametern:  " + str(sinusfunktion.getValue(math.pi,fitpararray))
+print("Der Funktionswert an der Stelle \'t=pi\' ist mit den angegebenen Parametern:  " + str(sinusfunktion.getValue(math.pi,fitpararray)))
                                                            
 sinus_fest = sinusfunktion.getFunction(fitpararray)
 
-print "Der Funktionswert fuer \'t=pi'\ ist: " + str(sinus_fest(math.pi))
+print("Der Funktionswert fuer \'t=pi'\ ist: " + str(sinus_fest(math.pi)))
 
 auslenkung_bei_pi = sinusfunktion.getParameter(math.pi)
 
-print "Die parametrisierte Auslenkung an der festen Stelle \'t=pi\' ist mit den angegebenen Parametern:  " + str(auslenkung_bei_pi.getValue(fitpararray))
+print("Die parametrisierte Auslenkung an der festen Stelle \'t=pi\' ist mit den angegebenen Parametern:  " + str(auslenkung_bei_pi.getValue(fitpararray)))

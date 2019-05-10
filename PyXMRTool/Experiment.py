@@ -44,14 +44,14 @@ import matplotlib.patches as mpatches
 
 import Pythonreflectivity
 
-import SampleRepresentation
-import Parameters
+from . import SampleRepresentation
+from . import Parameters
 
 
 
 
 
-class ReflDataSimulator(object):
+class ReflDataSimulator():
     """Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver the sum of squared residuals (:meth:`.getSSR`) and the residuals themselfs (:meth:`.getResidualsSSR`), which both describe the difference between data and simulation at a certain parameter set. It can be in different modes which determins which data or which derived data is stored and simulated."""
     
     def __init__(self, mode, length_scale=1e-9):
@@ -164,8 +164,6 @@ class ReflDataSimulator(object):
                 circular[0]=average         #left circular polarization
                 circular[1]=average         #right circular polarization
                 rcalc=numpy.append(rcalc,circular,0)           
-                #dedug
-                print "magnetic zero"
             
             
             if self._mode=="l":  #linear polarization
@@ -993,7 +991,7 @@ class ReflDataSimulator(object):
                     if not line.isspace() and line:                               #ignore empty lines        
                         linearray=line.split()
                         pointlist=[]
-                        for i, angle_column, value_column in zip(range(len(additional_angles_columns)), additional_angles_columns, values_columns):
+                        for i, angle_column, value_column in zip(list(range(len(additional_angles_columns))), additional_angles_columns, values_columns):
                             if angle_column is not None:
                                 point=[]
                                 #energy

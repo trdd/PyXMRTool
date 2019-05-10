@@ -1,4 +1,4 @@
-#<Pythonreflectivityl: A Python Package for simulation of x-ray reflectivities of Heterostructures>
+#<Pythonreflectivity: A Python Package for simulation of x-ray reflectivities of Heterostructures>
 #    Copyright (C) <2017>  <Martin Zwiebler>
 #
 #    This program is free software: you can redistribute it and/or modify

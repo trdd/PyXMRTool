@@ -15,7 +15,7 @@ for item in files:
   energy=float(name_splitted[-2])
   energies.append(energy)
   
-refl=dict(zip(energies,[[None,None,None,None] for item in energies]))
+refl=dict(list(zip(energies,[[None,None,None,None] for item in energies])))
 
 for item in files:
   name=item.split("/")[-1]
@@ -38,8 +38,8 @@ for item in files:
     refl[energy][2]=qs
     refl[energy][3]=rs
 
-for energy in refl.keys():
-  lines=zip(refl[energy][0],refl[energy][1],refl[energy][2],refl[energy][3])
+for energy in list(refl.keys()):
+  lines=list(zip(refl[energy][0],refl[energy][1],refl[energy][2],refl[energy][3]))
   with open(dest_folder+"/sro_lsmo_"+str(energy)+".dat","w") as f:
     for line in lines:
       line=[str(item) for item in line]

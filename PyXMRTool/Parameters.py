@@ -51,14 +51,14 @@ Functions of one variable which are parametrized can be defined with instances o
     >>> derived_par = Parameters.DerivedParameter(sinus, const, par_real)
     >>> derived_par.getValue(fitpararray)
     25.833159233602423
-    >>> print (derived_par**2).getValue(fitpararray)
+    >>> print((derived_par**2).getValue(fitpararray))
     667.352115989
     >>> def growth(t, A, rate): return A*math.exp(t/float(rate))
     >>> par_func_growth = Parameters.ParametrizedFunction(growth, const, par_real)
-    >>> print par_func_growth.getValue(5.3,fitpararray)
+    >>> print(par_func_growth.getValue(5.3,fitpararray))
     6150.34006623
     >>> f_growth = par_func_growth.getFunction(fitpararray)
-    >>> print f_growth(5.3)
+    >>> print(f_growth(5.3))
     6150.34006623
     
     
@@ -82,7 +82,7 @@ import os.path
 
 
 
-class Parameter(object):
+class Parameter:
     """
     Base class for parameters. It contains a (complex) value which is set as instantiation and cannot be changed.
     
@@ -361,7 +361,7 @@ class Fitparameter(Parameter):
             raise Exception("Parameter needs a \'fitpararray\' to be evaluated.")
         elif self._index is None:
             raise Exception("Parameter has to be attached to a ParameterPool.")
-        elif self.pool.getFitArrayLen()<>len(fitpararray):
+        elif self.pool.getFitArrayLen()!=len(fitpararray):
             raise Exception("Given fit value array is "+str(len(fitpararray))+" entries long but should have a length of "+str(self.pool.getFitArrayLen())+".")
         elif self._complex==True:
             return complex(fitpararray[self._index],fitpararray[self._index+1])
@@ -432,7 +432,7 @@ class DerivedParameter(Parameter):
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------       
 
-class ParameterPool(object):
+class ParameterPool:
     """Collects a pool of Parameter objects and connects them with a parameter file."""
     
     #file format
@@ -577,14 +577,14 @@ class ParameterPool(object):
                         lower_limit =self. _convertStrToNumber(l[self._lineorder[2]])
                         upper_limit = self._convertStrToNumber(l[self._lineorder[3]])
                     except ValueError:
-                        print "Invalid number format in line: "+line
+                        print("Invalid number format in line: "+line)
                         raise
                         
                     name=l[self._lineorder[4]]
                     
 
                     if not ((isinstance(start_value,complex) or start_value is None) and (isinstance(upper_limit,complex) or upper_limit is None) and (isinstance(lower_limit,complex) or lower_limit is None))  and not ((not isinstance(start_value,complex) or start_value is None) and (not isinstance(upper_limit,complex) or upper_limit is None) and (not isinstance(lower_limit,complex) or lower_limit is None)):
-                        print line
+                        print(line)
                         raise ValueError("Start value and limits in the parameter file should be either all complex numbers or none of them.\n Bad line: "+line)                                
                     
                     par=self.getParameter(name)
@@ -606,12 +606,12 @@ class ParameterPool(object):
         """   
         columnwidth=25
         
-        if fitpararray is not None and len(fitpararray)<>self.getFitArrayLen():
+        if fitpararray is not None and len(fitpararray)!=self.getFitArrayLen():
             raise ValueError("\'fitpararray\' has wrong length.")
         
         if os.path.isfile(parfilename) :
             #ask if overwrite
-            answer=raw_input("Do you realy want to overwrite \'"+parfilename+"\'? [y/N]")
+            answer=input("Do you realy want to overwrite \'"+parfilename+"\'? [y/N]")
             answer=answer.lower()
             if not(answer=='y' or answer=='yes' or answer=='j' or answer=='ja'):
                 return
@@ -663,7 +663,7 @@ class ParameterPool(object):
         """
         lenreal=len(self._realUnfixedArray)
         lencomplex=len(self._complexUnfixedArray)
-        if len(fitpararray)<>(lenreal+2*lencomplex):
+        if len(fitpararray)!=(lenreal+2*lencomplex):
             raise Exception("Given fit value array is "+str(len(fitpararray))+" entries long but should have a length of "+str(lenreal+2*lencomplex)+".")
         for i in range(lenreal):
             self._parPool[self._realUnfixedArray[i]].start_val=fitpararray[i]
@@ -688,7 +688,7 @@ class ParameterPool(object):
             
         
     
-class ParametrizedFunction(object):
+class ParametrizedFunction:
     """Object of this class can be used for an easy implementation of a function of one argument which should be parametrized by fitparameters."""
     
         
@@ -758,3 +758,4 @@ class ParametrizedFunction(object):
                 return self._f(x, *values)
             return DerivedParameter(wrapper_function, *self._args)
     
+

@@ -51,12 +51,12 @@ pp.writeToFile("parameters.txt")            #write parameter file to get nice la
     
     
 # set up heterostructure (with 5 layers)
-print "... set up heterostructure"
+print("... set up heterostructure")
 hs = SampleRepresentation.Heterostructure(5)
 
 
 ###set up formfactors
-print "... set up formfactors"
+print("... set up formfactors")
    
 #at first create linereader functions to read the files
 commentsymbol='#'
@@ -88,13 +88,13 @@ Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,sca
 #Mn_FF=SampleRepresentation.FFfromFile("Mn.xas_aniso", ff_file_linereader,energyshift=pp.newParameter("Mn_energyshift"))
 
     
-print "... plot Mn formfactor to let user check"
+print("... plot Mn formfactor to let user check")
 Mn_FF.plotFF(start,energies=numpy.arange(500,700,0.01))
    
 SampleRepresentation.AtomLayerObject.registerAtom("Mn_XAS",Mn_FF)
    
 ### build layers from bottom
-print "... build layers"
+print("... build layers")
    
 substrate_layer = SampleRepresentation.AtomLayerObject({"Sr":density_SrTiO3, "Ti": density_SrTiO3, "O": 3* density_SrTiO3}, d=None,sigma=pp.newParameter("substrate_roughness"))
     
@@ -109,7 +109,7 @@ cap_layer=SampleRepresentation.AtomLayerObject({"Sr":density_SrTiO3, "Ti": densi
 carbon_contamination=SampleRepresentation.AtomLayerObject({"C":density_C}, d=pp.newParameter("contamination_thickness"),sigma=pp.newParameter("contamination_roughness"))
    
 ###plug layers into heterostructure
-print "... plug layers into heterostructure"
+print("... plug layers into heterostructure")
 hs.setLayer(0,substrate_layer)
 hs.setLayer(1,layer_SrRuO3)
 hs.setLayer(2,layer_LSMO)
@@ -131,7 +131,7 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
     point[1]=180.0/(numpy.pi)*numpy.arcsin( point[1]*simu.hcfactor/(2*numpy.pi)/(2*point[0]))
     return point
     
-print "... read experimental data"
+print("... read experimental data")
 #read measured data from files (using pointmodifier and namerreader)
 # at first read pi polarization
 simu.ReadData("Experiment/pi",simu.createLinereader(rpi_angle_column=0,rpi_column=1), pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
@@ -150,27 +150,27 @@ simu.setModel(hs,exp_energyshift=pp.newParameter("exp_Eshift"), exp_angleshift=p
 ####################################################################################################
 
 ### messe wie lange es dauert SSR 1000 mal auszurechnen
-print "... start measuring execution duration"
+print("... start measuring execution duration")
 def wrapper():
     simu.getSSR(start)
 zeitspanne=timeit.timeit(wrapper,number=100)
-print "--->Berechnung von Chi^2 dauert "+str(zeitspanne/100)+"s"    #---->dauert ca 0.22 s pro Anfrage auf meinem Laptop
+print("--->Berechnung von Chi^2 dauert "+str(zeitspanne/100)+"s")    #---->dauert ca 0.22 s pro Anfrage auf meinem Laptop
 
 #### perform fit and plot status
 
-print "... plotting according to start values"
+print("... plotting according to start values")
 simu.plotData(start)
 
-raw_input("Druecke Taste um fortzusetzen...")
+input("Druecke Taste um fortzusetzen...")
 
-print "... performing Fit"
+print("... performing Fit")
 starttime=time.time()
 
 #scipy least_squares Fit
 res=scipy.optimize.least_squares(simu.getResiduals, start, bounds=(l,u), method='trf', x_scale=numpy.array(u)-numpy.array(l), jac='3-point',verbose=2)
 best=res.x
 
-print "---> Duration of fit procedure: "+ str(time.time()-starttime)+"s"
+print("---> Duration of fit procedure: "+ str(time.time()-starttime)+"s")
 
 simu.plotData(best)
 #write found parameter set to a file
@@ -179,7 +179,7 @@ pp.writeToFile("parameters_best.txt")
 
 
 #zufaellige startwerte
-print "... performing parameter range screening"
+print("... performing parameter range screening")
 
 import pickle
 

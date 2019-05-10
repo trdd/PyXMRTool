@@ -136,14 +136,14 @@ simu.setModel(hs,reflmodifierfunction=reflmodifier)
 
 starttime=time.time()
 simdata=simu.getSimData(fitpararray)
-print time.time()-starttime
+print(time.time()-starttime)
 
 starttime=time.time()
 chisqr=simu.getSSR(fitpararray)
-print time.time()-starttime
+print(time.time()-starttime)
 
 simdata2=simu.getSimData(fitpararray,[[468,[1,2,3,4,5]],[468.1,[1,2,3,4,5]]])
-print simdata2
+print(simdata2)
 
 
 

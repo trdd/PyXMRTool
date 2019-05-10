@@ -30,7 +30,7 @@ for i in range(7):
     hs.setLayer(i,SampleRepresentation.LayerObject([pp.newParameter("chi"+str(i))],pp.newParameter("d"+str(i))))
 hs.setLayer(7,l)
 
-print "Create Formfactors"
+print("Create Formfactors")
 
 FF_Co=SampleRepresentation.FFfromFile("Co.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
 FF_Sr=SampleRepresentation.FFfromFile("Sr.F",SampleRepresentation.FFfromFile.createLinereader(complex_numbers=False))
@@ -45,11 +45,11 @@ SampleRepresentation.AtomLayerObject.registerAtom("Yannicium", FF_Ya)
 
 
 #create one atom layer object with above registered atoms and put it into the heterostructure
-print "Create atom layer object with registered atoms and put it into the heterostructure"
+print("Create atom layer object with registered atoms and put it into the heterostructure")
 al1=SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al1_density_Sr"), "Al":pp.newParameter("al1_density_Al"), "Yannicium":pp.newParameter("al1_density_Ya") }, pp.newParameter("al1_d"))
 hs.setLayer(8,al1)
 #add some more atom layer objects
-print "add some more atom layer objects"
+print("add some more atom layer objects")
 for i in range(9,13):
     hs.setLayer(i, SampleRepresentation.AtomLayerObject({"Sr":pp.newParameter("al"+str(i-7)+"_density_Sr"), "Al":pp.newParameter("al"+str(i-7)+"_density_Al"), "Yannicium":pp.newParameter("al"+str(i-7)+"_density_Ya") }, pp.newParameter("al"+str(i-7)+"_d")))
 
@@ -66,10 +66,10 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
     return point
 
 #read data from files
-print "... read files"
+print("... read files")
 simu.ReadData("data",simu.createLinereader(energy_column=1,angle_column=0,rsigma_column=2,rpi_column=3),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
 
-print "... read from array"
+print("... read from array")
 #test to read data via array
 #create test array first
 datapoints=[]
@@ -96,17 +96,17 @@ simu.setModel(hs,reflmodifierfunction=reflmodifier)
 #pp.writeToFile("partest_Experiment.txt")
 
 #simulate
-print "... simulate"
+print("... simulate")
 starttime=time.time()
 simdata=simu.getSimData(ar)
-print time.time()-starttime
+print(time.time()-starttime)
 
 starttime=time.time()
 chisqr=simu.getSSR(ar)
-print time.time()-starttime
+print(time.time()-starttime)
 
 simdata2=simu.getSimData(ar,[[468,[1,2,3,4,5]],[468.1,[1,2,3,4,5]]])
-print simdata2
+print(simdata2)
 
 
 

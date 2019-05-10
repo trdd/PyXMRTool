@@ -55,7 +55,7 @@ import sklearn.preprocessing
 import sklearn.cluster
 import scipy.optimize
 
-from PyXMRTool import Parameters
+from . import Parameters
 
 #settings############################
 numerical_derivative_factor=1.0e-9                          #defines in principle the the magnitude of  "Delta x" for the aproximation of a derivative by "Delta y/Delta x"
@@ -105,7 +105,7 @@ def Explore(residualsfunction,  parameter_settings, number_of_seeds, verbose=2,n
             raise ValueError("\'number_of_clusters\'  has to be positive.")
 
     #performing the least squares optimizations
-    print("... performing least squares optimization for "+str(number_of_seeds) +" seeds")
+    print(("... performing least squares optimization for "+str(number_of_seeds) +" seeds"))
     fixpoints=[]
     ssrs=[]
     upper_limits=numpy.array(upper_limits)
@@ -147,14 +147,14 @@ def Cluster(scan_output,ssrfunction, number_of_clusters=None):
     scaler=sklearn.preprocessing.StandardScaler()       #parameters have to be scaled to allow for a reasonable clustering
     fixpoints_scaled=scaler.fit_transform(fixpoints)
     if number_of_clusters is None:
-        print("... clustering "+str(len(fixpoints)) +" fixpoints in an optimal number of clusters")
+        print(("... clustering "+str(len(fixpoints)) +" fixpoints in an optimal number of clusters"))
         scores=[]
         for i in numpy.arange(2,min([20,len(fixpoints)])):
             km=sklearn.cluster.KMeans(n_clusters=i,init='random',n_init=100).fit(fixpoints_scaled)
             scores.append(sklearn.metrics.silhouette_score(fixpoints_scaled, km.labels_))
         number_of_clusters=2+scores.index(max(scores))
     else:        
-        print("... clustering "+str(number_of_seeds) +" fixpoints in "+str(number_of_clusters)+" clusters")
+        print(("... clustering "+str(number_of_seeds) +" fixpoints in "+str(number_of_clusters)+" clusters"))
 
     km=sklearn.cluster.KMeans(n_clusters=number_of_clusters, init='random',n_init=100).fit(fixpoints_scaled)
     clusters=[]
@@ -174,7 +174,7 @@ def Cluster(scan_output,ssrfunction, number_of_clusters=None):
     scan_output['clusters'] = clusters
     scan_output['clusters_members'] = clusters_members
     scan_output['clusters_members_ssrs'] = clusters_members_ssrs
-    print "... printing overview"
+    print("... printing overview")
     list_clusters(scan_output)
     return scan_output
     
@@ -189,7 +189,7 @@ def list_clusters(scan_output):
     """
     clusters=scan_output['clusters']
     for i,v in enumerate(clusters):
-        print "cluster "+str(i)+": catches "+str(v['ratio_of_seeds']*100)+"% of seeds, ssr_of_center="+str(v['ssr_of_center'])
+        print("cluster "+str(i)+": catches "+str(v['ratio_of_seeds']*100)+"% of seeds, ssr_of_center="+str(v['ssr_of_center']))
         
 def plot_clusters_onepar(scan_output, p, parameter_pool=None, ssr_lim=None):
     """
@@ -573,7 +573,7 @@ def Evolution(costfunction, parameter_settings , iterations, number_of_cores=1, 
     all_fitpararrays[0]=startfitparameters                                          #use the given start values just as one of many guesses (replace one random guess)
     children=numpy.zeros((generation_size, number_of_fitparameters))
     
-    print "Start Evolution of "+str(iterations)+" Generations with "+str(len(startfitparameters))+" Parameters."
+    print("Start Evolution of "+str(iterations)+" Generations with "+str(len(startfitparameters))+" Parameters.")
     ite=0
     while True:
 
@@ -583,7 +583,7 @@ def Evolution(costfunction, parameter_settings , iterations, number_of_cores=1, 
         out=joblib.Parallel(n_jobs=number_of_cores)(joblib.delayed(costfunction)(all_fitpararrays[i]) for i in range(generation_size) )  
         ranking_list=numpy.argsort(out)                                 #stores the best results as indices of the elements of out
         #Write the current state
-        print "   Generation " + str(ite) + ": Cost=" + str(out[ranking_list[0]])
+        print("   Generation " + str(ite) + ": Cost=" + str(out[ranking_list[0]]))
         #plot the current state (best guess)
         if plotfunction is not None:
             plotfunction(all_fitpararrays[ranking_list[0]])
@@ -593,7 +593,7 @@ def Evolution(costfunction, parameter_settings , iterations, number_of_cores=1, 
                 for line in f:
                     line=line.split(" ")
                     if(line[0]=="terminate" and int(line[1])==1):
-                        print "!! Iteration terminated, returning current status"
+                        print("!! Iteration terminated, returning current status")
                         return all_fitpararrays[ranking_list[0]], out[ranking_list[0]]
 
         #return if number of iterations is reached
@@ -732,17 +732,17 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , pa
             fiterror2=out[min_i][1]
             
             if( abs( (fiterror1-fiterror2)/(fiterror1+fiterror2) ) < convergence_criterium ):
-                print( "  --> Converged at cost=" + str(fiterror2) )
+                print(( "  --> Converged at cost=" + str(fiterror2) ))
                 return aite, out[min_i][1]                      #return best fit parameters and corresponding value of the costfunction      
             elif control_file is not None:
                 with open(control_file) as f:
                     for line in f:
                         line=line.split(" ")
                         if(line[0]=="terminate" and int(line[1])==1):
-                            print "!! Iteration terminated, current status"
+                            print("!! Iteration terminated, current status")
                             return aite, out[min_i][1]
             
-            print "   Iteration "+ str(ite)+": old cost = "+str(fiterror1)+", new cost = "+str(fiterror2)
+            print("   Iteration "+ str(ite)+": old cost = "+str(fiterror1)+", new cost = "+str(fiterror2))
             
             #plot the current state of fitting
             if plotfunction is not None:
@@ -794,14 +794,14 @@ def Levenberg_Marquardt_Fitter(residualandcostfunction,  parameter_settings , pa
         for i in range(number_of_fitparameters):
             if(b[i]==0):
                 if strict:
-                    print "WARNING! No gradient component" + str(i) + "! Singular matrix!\n Try \'strict=False\' for less rigorous treatment."
+                    print("WARNING! No gradient component" + str(i) + "! Singular matrix!\n Try \'strict=False\' for less rigorous treatment.")
                     print(b)
                     raise Exception
                 else:
                     irrelevantparameterlist.append(i)
         if not strict and not irrelevantparameterlist==[]:
             #remove the elements corresponding to the irrelevant parameters
-            print "WARNING! Parameters " + str(irrelevantparameterlist) + " are locally irrelevant (no gradient component) and will be ignored for this iteration."
+            print("WARNING! Parameters " + str(irrelevantparameterlist) + " are locally irrelevant (no gradient component) and will be ignored for this iteration.")
             DT_reduced=numpy.delete(DT,irrelevantparameterlist,0)
             A=numpy.dot(DT_reduced,DT_reduced.T)
             b=numpy.delete(b,irrelevantparameterlist,0)

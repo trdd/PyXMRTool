@@ -57,12 +57,12 @@ pp.writeToFile("parameters.txt")            #write parameter file to get nice la
     
     
 # set up heterostructure (with 5 layers)
-print "... set up heterostructure"
+print("... set up heterostructure")
 hs = SampleRepresentation.Heterostructure(5)
 
 
 ###set up formfactors
-print "... set up formfactors"
+print("... set up formfactors")
    
 #at first create linereader functions to read the files
 commentsymbol='#'
@@ -93,13 +93,13 @@ Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,sca
 #Mn_FF=SampleRepresentation.FFfromFile("data_for_comparison_from_Florian/Mn.aniso2", ff_file_linereader,energyshift=pp.newParameter("Mn_energyshift"))
 
     
-print "... plot Mn formfactor to let user check"
+print("... plot Mn formfactor to let user check")
 Mn_FF.plotFF(start,energies=numpy.arange(550,750,0.01))
    
 SampleRepresentation.AtomLayerObject.registerAtom("Mn_XAS",Mn_FF)
    
 ### build layers from bottom
-print "... build layers"
+print("... build layers")
    
 substrate_layer = SampleRepresentation.AtomLayerObject({"Sr":density_SrTiO3, "Ti": density_SrTiO3, "O": 3* density_SrTiO3}, d=None,sigma=pp.newParameter("substrate_roughness"))
     
@@ -112,7 +112,7 @@ cap_layer=SampleRepresentation.AtomLayerObject({"Sr":density_SrTiO3_cap, "Ti": d
 carbon_contamination=SampleRepresentation.AtomLayerObject({"C":density_C}, d=pp.newParameter("contamination_thickness"),sigma=pp.newParameter("contamination_roughness"))
    
 ###plug layers into heterostructure
-print "... plug layers into heterostructure"
+print("... plug layers into heterostructure")
 hs.setLayer(0,substrate_layer)
 hs.setLayer(1,layer_SrRuO3)
 hs.setLayer(2,layer_LSMO)
@@ -133,7 +133,7 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
     point[1]=180.0/(numpy.pi)*numpy.arcsin( point[1]*simu.hcfactor/(2*numpy.pi)/(2*point[0]))
     return point
     
-print "... read experimental data"
+print("... read experimental data")
 #read measured data from files (using pointmodifier and namerreader)
 #simu.ReadData("Exp_Umgeformt",simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
 simu.ReadData(["Exp_Umgeformt/sro_lsmo_630.0.dat"],simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader) 

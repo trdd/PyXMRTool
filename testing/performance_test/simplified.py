@@ -46,13 +46,13 @@ start,l,u=pp.getStartLowerUpper()           #read start values etc. to check for
     
     
 # set up heterostructure (with 6 layers)
-print "... set up heterostructure"
+print("... set up heterostructure")
 hs = SampleRepresentation.Heterostructure(6)
 
 
 
 ### build layers from bottom
-print "... build layers"
+print("... build layers")
    
 substrate_layer = SampleRepresentation.LayerObject([suscept_SrTiO3], d=None,sigma=pp.newParameter("substrate_roughness"))
     
@@ -69,7 +69,7 @@ cap_layer=SampleRepresentation.LayerObject([suscept_SrTiO3], d=pp.newParameter("
 carbon_contamination=SampleRepresentation.LayerObject([suscept_C],sigma=pp.newParameter("cap_roughness"))
    
 ###plug layers into heterostructure
-print "... plug layers into heterostructure"
+print("... plug layers into heterostructure")
 hs.setLayer(0,substrate_layer)
 hs.setLayer(1,layer_SrRuO3)
 hs.setLayer(2,layer_LSMO)
@@ -91,7 +91,7 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
     point[1]=180.0/(numpy.pi)*numpy.arcsin( point[1]*simu.hcfactor/(2*numpy.pi)/(2*point[0]))
     return point
     
-print "... read experimental data"
+print("... read experimental data")
 #read measured data from files (using pointmodifier and namerreader)
 #simu.ReadData("Exp_Umgeformt",simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
 simu.ReadData(["Exp_Umgeformt/sro_lsmo_630.0.dat"],simu.createLinereader(angle_column=0,rsigma_column=1,rpi_column=2),pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader) 
@@ -113,15 +113,15 @@ def wrapper():
     simu.getSSR(start)
 zeitspanne=timeit.timeit(wrapper,number=1000)
 
-print "--->Berechnung von Chi^2 dauert "+str(zeitspanne/1000)+"s"    #---->dauert ca 0.22 s pro Anfrage auf meinem Laptop
+print("--->Berechnung von Chi^2 dauert "+str(zeitspanne/1000)+"s")    #---->dauert ca 0.22 s pro Anfrage auf meinem Laptop
 
 #### perform fit and plot status
 
-print "... plotting according to start values"
+print("... plotting according to start values")
 simu.plotData(start)
 
 
-print "... performing Fit"
+print("... performing Fit")
 starttime=time.time()
 
 #eigener Levenberg_Marquardt_Fitter
@@ -139,7 +139,7 @@ def cost(fitpararray):
 res= scipy.optimize.least_squares(simu.getResiduals, start, bounds=(l,u), method='trf', x_scale='jac',verbose=2)
 best=res.x
 
-print "---> Duration of fit procedure: "+ str(time.time()-starttime)+"s"
+print("---> Duration of fit procedure: "+ str(time.time()-starttime)+"s")
 
 simu.plotData(best)
 
@@ -150,4 +150,4 @@ pp.writeToFile("simplified-best-parameters.txt")
 
 se=hs.getSingleEnergyStructure(best,630)
 for i in range(len(se)):
-    print se[i].chixx()
+    print(se[i].chixx())

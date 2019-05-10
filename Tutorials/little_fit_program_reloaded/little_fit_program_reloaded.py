@@ -205,21 +205,21 @@ if __name__ == '__main__':
     
     #output of fitted parameters and comparison with parameters which were originally used to create/simulate the data
     simulationparameters=numpy.array([261, 7, 651, 0.8, 32, 4, 649, -6, 1.2, 103, 15,2.5, 3.5, 4.1, 3.0e-7, 0.34])
-    print "######"
-    print "Result"
-    print "######"
-    print "parameter name".ljust(20)+"fitted parameters".ljust(30)+"original model parameters".ljust(30)
+    print("######")
+    print("Result")
+    print("######")
+    print("parameter name".ljust(20)+"fitted parameters".ljust(30)+"original model parameters".ljust(30))
     i=0
     for item in best:
-        print pp.getNames()[i].ljust(20)+str(item).ljust(30)+str(simulationparameters[i]).ljust(30)
+        print(pp.getNames()[i].ljust(20)+str(item).ljust(30)+str(simulationparameters[i]).ljust(30))
         i+=1
-    print "######"
+    print("######")
     
     #write fitted parameters to file (the fitted values are stored as 'start values')
     pp.writeToFile("parameter-output.txt",best) 
     
     #obtain and plot simulated reflectivity data instead of logarithm
-    print "--> Plot result"
+    print("--> Plot result")
     simu.setMode("cx")
     simdata=simu.getSimData(best)
     simu.plotData(best)

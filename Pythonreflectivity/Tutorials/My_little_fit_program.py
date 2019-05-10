@@ -107,7 +107,7 @@ def Fitparameters_to_Heterostructure( HS, fitparameters, energy, fitparameters_t
 
 def Read_fitparameters_input_file(filename):
     #This function reads the fitparameters for the start of the iteration and also the upper and lower limits in the fit
-    print("Reading Fitparameters from file " + filename )
+    print(("Reading Fitparameters from file " + filename ))
     #Find number of Fitparameters
     with open(filename) as f:
         j=0
@@ -321,17 +321,17 @@ def Levenberg_Marquardt_Fitter(startfitparameters, en, allth, expdata, fitparame
             Fiterror2=chisquared[min_i]
 
             if( abs( (Fiterror1-Fiterror2)/(Fiterror1+Fiterror2) ) < 1.0e-7 ):
-                print( "Converged at " + str(Fiterror2) )
+                print(( "Converged at " + str(Fiterror2) ))
                 print( "Fit parameters in convergence" )
                 for i in range(number_of_fitparameters):
-                    print( "script " + str(fitparameters_to_scriptparameters[i]) +  " " + str(aite[i]) + " " + str(lower_limits[i]) + " " + str(upper_limits[i]) )
+                    print(( "script " + str(fitparameters_to_scriptparameters[i]) +  " " + str(aite[i]) + " " + str(lower_limits[i]) + " " + str(upper_limits[i]) ))
                 res=Fitparameters_to_Reflectivity( en, allth, AllFitparameters[i], fitparameters_to_scriptparameters, total_number_of_data_points, 2 )
                 return aite, res
             
 
         #Remember how many iterations have been done
         if(ite>=1):
-            print( "Iteration ", ite, " X^2 old ", Fiterror1, " X^2 new ", Fiterror2 )
+            print(( "Iteration ", ite, " X^2 old ", Fiterror1, " X^2 new ", Fiterror2 ))
         
         ite+=1
         
@@ -371,7 +371,7 @@ def Levenberg_Marquardt_Fitter(startfitparameters, en, allth, expdata, fitparame
         #If one of the derivatives is entirely zero, the fit parameter is essentially meaningless. That may happen for a number of reasons. However, Gauss-Newton fails for this case.
         for i in range(number_of_fitparameters):
             if(b[i]==0):
-                print("WARNING! No gradient component", i, "! Singular matrix!")
+                print(("WARNING! No gradient component", i, "! Singular matrix!"))
                 print(b)
                 return
 

@@ -60,7 +60,7 @@ from matplotlib import pyplot as plt
 import inspect
 import Pythonreflectivity
 
-import Parameters
+from . import Parameters
 
 # -----------------------------------------------------------------------------------------------------------------------------
 # global variables for setup
@@ -73,13 +73,13 @@ chantler_reader_file = "ChantlerReader.pyt"  # filename of the file containing t
 # some stuff happening at execution of the module
 
 package_directory = os.path.dirname(os.path.abspath(__file__))  # store the absolute path of this  module
-execfile(os.path.join(package_directory, chantler_directory, chantler_reader_file))
+exec(compile(open(os.path.join(package_directory, chantler_directory, chantler_reader_file)).read(), os.path.join(package_directory, chantler_directory, chantler_reader_file), 'exec'))
 
 
 # -----------------------------------------------------------------------------------------------------------------------------
 # Heterostructure
 
-class Heterostructure(object):
+class Heterostructure:
     """Represents a heterostructure as a stack of instances of :class:`.LayerObject` or of derived classes.
     Its main pupose is to model the sample in a very flexibel way and to get the list of layers (Layer type of the :mod:`Pythonreflectivity` package from Martin Zwiebler) with defined susceptibilities at certain energies.
     
@@ -105,7 +105,7 @@ class Heterostructure(object):
         if number_of_layers < 0:
             raise ValueError("\'number_of_layers\' must be positive.")
         if multilayer_structure is None:
-            multilayer_structure = range(number_of_layers)
+            multilayer_structure = list(range(number_of_layers))
         elif not isinstance(multilayer_structure, list):
             raise TypeError("\'multilayer_structure\' has to be a list.")
         else:
@@ -134,12 +134,12 @@ class Heterostructure(object):
             else:
                 raise ValueError("\'multilayer_structure\' has wrong format.")
         index_list.sort()
-        if index_list[0] <> 0:
+        if index_list[0] != 0:
             raise ValueError("Indices in \'multilayer_structure\' have to start from 0.")
-        if index_list[-1] <> len(index_list) - 1:
+        if index_list[-1] != len(index_list) - 1:
             raise ValueError(
                 "Highest index in \'multilayer_structure\' does not agree with the number of different indices-1.")
-        if len(index_list) <> number_of_layers:
+        if len(index_list) != number_of_layers:
             raise Exception(
                 "Number of different indices in \'multilayer_structure\' does not agree with \'number_of_layers\'.")
         return len(index_list)
@@ -202,7 +202,7 @@ class Heterostructure(object):
         if number_of_layers < 0:
             raise ValueError("\'number_of_layers\' must be positive.")
         if multilayer_structure is None:
-            multilayer_structure = range(number_of_layers)
+            multilayer_structure = list(range(number_of_layers))
             numberofindices = number_of_layers
         elif not isinstance(multilayer_structure, list):
             raise TypeError("\'multilayer_structure\' has to be a list.")
@@ -288,7 +288,7 @@ class Heterostructure(object):
         index = 0
         for layer in self._listoflayers:
             if layer is None:
-                print "WARNING: Layer " + str(index) + " is undefined!"
+                print("WARNING: Layer " + str(index) + " is undefined!")
             else:
                 PyReflStructure[index].setd(layer.getD(fitpararray))
                 PyReflStructure[index].setsigma(layer.getSigma(fitpararray))
@@ -307,7 +307,7 @@ class Heterostructure(object):
 # -----------------------------------------------------------------------------------------------------------------------------
 # Layer Classes
 
-class LayerObject(object):
+class LayerObject:
     """Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.
     """
 
@@ -537,7 +537,7 @@ class MagneticLayerObject(LayerObject):
         chitensor=chitensor + off_chitensor
                     
         # call constructor of the base class
-        super(type(self), self).__init__(chitensor, d, sigma)
+        super().__init__(chitensor, d, sigma)
 
 
 class ModelChiLayerObject(LayerObject):
@@ -576,7 +576,7 @@ class ModelChiLayerObject(LayerObject):
         # asign members
         self._chitensorfunction = chitensorfunction
         # call constructor of the base class
-        super(type(self), self).__init__(None, d, sigma, magdir)
+        super().__init__(None, d, sigma, magdir)
 
     def _getChitensor_(self):
         return self._chitensorfunction
@@ -665,7 +665,7 @@ class AtomLayerObject(LayerObject):
         self._densitydict = densitydict.copy()  # The usage of "copy" creates a copy of the dictionary. By this, we ensure, that changes of the original dictionary outside the object will not affect the AtomLayerObject
 
         # call constructor of the base class
-        super(AtomLayerObject, self).__init__(None, d, sigma,
+        super().__init__(None, d, sigma,
                                               magdir="0")  # magdir is not used; the magnetization and their direction should be handled within the corresponding Formfactor classes
 
     def getDensitydict(self, fitpararray=None):
@@ -675,8 +675,8 @@ class AtomLayerObject(LayerObject):
         elif not isinstance(fitpararray, (list,tuple,numpy.ndarray)):
             raise TypeError("\'fitparray\' has to be a list, tuple or numpy array.")
         else:
-            return dict(zip(self._densitydict.keys(), [item.getValue(fitpararray) for item in
-                                                       self._densitydict.values()]))  # pack new dictionary from atomnames and "unpacked" parameters (actual values instead of abstract parameter)
+            return dict(list(zip(list(self._densitydict.keys()), [item.getValue(fitpararray) for item in
+                                                       list(self._densitydict.values())])))  # pack new dictionary from atomnames and "unpacked" parameters (actual values instead of abstract parameter)
 
     def getChi(self, fitpararray, energy):
         """
@@ -686,7 +686,7 @@ class AtomLayerObject(LayerObject):
         """
         # gehe alle Items in self._densitydict durch, item[1].getValue(fitpararray) liefert Dichte der Atomsorte, (type(self)._atomdict[item[0]]).getFF(fitpararray) liefert Formfaktor der Atomsorte, beides wird multipliziert und alles zusammen aufsummiert
         # ffsum = sum_i( number_density_atom_i * ff_tensor_atom_i)
-        ffsum = sum([item[1].getValue(fitpararray) * self._densityunitfactor * (type(self)._atomdict[item[0]]).getFF(energy, fitpararray) for item in self._densitydict.items()])
+        ffsum = sum([item[1].getValue(fitpararray) * self._densityunitfactor * (type(self)._atomdict[item[0]]).getFF(energy, fitpararray) for item in list(self._densitydict.items())])
         
 
         # Return the susceptibility tensor chi
@@ -725,7 +725,7 @@ class AtomLayerObject(LayerObject):
         if formfactor is not None and not isinstance(formfactor, Formfactor):
             raise TypeError("\'formfactor\' has to be an instance of \'Formfactor\' or of a derived class.")
         if name in cls._atomdict:
-            print "WARNING: Atom \'" + str(name) + "\' is replaced."
+            print("WARNING: Atom \'" + str(name) + "\' is replaced.")
         if formfactor is None:
             formfactor = FFfromChantler(name)
         cls._atomdict.update({name: formfactor})
@@ -742,13 +742,13 @@ class AtomLayerObject(LayerObject):
     @classmethod
     def getAtomNames(cls):
         """Return a list of names of registered atoms."""
-        return cls._atomdict.keys()
+        return list(cls._atomdict.keys())
 
 
 # -----------------------------------------------------------------------------------------------------------------------------
 # Formfactor classes
 
-class Formfactor(object):
+class Formfactor:
     """
     Base class to deal with energy-dependent atomic form-factors.
     
@@ -993,7 +993,7 @@ class FFfromChantler(FFfromFile):
             else:
                 return None
 
-        super(FFfromChantler, self).__init__(filename, wrapper, energyshift)  # call constructor of parent class (FFfromFile)
+        super().__init__(filename, wrapper, energyshift)  # call constructor of parent class (FFfromFile)
 
 class FFfromScaledAbsorption(Formfactor):
     """
@@ -1091,7 +1091,7 @@ class FFfromScaledAbsorption(Formfactor):
             raise TypeError("\'autofitrange\' must be a positive real number.")
         if autofitfunction is not None and not callable(autofitfunction):
             raise TypeError("\'absorption_linereaderfunction\' needs to be a callable object.")
-        if not ((element_symbol <> '' and tabulated_filename is None) or (
+        if not ((element_symbol != '' and tabulated_filename is None) or (
                 element_symbol == '' and tabulated_filename is not None)):
             raise ValueError(
                 "Either \'tabulated_filename\' has to be None or \'element_symbol\' has to be an empty string.")
@@ -1113,7 +1113,7 @@ class FFfromScaledAbsorption(Formfactor):
         self._energyshift = energyshift  # Attention: this is supposed to be an instance of "Parameters.Parameter". So a value can be obtained with self._energyshift.getValue(fitparraray)
 
         # setup acces to Chantler if neccessary
-        if element_symbol <> '':
+        if element_symbol != '':
             #use Chantler tables from database and the functions delivered with it to read them
             tabulated_filename = os.path.join(package_directory, chantler_directory,element_symbol + chantler_suffix)  # filename of corresponding Chantler Table
             if not os.path.isfile(tabulated_filename):
@@ -1569,7 +1569,7 @@ class MFFfromXMCD(MagneticFormfactor):
         mp = Parameters.ParametrizedFunction(interpolate.interp1d(energies, m_prime))
 
         # call constructor of base class
-        super(MFFfromXMCD, self).__init__(mp, mpp, theta_M, phi_M, minE, maxE, energyshift)
+        super().__init__(mp, mpp, theta_M, phi_M, minE, maxE, energyshift)
 
     # static methods
     @staticmethod
@@ -1614,7 +1614,7 @@ class MFFfromXMCD(MagneticFormfactor):
 # -----------------------------------------------------------------------------------------------------------------------------
 # Density Profil classes
 
-class DensityProfile(object):
+class DensityProfile:
     """
     This class can be used to generate arbitrary density profiles within a stack of several :class:`.AtomLayerObject` of equal thicknesses.
     
@@ -1767,7 +1767,7 @@ def plotAtomDensity(hs, fitpararray, colormap=[], atomnames=None):
     else:
         widthstep = 0.0
     if atomnames == []:
-        print "No atoms registered."
+        print("No atoms registered.")
         return
 
     densitylistdict = {}
@@ -1789,11 +1789,11 @@ def plotAtomDensity(hs, fitpararray, colormap=[], atomnames=None):
     w = 1
     for name in atomnames:
         if colorindex < len(colormap):
-            plt.bar(range(number_of_layers), densitylistdict[name], align='center', width=w, label=name,
+            plt.bar(list(range(number_of_layers)), densitylistdict[name], align='center', width=w, label=name,
                                   color=colormap[colorindex], alpha=0.9)
             colorindex += 1
         else:
-            plt.bar(range(number_of_layers), densitylistdict[name], align='center', width=w, label=name,
+            plt.bar(list(range(number_of_layers)), densitylistdict[name], align='center', width=w, label=name,
                                   alpha=0.9)
         w -= widthstep
 

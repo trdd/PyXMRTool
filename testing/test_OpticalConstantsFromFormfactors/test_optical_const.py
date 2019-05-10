@@ -45,7 +45,7 @@ start,l,u=pp.getStartLowerUpper()           #read start values etc. to check for
     
     
 ###set up formfactors
-print "... set up formfactors"
+print("... set up formfactors")
    
 #at first create linereader functions to read the files
 commentsymbol='#'
@@ -82,7 +82,7 @@ Mn_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710,sca
 SampleRepresentation.AtomLayerObject.registerAtom("Mn_XAS",Mn_FF)
    
 ### build layers from bottom
-print "... build layers"
+print("... build layers")
    
    
 layer_LSMO = SampleRepresentation.AtomLayerObject({"La":0.7*density_LSMO, "Sr":0.3*density_LSMO, "Mn_XAS":density_LSMO, "O": 3* density_LSMO})

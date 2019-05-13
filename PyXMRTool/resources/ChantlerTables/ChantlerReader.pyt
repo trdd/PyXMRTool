@@ -25,7 +25,7 @@ This file will not be used as module but just execute with *execfile()*. So be c
 """
 
 
-#Python Version 2.7
+#Python Version 3.6
 
 
 __author__ = "Yannic Utz"

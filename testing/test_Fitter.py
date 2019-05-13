@@ -1,4 +1,5 @@
 import numpy
+import scipy
 import time
 import types
 
@@ -66,20 +67,12 @@ if __name__ == '__main__':
     
     simu.plotData(start)
     
-    def costfunction(fitpararray):
-        return simu.getSSR(fitpararray)
-    best,ssr=Fitters.Evolution(costfunction,pp.getStartLowerUpper(), iterations=5, number_of_cores=3,mutation_strength=0.4,plotfunction=simu.plotData)
+    #scipy least_squares Fit
+    res=scipy.optimize.least_squares(simu.getResiduals, start, bounds=(lower_limits,upper_limits), method='trf', x_scale=numpy.array(upper_limits)-numpy.array(lower_limits), jac='3-point',verbose=2)
+    best=res.x
     
     simu.plotData(best)
 
-    
-    
-    def rescost(fitpararray):
-        return simu.getResidualsSSR(fitpararray)
-    best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( best, lower_limits, upper_limits), 20 ,number_of_cores=3, strict=False, control_file=None)
-    #best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,  ( start, lower_limits, upper_limits), 20 ,number_of_cores=3, strict=False, control_file=None)
-    
-    simu.plotData(best)
     
     print("Best Parameters")
     i=0

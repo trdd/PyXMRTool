@@ -29,7 +29,7 @@
    
 """
 
-#Python Version 2.7
+#Python Version 3.6
 
 __author__ = "Yannic Utz"
 __copyright__ = ""

@@ -66,7 +66,8 @@ Functions of one variable which are parametrized can be defined with instances o
 """
 
 
-#Python Version 2.7
+#Python Version 3.6
+
 __author__ = "Yannic Utz"
 __copyright__ = ""
 __credits__ = ["Yannic Utz and Martin Zwiebler"]

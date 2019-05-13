@@ -18,6 +18,18 @@
     Retrive the Chantler Tables from the NIST Homepage automatically.
 """
 
+#Python Version 3.6
+
+
+__author__ = "Yannic Utz"
+__copyright__ = ""
+__credits__ = ["Yannic Utz and Martin Zwiebler"]
+__license__ = "GNU General Public License v3.0"
+__version__ = "0.9"
+__maintainer__ = "Yannic Utz"
+__email__ = "yannic.utz@tu-dresden.de"
+__status__ = "beta" 
+
 
 import requests  
 from lxml import html
@@ -94,7 +106,7 @@ for i in range(92):             #looping through the peridic table
     #save to file
     filename=elsymbol+".cff"
     if os.path.isfile(filename):
-        answer=raw_input("Do you realy want to replace \'"+filename+"\'? (Y/n)")
+        answer=input("Do you realy want to replace \'"+filename+"\'? (Y/n)")
         if not(answer=="Y" or answer=="y" or answer==''):
             continue            
     with open(filename,"w") as file:
@@ -110,7 +122,7 @@ for i in range(92):             #looping through the peridic table
             file.write("  "+str(float(energy)*1000).center(20)+" "+str(float(f1)).center(20)+ " " + str(float(f2)).center(20)+"\n")
         
         
-    print "...got "+ elsymbol
+    print("...got "+ elsymbol)
     
     
     

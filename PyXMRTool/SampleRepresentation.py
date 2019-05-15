@@ -1403,6 +1403,62 @@ class FFfromScaledAbsorption(Formfactor):
     """Lower limit of stored energy range. Read-only."""
 
 
+class FFfromFitableModel(Formfactor):
+    """
+    Formfactor class which can used to implement a fittable model for the formfactor as e.g. a Kramers-Kronig variational approach with triangles (see Stone et al., PRB 86, 024102 (2012).
+    
+    The class just take the complex formfactor tensor as :class:`Parameters.ParametrizedFunction`, which is a function dependent on fitparameters.
+    
+    See :doc:`/definitions/formfactors` for sign conventions.
+    """
+
+    def __init__(self, ff_tensor_function, minE, maxE):
+        """
+        Parameters
+        ----------
+        ff_tensor_function : :class:`Parameters.ParametrizedFunction`
+            Energy-dependent complex formfactor tensor. A parametrized funtion of energy  (see :class:`Parameters.ParametrizedFunction`) which reurns a list of 9 complex numbers.
+        minE : float
+        maxE : float
+            Gives the boundaries of the valid energy-range of the given ff_tensor_function.
+        """
+
+        # check parameters
+        if not isinstance(ff_tensor_function, Parameters.ParametrizedFunction):
+            raise TypeError("\'ff_tensor_function\' has to be an instance of \`Parameters.ParametrizedFunction\`.")
+        if not minE < maxE :
+            raise ValueError("\'minE\' has to be smaller than \'maxE\'")
+        
+        # asign members
+        self._ff_tensor_function = ff_tensor_function
+        self._minE=minE
+        self._maxE=maxE
+
+
+    def getFF(self, energy, fitpararray=None):
+        """
+        Return the formfactor for **energy** corresponding to **fitpararray** (if it depends on it) as 9-element Numpy array of complex numbers.
+        
+        **energy** is measured in units of eV.
+        """
+        if energy < self.minE or energy  > self.maxE:
+            raise ValueError("\'energy  = "  + str(energy ) + "\' is out of range (" + str(self.minE) + "," + str(self.maxE) + ").")
+        return numpy.array( self._ff_tensor_function.getValue(energy,fitpararray)   )
+
+    def _getMinE(self):
+        return self.minE
+
+    def _getMaxE(self):
+        return self.maxE
+
+    # properties
+    maxE = property(_getMaxE)
+    """Upper limit of stored energy range. Read-only."""
+    minE = property(_getMinE)
+    """Lower limit of stored energy range. Read-only."""
+
+
+
 # -----------------------------------------------------------------------------------------------------------------------------
 # Magnetic Formfactor classes
 

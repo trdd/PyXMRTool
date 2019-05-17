@@ -1446,10 +1446,10 @@ class FFfromFitableModel(Formfactor):
         return numpy.array( self._ff_tensor_function.getValue(energy,fitpararray)   )
 
     def _getMinE(self):
-        return self.minE
+        return self._minE
 
     def _getMaxE(self):
-        return self.maxE
+        return self._maxE
 
     # properties
     maxE = property(_getMaxE)

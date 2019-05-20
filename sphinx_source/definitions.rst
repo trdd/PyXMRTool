@@ -6,4 +6,5 @@ Terms and Definitions
    :maxdepth: 1
    
    definitions/formfactors
+   definitions/coordinate_systems
    

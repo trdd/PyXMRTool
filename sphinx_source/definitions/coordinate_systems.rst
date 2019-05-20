@@ -14,7 +14,8 @@ The polarization vectors for :math:`\sigma`-polarization and :math:`\pi`-polariz
 
 .. math::
     \vec{e}_\sigma =    \left(\begin{array}{c} 1\\ 0\\ 0\\ \end{array}\right)   \quad \, \qquad   \vec{e}_\pi =    \left(\begin{array}{c} 0\\ \sin\theta\\ \cos\theta\\ \end{array}\right)
-    
+
+The y-z plane is defined / is identical with the scattering plane.
     
 The polarization vectors for left and right circular polarizations are
 

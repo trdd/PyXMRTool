@@ -478,7 +478,7 @@ class MagneticLayerObject(LayerObject):
             Real and imaginary parts of the magnetic term. 
         theta_M : :class:`Parameters.Parameter`
         phi_M : :class:`Parameters.Parameter`
-            Angles which describe the direction of the magnetization measured in degrees.
+            Angles which describe the direction of the magnetization measured in degrees. See also :doc:`/definitions/coordinate_systems`.
         d : :class:`Parameters.Parameter`
             Thickness. Unit is the same as for every other length used throughout the project and is not predefined. E.g. wavelength.
             *None* or *0* mean infinitively thick.
@@ -1471,13 +1471,13 @@ class MagneticFormfactor(Formfactor):
         """Initializes the MagneticFormfactor with energy-dependent magnetic terms **m_prime** and **m_primeprime** and the angles **theta_M** and **phi_M** which describe the direction of the magnetization.
         
         See *Macke and Goering 2014, J.Phys.: Condens. Matter 26, 363201.* Eq. 11-14 for details.
-        
+               
         
         Parameters
         ----------
         m_prime : :class:Parameters.ParametrizedFunction
         m_primeprime : :class:Parameters.ParametrizedFunction
-            Real and imaginary parts of the magnetic term. Given as parametrized functions of energy.
+            Real and imaginary parts of the magnetic term. Given as parametrized functions of energy. See also :doc:`/definitions/coordinate_systems`.
         theta_M : :class:`Parameters.Parameter`
         phi_M : :class:`Parameters.Parameter`
             Angles which describe the direction of the magnetization measured in degrees.
@@ -1572,7 +1572,7 @@ class MFFfromXMCD(MagneticFormfactor):
         Parameters
         ----------
         theta_M, phi_M : :class:`Parameters.Parameter`
-            Angles which describe the direction of the magnetization measured in degrees.
+            Angles which describe the direction of the magnetization measured in degrees. See also :doc:`/definitions/coordinate_systems`.
         filename : str
             Path to the text file which contains the XMCD signal as function of energy.
         linereaderfunction : callable

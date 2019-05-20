@@ -6,7 +6,9 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = PyXMRTool
 SOURCEDIR     = .
-BUILDDIR      = _build
+#BUILDDIR      = _build
+BUILDDIR      = ../documentation
+
 
 # Put it first so that "make" without argument is like "make help".
 help:

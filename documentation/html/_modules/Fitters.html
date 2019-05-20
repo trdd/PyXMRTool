@@ -1,0 +1,916 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Fitters &#8212; PyXMRTool 0.9 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">todo: Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hints.html">Hints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../definitions.html">Terms and Definitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development.html">Developement</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for Fitters</h1><div class="highlight"><pre>
+<span class="c1">#&lt;PyXMRTool: A Python Package for the analysis of X-Ray Magnetic Reflectivity data measured on heterostructures&gt;</span>
+<span class="c1">#    Copyright (C) &lt;2018&gt;  &lt;Yannic Utz&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#    This program is free software: you can redistribute it and/or modify</span>
+<span class="c1">#    it under the terms of the GNU Lesser General Public License as published by</span>
+<span class="c1">#    the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1">#    (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1">#    This program is distributed in the hope that it will be useful,</span>
+<span class="c1">#    but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1">#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1">#    GNU Lesser General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1">#    You should have received a copy of the GNU Lesser General Public License</span>
+<span class="c1">#    along with this program.  If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Contains different optimization algorithms designed to fit reflectivity data.</span>
+<span class="sd">   They take advantage of parallelization to be used on multiprocessor system.</span>
+<span class="sd">   </span>
+<span class="sd">   The algorithms are developed by Martin Zwiebel and I just adopted them with slight changes to PyXMRTool.</span>
+<span class="sd">   More information can be found in the PhD thesis of Martin Zwiebler.</span>
+<span class="sd">   </span>
+<span class="sd">   The algorithms are not well developed yet. It is better to use existing optimizers. E.g. *scipy.optimize.least_squares*.</span>
+<span class="sd">   </span>
+<span class="sd">   Only :func:`Explore` and related functions are recommended to use.</span>
+<span class="sd">   :func:`Explore` uses *scipy.optimize.least_squares* to explore the complete parameter range and :func:`list_clusters`, :func:`plot_parameter_spread` and :func:`plot_allparameters_spread` are used to visualize the result.</span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#Python Version 3.6</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Yannic Utz&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="n">__credits__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Yannic Utz and Martin Zwiebler&quot;</span><span class="p">]</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s2">&quot;GNU General Public License v3.0&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.9&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s2">&quot;Yannic Utz&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;yannic.utz@tu-dresden.de&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s2">&quot;beta&quot;</span>
+
+
+
+<span class="kn">import</span> <span class="nn">numbers</span>
+<span class="kn">import</span> <span class="nn">joblib</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">patches</span> <span class="k">as</span> <span class="n">mpatches</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">linalg</span> <span class="k">as</span> <span class="n">scipy_linalg</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">sklearn.preprocessing</span>
+<span class="kn">import</span> <span class="nn">sklearn.cluster</span>
+<span class="kn">import</span> <span class="nn">scipy.optimize</span>
+
+<span class="kn">from</span> <span class="nn">PyXMRTool</span> <span class="k">import</span> <span class="n">Parameters</span>
+
+<span class="c1">#settings############################</span>
+<span class="n">numerical_derivative_factor</span><span class="o">=</span><span class="mf">1.0e-9</span>                          <span class="c1">#defines in principle the the magnitude of  &quot;Delta x&quot; for the aproximation of a derivative by &quot;Delta y/Delta x&quot;</span>
+<span class="c1">#####################################</span>
+
+<div class="viewcode-block" id="Explore"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.Explore">[docs]</a><span class="k">def</span> <span class="nf">Explore</span><span class="p">(</span><span class="n">residualsfunction</span><span class="p">,</span>  <span class="n">parameter_settings</span><span class="p">,</span> <span class="n">number_of_seeds</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">number_of_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A scanning function which should be usefull to explore the parameter space.</span>
+<span class="sd">    </span>
+<span class="sd">    It chooses **number_of_seeds** different random start parameter vectors (seeds) within the given paramteter range. Each seed is used as start parameter set for a least_square fitter to find the minimum of the sum of squared residuals (*ssr*) (using :func:`scipy.optimize.least_squares` with the *trust region reflective algorithm). This will lead to **number_of_seeds** fixpoints. They will then be analysed with a (k-means) clustering algorithm to group these fixpoint in **number_of_clusters** different clusters. If **number_of_clusters** = *None* (default), the clustering with the best sillouette coefficient will be used. These clusters will then be analysed: What is the SSR corresponding to the cluster centers? How many seeds lead to the corresponding clusters? What are the means and spreads of parameter values within each cluster?</span>
+<span class="sd">    </span>
+<span class="sd">    The return value will be a structure containing the results.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    residualsfunction : callable</span>
+<span class="sd">        A function which returns the differences between simulated and measured data points (residuals) as list/array. It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getResiduals&#39; of an instance of :class:`SampleRepresentation.ReflDataSimulator`.</span>
+<span class="sd">    parameter_settings : tuple of lists/arrays of floats</span>
+<span class="sd">        Sets start values, lower and upper limit of the parameters as *(startfitparameters, lower_limits, upper_limits )*, where each of the entries is an list/array of values of same length. The *startfitparameters* are not used (can be *None*) and just necessaray for compatibility.</span>
+<span class="sd">    number_of_seeds : int </span>
+<span class="sd">        number of random seeds which should be generated</span>
+<span class="sd">    verbose : {0, 1, 2}</span>
+<span class="sd">        determines the level of the optimizer&#39;s algorithm&#39;s verbosity:</span>
+<span class="sd">            0 : work silently.</span>
+<span class="sd">            1 : display a termination report for each seed.</span>
+<span class="sd">            2 (default) : display progress during iterations.</span>
+<span class="sd">    number_of_clusters : int </span>
+<span class="sd">        number of clusters in which the resulting fixpoints shall be grouped</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#unpack parameter settings</span>
+    <span class="p">(</span><span class="n">startfitparameters</span><span class="p">,</span> <span class="n">lower_limits</span><span class="p">,</span> <span class="n">upper_limits</span> <span class="p">)</span><span class="o">=</span><span class="n">parameter_settings</span>
+    
+    <span class="c1">#check parameters</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">residualsfunction</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">residualsfunction</span><span class="se">\&#39;</span><span class="s2"> has to be callable.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints does not match in length.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">number_of_seeds</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter. </span><span class="se">\&#39;</span><span class="s2">number_of_seeds</span><span class="se">\&#39;</span><span class="s2"> has to be integer.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">number_of_seeds</span><span class="o">&lt;</span><span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">number_of_seeds</span><span class="se">\&#39;</span><span class="s2"> has to be 3 at least.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">number_of_clusters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">number_of_clusters</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter. </span><span class="se">\&#39;</span><span class="s2">number_of_clusters</span><span class="se">\&#39;</span><span class="s2"> has to be integer.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">number_of_clusters</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">number_of_clusters</span><span class="se">\&#39;</span><span class="s2">  has to be positive.&quot;</span><span class="p">)</span>
+
+    <span class="c1">#performing the least squares optimizations</span>
+    <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;... performing least squares optimization for &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">number_of_seeds</span><span class="p">)</span> <span class="o">+</span><span class="s2">&quot; seeds&quot;</span><span class="p">))</span>
+    <span class="n">fixpoints</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">ssrs</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">upper_limits</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">)</span>
+    <span class="n">lower_limits</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_seeds</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">least_squares</span><span class="p">(</span><span class="n">residualsfunction</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">))</span><span class="o">*</span><span class="p">(</span><span class="n">upper_limits</span><span class="o">-</span><span class="n">lower_limits</span><span class="p">)</span><span class="o">+</span><span class="n">lower_limits</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">,</span><span class="n">upper_limits</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;trf&#39;</span><span class="p">,</span> <span class="n">x_scale</span><span class="o">=</span><span class="n">upper_limits</span><span class="o">-</span><span class="n">lower_limits</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="s1">&#39;3-point&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">fixpoints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">ssrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">res</span><span class="o">.</span><span class="n">cost</span><span class="p">)</span>
+    <span class="n">fixpoints</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fixpoints</span><span class="p">)</span>
+    <span class="n">ssrs</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ssrs</span><span class="p">)</span>
+    <span class="n">ssrfunction</span><span class="o">=</span><span class="k">lambda</span> <span class="n">fitpararray</span> <span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span> <span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">square</span> <span class="p">(</span> <span class="n">residualsfunction</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span> 
+    <span class="n">scan_output</span><span class="o">=</span><span class="n">Cluster</span><span class="p">({</span><span class="s1">&#39;fixpoints&#39;</span><span class="p">:</span> <span class="n">fixpoints</span><span class="p">,</span> <span class="s1">&#39;ssrs_of_fixpoints&#39;</span> <span class="p">:</span> <span class="n">ssrs</span><span class="p">},</span> <span class="n">ssrfunction</span> <span class="p">,</span><span class="n">number_of_clusters</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">scan_output</span></div>
+
+<div class="viewcode-block" id="Cluster"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.Cluster">[docs]</a><span class="k">def</span> <span class="nf">Cluster</span><span class="p">(</span><span class="n">scan_output</span><span class="p">,</span><span class="n">ssrfunction</span><span class="p">,</span> <span class="n">number_of_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to deal with output of :func:`Explore`.</span>
+<span class="sd">    </span>
+<span class="sd">    Clusters the found fixpoints and returns the result as structure in the same format as :func:`Explore`. Actually, it is used by :func:`Explore` internally.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    scan_output : struct</span>
+<span class="sd">        return value of :func:`Explore`</span>
+<span class="sd">    ssrfunction : callable</span>
+<span class="sd">        A function which returns the sum of squared residuals between simulated and measured data points (ssr). It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getSSR` of an instance of :class:`SampleRepresentation.ReflDataSimulator`.  </span>
+<span class="sd">    number_of_clusters : int </span>
+<span class="sd">        number of clusters in which the resulting fixpoints shall be grouped</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#parameter checking</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">ssrfunction</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">ssrsfunction</span><span class="se">\&#39;</span><span class="s2"> has to be callable.&quot;</span><span class="p">)</span>
+            
+    <span class="n">scan_output</span><span class="o">=</span><span class="n">scan_output</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">fixpoints</span><span class="o">=</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;fixpoints&#39;</span><span class="p">]</span>
+    <span class="n">ssrs</span><span class="o">=</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;ssrs_of_fixpoints&#39;</span><span class="p">]</span>
+    <span class="c1">#performing cluster analysis</span>
+    <span class="n">scaler</span><span class="o">=</span><span class="n">sklearn</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">StandardScaler</span><span class="p">()</span>       <span class="c1">#parameters have to be scaled to allow for a reasonable clustering</span>
+    <span class="n">fixpoints_scaled</span><span class="o">=</span><span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">fixpoints</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">number_of_clusters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;... clustering &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fixpoints</span><span class="p">))</span> <span class="o">+</span><span class="s2">&quot; fixpoints in an optimal number of clusters&quot;</span><span class="p">))</span>
+        <span class="n">scores</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="nb">min</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">fixpoints</span><span class="p">)])):</span>
+            <span class="n">km</span><span class="o">=</span><span class="n">sklearn</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">i</span><span class="p">,</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span><span class="n">n_init</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fixpoints_scaled</span><span class="p">)</span>
+            <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sklearn</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">silhouette_score</span><span class="p">(</span><span class="n">fixpoints_scaled</span><span class="p">,</span> <span class="n">km</span><span class="o">.</span><span class="n">labels_</span><span class="p">))</span>
+        <span class="n">number_of_clusters</span><span class="o">=</span><span class="mi">2</span><span class="o">+</span><span class="n">scores</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>        
+        <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;... clustering &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">number_of_seeds</span><span class="p">)</span> <span class="o">+</span><span class="s2">&quot; fixpoints in &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">number_of_clusters</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; clusters&quot;</span><span class="p">))</span>
+
+    <span class="n">km</span><span class="o">=</span><span class="n">sklearn</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">number_of_clusters</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span><span class="n">n_init</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fixpoints_scaled</span><span class="p">)</span>
+    <span class="n">clusters</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">clusters_members</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">clusters_members_ssrs</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">):</span>
+        <span class="n">number_fp</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">labels_</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">cluster_center</span><span class="o">=</span><span class="n">scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="n">members_indices</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">labels_</span><span class="o">==</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">members</span><span class="o">=</span><span class="n">fixpoints</span><span class="p">[</span><span class="n">members_indices</span><span class="p">]</span>
+        <span class="n">members_ssrs</span><span class="o">=</span><span class="n">ssrs</span><span class="p">[</span><span class="n">members_indices</span><span class="p">]</span>
+        <span class="n">std_dev</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">members</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">max_spread</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">members</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">-</span><span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">members</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">clusters</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;center&#39;</span><span class="p">:</span> <span class="n">cluster_center</span><span class="p">,</span> <span class="s1">&#39;std_dev&#39;</span><span class="p">:</span> <span class="n">std_dev</span><span class="p">,</span> <span class="s1">&#39;rel_std_dev&#39;</span><span class="p">:</span> <span class="n">std_dev</span><span class="o">/</span><span class="n">cluster_center</span><span class="p">,</span> <span class="s1">&#39;max_spread&#39;</span><span class="p">:</span> <span class="n">max_spread</span><span class="p">,</span> <span class="s1">&#39;rel_max_spread&#39;</span><span class="p">:</span> <span class="n">max_spread</span><span class="o">/</span><span class="n">cluster_center</span>  <span class="p">,</span> <span class="s1">&#39;number_of_members&#39;</span><span class="p">:</span> <span class="n">number_fp</span><span class="p">,</span> <span class="s1">&#39;ratio_of_seeds&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">number_fp</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">fixpoints</span><span class="p">),</span> <span class="s1">&#39;ssr_of_center&#39;</span><span class="p">:</span> <span class="n">ssrfunction</span><span class="p">(</span><span class="n">cluster_center</span><span class="p">)})</span>
+        <span class="n">clusters_members</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+        <span class="n">clusters_members_ssrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">members_ssrs</span><span class="p">)</span>
+    <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">clusters</span>
+    <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters_members&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">clusters_members</span>
+    <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters_members_ssrs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">clusters_members_ssrs</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;... printing overview&quot;</span><span class="p">)</span>
+    <span class="n">list_clusters</span><span class="p">(</span><span class="n">scan_output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scan_output</span></div>
+    
+
+
+    
+<div class="viewcode-block" id="list_clusters"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.list_clusters">[docs]</a><span class="k">def</span> <span class="nf">list_clusters</span><span class="p">(</span><span class="n">scan_output</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to deal with output of :func:`Explore`.</span>
+<span class="sd">    </span>
+<span class="sd">    Lists all found clusters (which should correspond to fixpoints) and their properties.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">clusters</span><span class="o">=</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cluster &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;: catches &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;ratio_of_seeds&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="si">% o</span><span class="s2">f seeds, ssr_of_center=&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;ssr_of_center&#39;</span><span class="p">]))</span></div>
+        
+<div class="viewcode-block" id="plot_clusters_onepar"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.plot_clusters_onepar">[docs]</a><span class="k">def</span> <span class="nf">plot_clusters_onepar</span><span class="p">(</span><span class="n">scan_output</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">parameter_pool</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ssr_lim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to deal with output of :func:`Explore` (**scan_output**).</span>
+<span class="sd">    </span>
+<span class="sd">    Shows the parameter values of the centers of the found clusters of one parameter.</span>
+<span class="sd">    On the y axis the corresponding sum of squared residuals of the fit are shown.</span>
+<span class="sd">    The size (area) of the bubles corresponds to the ratio of seeds which converged to this fixpoint.</span>
+<span class="sd">    The bars show the range of parameter values which were assigned to this cluster/fixpoint.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    scan_output : struct</span>
+<span class="sd">        Structure as returned by :func:`Explore`.</span>
+<span class="sd">    p : int or str</span>
+<span class="sd">        Selects the parameter. Either with its index or its name. In the second case **parameter_pool** has to be given.</span>
+<span class="sd">    parameter_pool : :class:`Parameters.ParameterPool`</span>
+<span class="sd">        The paramter pool containing the parameters, which are under consideration. If given, parameter names are plotted and the x axis is adjusted to lower and upper limits stored in **parameter_pool**.</span>
+<span class="sd">    ssr_lim : list/tuple</span>
+<span class="sd">        lower and upper limit of y-axis (ssr)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#parameter checking</span>
+    <span class="k">if</span> <span class="n">parameter_pool</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_pool</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">parameter_pool</span><span class="se">\&#39;</span><span class="s1"> has to be an instance of </span><span class="se">\&#39;</span><span class="s1">Parameters.ParameterPool</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_pool</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">):</span>
+                <span class="n">pname</span><span class="o">=</span><span class="n">p</span>
+                <span class="n">pnumber</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getNames</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span>
+                <span class="n">ll</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">lower_lim</span>
+                <span class="n">ul</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">upper_lim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">p</span><span class="se">\&#39;</span><span class="s1"> has to be either integer (index of parameter) or a string (name of parameter).&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_pool</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">):</span>
+            <span class="n">pnumber</span><span class="o">=</span><span class="n">p</span>
+            <span class="n">pname</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getNames</span><span class="p">()[</span><span class="n">pnumber</span><span class="p">]</span>
+            <span class="n">ll</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">lower_lim</span>
+            <span class="n">ul</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">upper_lim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pnumber</span><span class="o">=</span><span class="n">p</span>
+            <span class="n">pname</span><span class="o">=</span><span class="s1">&#39;Parameter Index &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">ll</span><span class="o">=</span><span class="kc">None</span>
+            <span class="n">ul</span><span class="o">=</span><span class="kc">None</span>
+    
+    <span class="c1">#create a color for each cluster</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;gist_rainbow&#39;</span><span class="p">)</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">])</span>
+    <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="n">cmap</span><span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span><span class="mf">0.5</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)]</span>
+    <span class="c1">#get center values</span>
+    <span class="n">centers</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+        <span class="n">centers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;center&#39;</span><span class="p">][</span><span class="n">pnumber</span><span class="p">])</span>
+    <span class="c1">#get sums of squared residuals</span>
+    <span class="n">ssrs</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+        <span class="n">ssrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;ssr_of_center&#39;</span><span class="p">])</span>
+    <span class="c1">#get ratios of seeds (meaning: how many of the seeds convered to a certain cluster)</span>
+    <span class="n">rofs</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+        <span class="n">rofs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;ratio_of_seeds&#39;</span><span class="p">])</span>
+    <span class="n">rofs</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rofs</span><span class="p">)</span>
+    <span class="c1">#get spreads of the parameter values (min and max)</span>
+    <span class="n">spreads_lower</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">spreads_upper</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">cl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters_members&#39;</span><span class="p">]):</span>
+        <span class="n">spreads_lower</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">centers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="nb">min</span><span class="p">(</span><span class="n">cl</span><span class="p">[:,</span><span class="n">pnumber</span><span class="p">]))</span>
+        <span class="n">spreads_upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">cl</span><span class="p">[:,</span><span class="n">pnumber</span><span class="p">])</span><span class="o">-</span><span class="n">centers</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">spreads</span><span class="o">=</span><span class="p">[</span><span class="n">spreads_lower</span><span class="p">,</span><span class="n">spreads_upper</span><span class="p">]</span>
+    <span class="n">spreads</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spreads</span><span class="p">)</span>
+    <span class="c1">#plotting</span>
+    <span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+    <span class="c1">#ploting circles with size related to the ratio of seeds, position=(center,ssr)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span><span class="n">ssrs</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="n">rofs</span><span class="o">*</span><span class="mi">5000</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span><span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;face&#39;</span><span class="p">)</span>
+    <span class="c1">#plotting errorbars related to the spread</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span><span class="n">ssrs</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">spreads</span><span class="p">,</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+    <span class="c1">#legend</span>
+    <span class="n">patches</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">colors</span><span class="p">):</span>
+        <span class="n">patches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mpatches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="n">patches</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">,</span><span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">box</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">box</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span><span class="n">box</span><span class="o">.</span><span class="n">y0</span><span class="p">,</span><span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="o">*</span><span class="mf">0.9</span><span class="p">,</span><span class="n">box</span><span class="o">.</span><span class="n">height</span><span class="p">])</span>
+    <span class="c1">#label xaxis</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span>
+    <span class="c1">#set limits of xaxis</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="n">ll</span><span class="p">,</span><span class="n">ul</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">ssr_lim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ssr_lim</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="plot_clusters_allpars"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.plot_clusters_allpars">[docs]</a><span class="k">def</span> <span class="nf">plot_clusters_allpars</span><span class="p">(</span><span class="n">scan_output</span><span class="p">,</span> <span class="n">parameter_pool</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ssr_lim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to deal with output of :func:`Explore` (**scan_output**).</span>
+<span class="sd">    </span>
+<span class="sd">    Shows the parameter values of the centers of the found clusters of all parameter in a multiplot.</span>
+<span class="sd">    On the y axis the corresponding sum of squared residuals of the fit are shown.</span>
+<span class="sd">    The size (area) of the bubles corresponds to the ratio of seeds which converged to this fixpoint.</span>
+<span class="sd">    The bars show the range of parameter values which were assigned to this cluster/fixpoint.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    scan_output : struct</span>
+<span class="sd">        Structure as returned by :func:`Explore`.</span>
+<span class="sd">    parameter_pool : :class:`Parameters.ParameterPool`</span>
+<span class="sd">        The paramter pool containing the parameters, which are under consideration. If given, parameter names are plotted and the x axes are adjusted to lower and upper limits stored in **parameter_pool**.</span>
+<span class="sd">    ssr_lim : list/tuple</span>
+<span class="sd">        lower and upper limit of y-axis (ssr)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#parameter checking</span>
+    <span class="k">if</span> <span class="n">parameter_pool</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_pool</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">parameter_pool</span><span class="se">\&#39;</span><span class="s1"> has to be an instance of </span><span class="se">\&#39;</span><span class="s1">Parameters.ParameterPool</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+    
+    <span class="c1">#create a color for each cluster</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;gist_rainbow&#39;</span><span class="p">)</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">])</span>
+    <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="n">cmap</span><span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span><span class="mf">0.5</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)]</span>
+    
+    <span class="c1">#create figure</span>
+    <span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.figsize&quot;</span><span class="p">])</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
+    
+    <span class="c1">#get number of parameters</span>
+    <span class="n">number_of_parameters</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;center&#39;</span><span class="p">])</span>
+    <span class="n">grid</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">number_of_parameters</span><span class="p">))</span>
+    
+    <span class="c1">#looping trough parameters</span>
+    <span class="k">for</span> <span class="n">pnumber</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_parameters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_pool</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">):</span>
+            <span class="n">pname</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getNames</span><span class="p">()[</span><span class="n">pnumber</span><span class="p">]</span>
+            <span class="n">ll</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">lower_lim</span>
+            <span class="n">ul</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">upper_lim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pname</span><span class="o">=</span><span class="s1">&#39;Parameter Index &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pnumber</span><span class="p">)</span>
+            <span class="n">ll</span><span class="o">=</span><span class="kc">None</span>
+            <span class="n">ul</span><span class="o">=</span><span class="kc">None</span>
+    
+    
+        <span class="c1">#get center values</span>
+        <span class="n">centers</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+            <span class="n">centers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;center&#39;</span><span class="p">][</span><span class="n">pnumber</span><span class="p">])</span>
+        <span class="c1">#get sums of squared residuals</span>
+        <span class="n">ssrs</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+            <span class="n">ssrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;ssr_of_center&#39;</span><span class="p">])</span>
+        <span class="c1">#get ratios of seeds (meaning: how many of the seeds convered to a certain cluster)</span>
+        <span class="n">rofs</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+            <span class="n">rofs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;ratio_of_seeds&#39;</span><span class="p">])</span>
+        <span class="n">rofs</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rofs</span><span class="p">)</span>
+        <span class="c1">#get spreads of the parameter values (min and max)</span>
+        <span class="n">spreads_lower</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">spreads_upper</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">cl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters_members&#39;</span><span class="p">]):</span>
+            <span class="n">spreads_lower</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">centers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="nb">min</span><span class="p">(</span><span class="n">cl</span><span class="p">[:,</span><span class="n">pnumber</span><span class="p">]))</span>
+            <span class="n">spreads_upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">cl</span><span class="p">[:,</span><span class="n">pnumber</span><span class="p">])</span><span class="o">-</span><span class="n">centers</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">spreads</span><span class="o">=</span><span class="p">[</span><span class="n">spreads_lower</span><span class="p">,</span><span class="n">spreads_upper</span><span class="p">]</span>
+        <span class="n">spreads</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spreads</span><span class="p">)</span>
+        <span class="c1">#plotting</span>
+
+        <span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span><span class="n">grid</span><span class="p">,</span><span class="n">pnumber</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1">#ploting circles with size related to the ratio of seeds, position=(center,ssr)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span><span class="n">ssrs</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="n">rofs</span><span class="o">*</span><span class="mi">5000</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span><span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;face&#39;</span><span class="p">)</span>
+        <span class="c1">#plotting errorbars related to the spread</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span><span class="n">ssrs</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">spreads</span><span class="p">,</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        <span class="c1">#label xaxis</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span>
+        <span class="c1">#set limits of xaxis</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="n">ll</span><span class="p">,</span><span class="n">ul</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ssr_lim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ssr_lim</span><span class="p">)</span>
+ 
+    <span class="c1">#legend</span>
+    <span class="n">patches</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">lbls</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">colors</span><span class="p">):</span>
+            <span class="n">patches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mpatches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+            <span class="n">lbls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="n">patches</span><span class="p">,</span><span class="n">labels</span><span class="o">=</span><span class="n">lbls</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="plot_fixpoints_allpars"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.plot_fixpoints_allpars">[docs]</a><span class="k">def</span> <span class="nf">plot_fixpoints_allpars</span><span class="p">(</span><span class="n">scan_output</span><span class="p">,</span> <span class="n">parameter_pool</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">ssr_lim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to deal with output of :func:`Explore` (**scan_output**).</span>
+<span class="sd">    </span>
+<span class="sd">    Shows the parameter values of the centers of the found clusters of all parameter in a multiplot.</span>
+<span class="sd">    On the y axis the corresponding sum of squared residuals of the fit are shown.</span>
+<span class="sd">    The size (area) of the bubles corresponds to the ratio of seeds which converged to this fixpoint.</span>
+<span class="sd">    The bars show the range of parameter values which were assigned to this cluster/fixpoint.</span>
+<span class="sd">    Additionally, all fixpoints are also shown, colored according to their cluster asscociated.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    scan_output : struct</span>
+<span class="sd">        Structure as returned by :func:`Explore`.</span>
+<span class="sd">    ssrfunction : callable</span>
+<span class="sd">        A function which returns the sum of squared residuals between simulated and measured data points (ssr). It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getSSR` of an instance of :class:`SampleRepresentation.ReflDataSimulator`.        </span>
+<span class="sd">    parameter_pool : :class:`Parameters.ParameterPool`</span>
+<span class="sd">        The paramter pool containing the parameters, which are under consideration. If given, parameter names are plotted and the x axes are adjusted to lower and upper limits stored in **parameter_pool**.</span>
+<span class="sd">    ssr_lim : list/tuple</span>
+<span class="sd">        lower and upper limit of y-axis (ssr)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#parameter checking</span>
+    <span class="k">if</span> <span class="n">parameter_pool</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_pool</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">parameter_pool</span><span class="se">\&#39;</span><span class="s1"> has to be an instance of </span><span class="se">\&#39;</span><span class="s1">Parameters.ParameterPool</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+    
+    <span class="c1">#create a color for each cluster</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;gist_rainbow&#39;</span><span class="p">)</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">])</span>
+    <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="n">cmap</span><span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span><span class="mf">0.5</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)]</span>
+    
+    <span class="c1">#create figure</span>
+    <span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.figsize&quot;</span><span class="p">])</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
+    
+    <span class="c1">#get number of parameters</span>
+    <span class="n">number_of_parameters</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;center&#39;</span><span class="p">])</span>
+    <span class="n">grid</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">number_of_parameters</span><span class="p">))</span>
+    
+    <span class="c1">#get members and their ssrs</span>
+    <span class="n">members_per_par</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">pnumber</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_parameters</span><span class="p">):</span>
+        <span class="n">members</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters_members&#39;</span><span class="p">]:</span>
+            <span class="n">m</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">cl</span><span class="p">:</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="n">pnumber</span><span class="p">])</span>
+            <span class="n">members</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">members_per_par</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+    <span class="n">members_ssrs</span><span class="o">=</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters_members_ssrs&#39;</span><span class="p">]</span>
+      
+    
+    <span class="c1">#looping trough parameters</span>
+    <span class="k">for</span> <span class="n">pnumber</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_parameters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_pool</span><span class="p">,</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">):</span>
+            <span class="n">pname</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getNames</span><span class="p">()[</span><span class="n">pnumber</span><span class="p">]</span>
+            <span class="n">ll</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">lower_lim</span>
+            <span class="n">ul</span><span class="o">=</span><span class="n">parameter_pool</span><span class="o">.</span><span class="n">getParameter</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span><span class="o">.</span><span class="n">upper_lim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pname</span><span class="o">=</span><span class="s1">&#39;Parameter Index &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pnumber</span><span class="p">)</span>
+            <span class="n">ll</span><span class="o">=</span><span class="kc">None</span>
+            <span class="n">ul</span><span class="o">=</span><span class="kc">None</span>
+    
+    
+        <span class="c1">#get center values</span>
+        <span class="n">centers</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+            <span class="n">centers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;center&#39;</span><span class="p">][</span><span class="n">pnumber</span><span class="p">])</span>
+        <span class="c1">#get sums of squared residuals</span>
+        <span class="n">ssrs</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+            <span class="n">ssrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;ssr_of_center&#39;</span><span class="p">])</span>
+        <span class="c1">#get ratios of seeds (meaning: how many of the seeds convered to a certain cluster)</span>
+        <span class="n">rofs</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]:</span>
+            <span class="n">rofs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cl</span><span class="p">[</span><span class="s1">&#39;ratio_of_seeds&#39;</span><span class="p">])</span>
+        <span class="n">rofs</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rofs</span><span class="p">)</span>
+        <span class="c1">#get spreads of the parameter values (min and max)</span>
+        <span class="n">spreads_lower</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">spreads_upper</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">cl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scan_output</span><span class="p">[</span><span class="s1">&#39;clusters_members&#39;</span><span class="p">]):</span>
+            <span class="n">spreads_lower</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">centers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="nb">min</span><span class="p">(</span><span class="n">cl</span><span class="p">[:,</span><span class="n">pnumber</span><span class="p">]))</span>
+            <span class="n">spreads_upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">cl</span><span class="p">[:,</span><span class="n">pnumber</span><span class="p">])</span><span class="o">-</span><span class="n">centers</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">spreads</span><span class="o">=</span><span class="p">[</span><span class="n">spreads_lower</span><span class="p">,</span><span class="n">spreads_upper</span><span class="p">]</span>
+        <span class="n">spreads</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spreads</span><span class="p">)</span>
+        
+        <span class="c1">#plotting</span>
+        <span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span><span class="n">grid</span><span class="p">,</span><span class="n">pnumber</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1">#ploting circles with size related to the ratio of seeds, position=(center,ssr)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span><span class="n">ssrs</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="n">rofs</span><span class="o">*</span><span class="mi">5000</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span><span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;face&#39;</span><span class="p">)</span>
+        <span class="c1">#plotting errorbars related to the spread</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span><span class="n">ssrs</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">spreads</span><span class="p">,</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        <span class="c1">#plotting each fixpoint in the color of its associated cluster</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">members</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">members_per_par</span><span class="p">[</span><span class="n">pnumber</span><span class="p">]):</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">members</span><span class="p">,</span><span class="n">members_ssrs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>           
+        <span class="c1">#label xaxis</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">pname</span><span class="p">)</span>
+        <span class="c1">#set limits of xaxis</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="n">ll</span><span class="p">,</span><span class="n">ul</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ssr_lim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ssr_lim</span><span class="p">)</span>
+ 
+    <span class="c1">#legend</span>
+    <span class="n">patches</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">lbls</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">colors</span><span class="p">):</span>
+            <span class="n">patches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mpatches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+            <span class="n">lbls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="n">patches</span><span class="p">,</span><span class="n">labels</span><span class="o">=</span><span class="n">lbls</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+
+
+<div class="viewcode-block" id="Evolution"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.Evolution">[docs]</a><span class="k">def</span> <span class="nf">Evolution</span><span class="p">(</span><span class="n">costfunction</span><span class="p">,</span> <span class="n">parameter_settings</span> <span class="p">,</span> <span class="n">iterations</span><span class="p">,</span> <span class="n">number_of_cores</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">generation_size</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">mutation_strength</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">elite</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">parent_percentage</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">control_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plotfunction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evolutionary fit algorithm. Slow but good in finding the global minimum.</span>
+<span class="sd">    Return the optimized parameter set and the coresponding value of the costfunction.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    costfunction : callable</span>
+<span class="sd">        A function which returns a measure (cost) for the difference between measurement and simulated data according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getSSR` of an instance of :class:`SampleRepresentation.ReflDataSimulator` wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.</span>
+<span class="sd">        Example for the wrapping::</span>
+<span class="sd">            </span>
+<span class="sd">            simu = SampleRepresentation.ReflDataSimulator(&quot;l&quot;)</span>
+<span class="sd">            ...</span>
+<span class="sd">            def cost(fitpararray):</span>
+<span class="sd">                return simu.getSSR(fitpararray)</span>
+<span class="sd">    </span>
+<span class="sd">        Pass then the function *cost* as **costfunction**. It can also be any other function which takes the array of fit parameters and returns one real value which should be minimized by :meth:`.Evolution`.</span>
+<span class="sd">        </span>
+<span class="sd">    parameter_settings: tuple of lists of floats</span>
+<span class="sd">        Sets start values, lower and upper limit of the parameters as *(startfitparameters, lower_limits, upper_limits )*, where each of the entries is an list/array of values of same length.</span>
+<span class="sd">    iterations : int </span>
+<span class="sd">        number of iterations/generations</span>
+<span class="sd">    number_of_cores : int </span>
+<span class="sd">        Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.</span>
+<span class="sd">    generation_size : int </span>
+<span class="sd">        Generate this many individual fit parameter sets in each generation.</span>
+<span class="sd">    mutation_strength : float</span>
+<span class="sd">        Mutates children by adding this factor times (upper_limit - lower_limit)  --&gt; use rather small values </span>
+<span class="sd">    elite : int</span>
+<span class="sd">        Remember the best individuals for the next generation.</span>
+<span class="sd">    parent_percentage : flota</span>
+<span class="sd">        Use this fraction of a gereneration (the best) for reproduction.</span>
+<span class="sd">    control_file : str </span>
+<span class="sd">        Filename of a control file. If it is given, you can abort the optimization routine by writing &quot;terminate 1&quot; to the beginning of its first line.</span>
+<span class="sd">    plotfunction : callable</span>
+<span class="sd">        Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    This Evolutionary algorithm is mainly the same as Martins. Only the rule for mutation has changed:</span>
+<span class="sd">    </span>
+<span class="sd">    | Martin: ``children[i]=children[i] * (1 + s * random float(-1,1))``</span>
+<span class="sd">    | I:      ``children[i]=children[i] + s * random float(-1,1)*(upper_limits-lower_limits)``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#unpack parameter settings</span>
+    <span class="p">(</span><span class="n">startfitparameters</span><span class="p">,</span> <span class="n">lower_limits</span><span class="p">,</span> <span class="n">upper_limits</span> <span class="p">)</span><span class="o">=</span><span class="n">parameter_settings</span>
+    
+    <span class="c1">#check parameters</span>
+    <span class="c1">#if not callable(costfunction):</span>
+    <span class="c1">#    raise TypeError(&quot;\&#39;costfunction\&#39; has to be callable.&quot;)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">startfitparameters</span><span class="se">\&#39;</span><span class="s2"> and constraints don&#39;t match in length.&quot;</span><span class="p">)</span>
+    <span class="n">pos_integer_pars</span><span class="o">=</span><span class="p">[</span><span class="n">number_of_cores</span><span class="p">,</span><span class="n">iterations</span><span class="p">,</span><span class="n">generation_size</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pos_integer_pars</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter has to be positive.&quot;</span><span class="p">)</span>
+    <span class="n">pos_real_pars</span><span class="o">=</span><span class="p">[</span><span class="n">mutation_strength</span><span class="p">,</span> <span class="n">elite</span><span class="p">,</span> <span class="n">parent_percentage</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pos_real_pars</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Real</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter has to be positive.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">control_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">control_file</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_file</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; is not an existing path.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plotfunction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">plotfunction</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">plotfunction</span><span class="se">\&#39;</span><span class="s2"> has to be callable.&quot;</span><span class="p">)</span>
+
+    
+
+      
+    <span class="c1">#use numpy arrays</span>
+    <span class="n">startfitparameters</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">)</span>
+    <span class="n">lower_limits</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span>
+    <span class="n">upper_limits</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">)</span>
+    
+    <span class="n">number_of_parents</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">generation_size</span><span class="o">*</span><span class="n">parent_percentage</span><span class="p">)</span>
+    
+   
+    <span class="c1">#Initial state:</span>
+    <span class="n">number_of_fitparameters</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">)</span>
+    <span class="n">randomnumbers</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">generation_size</span><span class="p">,</span> <span class="n">number_of_fitparameters</span><span class="p">)</span>
+    <span class="n">all_fitpararrays</span><span class="o">=</span><span class="n">lower_limits</span><span class="o">+</span><span class="n">randomnumbers</span><span class="o">*</span><span class="p">(</span><span class="n">upper_limits</span><span class="o">-</span><span class="n">lower_limits</span><span class="p">)</span>
+    <span class="n">all_fitpararrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="n">startfitparameters</span>                                          <span class="c1">#use the given start values just as one of many guesses (replace one random guess)</span>
+    <span class="n">children</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">generation_size</span><span class="p">,</span> <span class="n">number_of_fitparameters</span><span class="p">))</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Start Evolution of &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">iterations</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; Generations with &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot; Parameters.&quot;</span><span class="p">)</span>
+    <span class="n">ite</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+
+        <span class="n">ite</span><span class="o">+=</span><span class="mi">1</span>
+
+        <span class="c1">#Calculate the costfunction (usually chisquare) for each individuum</span>
+        <span class="n">out</span><span class="o">=</span><span class="n">joblib</span><span class="o">.</span><span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="n">number_of_cores</span><span class="p">)(</span><span class="n">joblib</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">costfunction</span><span class="p">)(</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">generation_size</span><span class="p">)</span> <span class="p">)</span>  
+        <span class="n">ranking_list</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>                                 <span class="c1">#stores the best results as indices of the elements of out</span>
+        <span class="c1">#Write the current state</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Generation &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ite</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;: Cost=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
+        <span class="c1">#plot the current state (best guess)</span>
+        <span class="k">if</span> <span class="n">plotfunction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plotfunction</span><span class="p">(</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="c1">#check for termination</span>
+        <span class="k">if</span> <span class="n">control_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">control_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;terminate&quot;</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">==</span><span class="mi">1</span><span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;!! Iteration terminated, returning current status&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">out</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="c1">#return if number of iterations is reached</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">ite</span><span class="o">==</span><span class="n">iterations</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">out</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>       <span class="c1">#return best fit parameters and corresponding value of the costfunction  </span>
+        
+        <span class="c1">#determin next generation</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">generation_size</span><span class="p">):</span>
+            <span class="c1">#Copy the elite</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;</span><span class="n">elite</span><span class="p">):</span>
+                <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1">#Reproduce children from the mother and father randomly</span>
+                <span class="n">Mother</span><span class="o">=</span><span class="n">i</span><span class="o">%</span><span class="n">number_of_parents</span><span class="p">;</span>
+                <span class="n">Father</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">number_of_parents</span><span class="p">)</span>
+                <span class="c1">#No Cloning</span>
+                <span class="k">while</span><span class="p">(</span><span class="n">Father</span><span class="o">==</span><span class="n">Mother</span><span class="p">):</span>
+                    <span class="n">Father</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">number_of_parents</span><span class="p">)</span>
+
+                <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="n">Mother</span><span class="p">]]</span><span class="o">+</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">ranking_list</span><span class="p">[</span><span class="n">Father</span><span class="p">]])</span>
+
+                <span class="c1">#Mutate the children</span>
+                <span class="n">r</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+                <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">r</span><span class="o">*</span><span class="n">mutation_strength</span>                  <span class="c1">#changed mutation rule by Yannic (mutation not depending on parameter value)</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="p">):</span>    <span class="c1">#periodic boundaries (changed by Yannic; Martin sets to the limits if theey are exceeded)</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">&lt;</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
+                        <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span><span class="o">%</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                    <span class="k">elif</span><span class="p">(</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">&gt;</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
+                        <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">+</span><span class="p">(</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">%</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="c1">#The children are now the new generation</span>
+        <span class="n">all_fitpararrays</span><span class="o">=</span><span class="n">children</span></div>
+        
+        
+
+        
+        
+<div class="viewcode-block" id="Levenberg_Marquardt_Fitter"><a class="viewcode-back" href="../modules-api/fitters.html#Fitters.Levenberg_Marquardt_Fitter">[docs]</a><span class="k">def</span> <span class="nf">Levenberg_Marquardt_Fitter</span><span class="p">(</span><span class="n">residualandcostfunction</span><span class="p">,</span>  <span class="n">parameter_settings</span> <span class="p">,</span> <span class="n">parallel_points</span> <span class="p">,</span><span class="n">number_of_cores</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">convergence_criterium</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="n">control_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plotfunction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modified Levenberg-Marquard algorithm (see PhD thesis of Martin Zwiebler). Good convergence, but might end up in a local mininum.</span>
+<span class="sd">    Return the optimized parameter set and the coresponding value of the costfunction.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    residualandcostfunction : callable</span>
+<span class="sd">        A function which returns the differences between simulated and measured data points (residuals) as list and a scalar measure (cost) for these differences in total according to the paramter set given as list of values. Usually the sum of squared residuals (SSR) is used as cost. It should usally be the method :meth:`SampleRepresentation.ReflDataSimulator.getResidualsSSR` of an instance of :class:`SampleRepresentation.ReflDataSimulator` wrapped in a function. The wrapping is necessaray due to some implemetation issues connected to the parallelization.</span>
+<span class="sd">        Example for the wrapping::</span>
+<span class="sd">            </span>
+<span class="sd">            simu = SampleRepresentation.ReflDataSimulator(&quot;l&quot;)</span>
+<span class="sd">            ...</span>
+<span class="sd">            def rescost(fitpararray):</span>
+<span class="sd">                return simu.getResidualsSSR(fitpararray)</span>
+<span class="sd">    </span>
+<span class="sd">        Pass then the function *rescost* as **costfunction**. It can also be any other function which takes the array of fit parameters and returns a tuple of </span>
+<span class="sd">        1.) a list of residuals (will be used to determine derivatives) 2.) a value of the costfunction which should be minimized by :meth:`.Levenberg_Marquardt_Fitter`.</span>
+<span class="sd">        </span>
+<span class="sd">    parameter_settings: tuple of lists of floats</span>
+<span class="sd">        Sets start values, lower and upper limit of the parameters as *(startfitparameters, lower_limits, upper_limits )*, where each of the entries is an list/array of values of same length.</span>
+<span class="sd">    parallel_points : int </span>
+<span class="sd">        This should be something like the number of threads that can run in parallel/number of cores. The algorithm will first find a direction for a good descent and then check this number of points on the line. The best one will yield the new fit parameter set.</span>
+<span class="sd">    number_of_cores : int </span>
+<span class="sd">        Number of jobs used in parallel. Best performance when set to the number of available cores on your computer.</span>
+<span class="sd">    strict : bool</span>
+<span class="sd">        Usually this algorithm fails if the residuals are locally independent of one of the parameters. If you set **stict** = *False* this parameter will be neglected locally.</span>
+<span class="sd">    convergence_criterium : float</span>
+<span class="sd">        If the relative difference between the costs in two succeeding iterations is smaller than **convergence_criterium**, the fitting is defined as \`converged\`.</span>
+<span class="sd">    control_file : str </span>
+<span class="sd">        Filename of a control file. If it is given, you can abort the optimization routine by writing &quot;terminate 1&quot; to the beginning of its first line.</span>
+<span class="sd">    plotfunction : callable</span>
+<span class="sd">        Function which is used to plot the current state of fitting (simulated data with currently best parameter set) after every iteration if given. It should take only one parameter: the array of fitparameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#unpack parameter settings</span>
+    <span class="p">(</span><span class="n">startfitparameters</span><span class="p">,</span> <span class="n">lower_limits</span><span class="p">,</span> <span class="n">upper_limits</span> <span class="p">)</span><span class="o">=</span><span class="n">parameter_settings</span>
+    
+    <span class="c1">#check parameters</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">residualandcostfunction</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">residualandcostfunction</span><span class="se">\&#39;</span><span class="s2"> has to be callable.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">startfitparameters</span><span class="se">\&#39;</span><span class="s2"> and constraints don&#39;t match in length.&quot;</span><span class="p">)</span>
+    <span class="n">pos_integer_pars</span><span class="o">=</span><span class="p">[</span><span class="n">number_of_cores</span><span class="p">,</span><span class="n">parallel_points</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pos_integer_pars</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Invalid parameter.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter has to be positive.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strict</span><span class="p">,</span><span class="nb">bool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">strict</span><span class="se">\&#39;</span><span class="s2"> has to be of type bool.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">control_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">control_file</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_file</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; is not an existing path.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plotfunction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">plotfunction</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&#39;</span><span class="s2">plotfunction</span><span class="se">\&#39;</span><span class="s2"> has to be callable.&quot;</span><span class="p">)</span>
+
+    
+
+   
+    <span class="c1">#use numpy arrays</span>
+    <span class="n">startfitparameters</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">)</span>
+    <span class="n">lower_limits</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lower_limits</span><span class="p">)</span>
+    <span class="n">upper_limits</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">)</span>
+    
+    <span class="n">number_of_fitparameters</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">)</span>
+    
+    <span class="n">aite</span><span class="o">=</span><span class="n">startfitparameters</span>
+
+    <span class="s2">&quot;Start Levenberg-Marquardt algorithm with &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">startfitparameters</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot; Parameters.&quot;</span>
+    <span class="n">ite</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">while</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="n">ite</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">):</span>
+            <span class="c1">#Go here once you calculated the first step</span>
+
+            <span class="c1">#Calculate the fit parameters on the line of descent</span>
+            <span class="n">all_fitpararrays</span><span class="o">=</span><span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">aite</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parallel_points</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parallel_points</span><span class="p">):</span>
+                <span class="n">scale</span><span class="o">=</span><span class="mf">0.5</span><span class="o">**</span><span class="n">i</span>
+                <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">scale</span><span class="o">*</span><span class="n">DTr</span> <span class="o">-</span> <span class="n">scale</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">scale</span><span class="p">)</span><span class="o">*</span><span class="n">DTr2</span>
+
+
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parallel_points</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="p">):</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">&lt;</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                        <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">elif</span><span class="p">(</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">&gt;</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                        <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+          
+            <span class="c1">##Calculate the residuals and cost (e.g. difference between simulated and measured reflectivities) on the line of descent, in parallel</span>
+            <span class="n">out</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">joblib</span><span class="o">.</span><span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="n">number_of_cores</span><span class="p">)(</span><span class="n">joblib</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">residualandcostfunction</span><span class="p">)(</span> <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parallel_points</span><span class="p">)</span> <span class="p">))</span>
+            
+            
+            <span class="c1">#Find the lowest chisquare</span>
+            <span class="n">min_i</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">out</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">aite</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">min_i</span><span class="p">])</span>
+            
+            <span class="n">fiterror2</span><span class="o">=</span><span class="n">out</span><span class="p">[</span><span class="n">min_i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            
+            <span class="k">if</span><span class="p">(</span> <span class="nb">abs</span><span class="p">(</span> <span class="p">(</span><span class="n">fiterror1</span><span class="o">-</span><span class="n">fiterror2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">fiterror1</span><span class="o">+</span><span class="n">fiterror2</span><span class="p">)</span> <span class="p">)</span> <span class="o">&lt;</span> <span class="n">convergence_criterium</span> <span class="p">):</span>
+                <span class="nb">print</span><span class="p">((</span> <span class="s2">&quot;  --&gt; Converged at cost=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fiterror2</span><span class="p">)</span> <span class="p">))</span>
+                <span class="k">return</span> <span class="n">aite</span><span class="p">,</span> <span class="n">out</span><span class="p">[</span><span class="n">min_i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>                      <span class="c1">#return best fit parameters and corresponding value of the costfunction      </span>
+            <span class="k">elif</span> <span class="n">control_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">control_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+                        <span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;terminate&quot;</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">==</span><span class="mi">1</span><span class="p">):</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;!! Iteration terminated, current status&quot;</span><span class="p">)</span>
+                            <span class="k">return</span> <span class="n">aite</span><span class="p">,</span> <span class="n">out</span><span class="p">[</span><span class="n">min_i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Iteration &quot;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ite</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;: old cost = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">fiterror1</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;, new cost = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">fiterror2</span><span class="p">))</span>
+            
+            <span class="c1">#plot the current state of fitting</span>
+            <span class="k">if</span> <span class="n">plotfunction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">plotfunction</span><span class="p">(</span><span class="n">aite</span><span class="p">)</span>
+            
+
+            
+       
+        
+           
+        
+        <span class="c1">#Make Fit parameters for the calculation of the derivative</span>
+        <span class="n">all_fitpararrays</span><span class="o">=</span><span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">aite</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>          <span class="c1">##this Matrix stores fitparameters for each point that is calculated in parallel</span>
+        <span class="n">delta</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="p">):</span>
+        <span class="c1">#YANNIC: geaendert, weil es mir so sinnvoller erschien</span>
+            <span class="c1">#if(all_fitpararrays[i][i]==0 or (lower_limits[i]&lt;0&lt;upper_limits[i]) ):</span>
+                <span class="c1">#delta[i]=numerical_derivative_factor*max( abs(upper_limits[i]), abs(lower_limits[i] ) )</span>
+            <span class="c1">#else:</span>
+                <span class="c1">#delta[i]=numerical_derivative_factor*all_fitpararrays[number_of_fitparameters][i]  </span>
+            <span class="n">delta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">numerical_derivative_factor</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span><span class="n">upper_limits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">lower_limits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">)</span>
+            <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">+=</span><span class="n">delta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+
+        <span class="c1">##Calculate the residuals and cost (e.g. difference between simulated and measured reflectivities) at each delta-step, in parallel</span>
+
+        <span class="n">out</span><span class="o">=</span><span class="n">joblib</span><span class="o">.</span><span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="n">number_of_cores</span><span class="p">)(</span><span class="n">joblib</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">residualandcostfunction</span><span class="p">)(</span> <span class="n">all_fitpararrays</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+        
+        <span class="k">if</span><span class="p">(</span><span class="n">ite</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
+            <span class="c1">#Calculate the first fit error</span>
+            <span class="n">fiterror1</span><span class="o">=</span> <span class="n">out</span><span class="p">[</span> <span class="n">number_of_fitparameters</span> <span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1">#in first iteration: create the matrix DT to stores all the residuals derivatives</span>
+            <span class="n">number_of_datapoints</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">DT</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">number_of_fitparameters</span><span class="p">,</span><span class="n">number_of_datapoints</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fiterror1</span><span class="o">=</span><span class="n">fiterror2</span>
+        <span class="c1">#Calculate the derivative of the reflectivity</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="p">):</span>
+            <span class="n">DT</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span> <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">out</span><span class="p">[</span><span class="n">number_of_fitparameters</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span><span class="o">/</span><span class="n">delta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1">##Calculate the gradient</span>
+        
+        <span class="n">A</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">DT</span><span class="p">,</span><span class="n">DT</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">b</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">DT</span><span class="p">,(</span><span class="n">out</span><span class="p">[</span><span class="n">number_of_fitparameters</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">T</span> <span class="p">)</span>
+
+        <span class="c1">#If one of the derivatives is entirely zero, the fit parameter is essentially meaningless. That may happen for a number of reasons. However, Gauss-Newton fails for this case.</span>
+        <span class="c1">#If strict=False make it work nevertheless</span>
+        <span class="n">irrelevantparameterlist</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="p">):</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING! No gradient component&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;! Singular matrix!</span><span class="se">\n</span><span class="s2"> Try </span><span class="se">\&#39;</span><span class="s2">strict=False</span><span class="se">\&#39;</span><span class="s2"> for less rigorous treatment.&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">irrelevantparameterlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">strict</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">irrelevantparameterlist</span><span class="o">==</span><span class="p">[]:</span>
+            <span class="c1">#remove the elements corresponding to the irrelevant parameters</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING! Parameters &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">irrelevantparameterlist</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; are locally irrelevant (no gradient component) and will be ignored for this iteration.&quot;</span><span class="p">)</span>
+            <span class="n">DT_reduced</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">DT</span><span class="p">,</span><span class="n">irrelevantparameterlist</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">A</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">DT_reduced</span><span class="p">,</span><span class="n">DT_reduced</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">b</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="n">irrelevantparameterlist</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1">#Solve this system of equations to calculate the descent vector that is used for large steps</span>
+        <span class="n">DTr</span><span class="o">=</span><span class="n">scipy_linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">sym_pos</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1">#This is another good descent vector that is used for small steps</span>
+        <span class="n">DTr2</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">irrelevantparameterlist</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_fitparameters</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">irrelevantparameterlist</span><span class="p">)):</span>
+            <span class="n">DTr2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="c1">#fill components of the descent vector which correspond to irrelevant parameters, with zero</span>
+            <span class="k">for</span> <span class="n">parind</span> <span class="ow">in</span> <span class="n">irrelevantparameterlist</span><span class="p">:</span>
+                <span class="n">DTr</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">DTr</span><span class="p">,</span><span class="n">parind</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">DTr2</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">DTr2</span><span class="p">,</span><span class="n">parind</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+            
+        <span class="n">ite</span><span class="o">+=</span><span class="mi">1</span></div>
+        
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyXMRTool 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Yannic Utz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

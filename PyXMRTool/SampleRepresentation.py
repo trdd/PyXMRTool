@@ -24,6 +24,8 @@ So far the following layer types are implemented:
 * :class:`.LayerObject`: Layer with a constant (over energy) but fittable electric susceptibility tensor.
 
 * :class:`.ModelChiLayerObject`: This layer type holds the electric susceptibility tensor as a user-defined function of energy.
+
+* :class:`.MagneticLayerObject`: This layer type deals with a magnetic layer and therefor creates the off-diagonal elements of the susceptibitlity tensor from a magnetic term and two angles.
     
 * :class:`.AtomLayerObject`: This layer deals with compositions of atoms with different formfactors. The densities of the atoms can be varied during fitting procedures and plotted with using :func:`.plotAtomDensity`. The formfactors are represented by instances of classes which are derived from :class:`.Formfactor` (the base class is abstract and cannot be used directly).
 
@@ -32,6 +34,16 @@ So far the following formfactor types are implemented:
 * :class:`.FFfromFile`: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.
 
 * :class:`.FFfromScaledAbsorption`: Reads an absorption measurement (fitted to off-resonant tabulated values) and a theoretical/tabulated energy-dependen formfactor from textfiles. Within a given energy-range, the absorption is scaled with a fittable factor and the real part is obtained by a Kramers-Kronig transformation. See section 3.3 of Martin Zwiebler PhD-Thesis for details.
+
+* :class:`.FFfromFitableModel`: Formfactor from user-defined fitable model functions. Can be used to implement e.g. a Kramers-Kronig variational approach.
+
+* :class:`.MagneticFormfactor`: Basic formfactor class to deal with a magnetic formfactor, i.e. only the off-diagonal elements of a formfactor tensor. Magnetic terms are defined by the user as instances of :class:`Parameters.ParametrizedFunction`.
+
+* :class:`.MFFfromXMCD`: A magnetic formfactor which is created from an XMCD measurement.
+
+To allow for atomic slicing you can create density profiles with class :class:`.DensityProfile` or the specialized :class:`.DensityProfile_erf`. Once created, they can provide atomic densities used in :class:`.AtomLayerObject` for the different layers (which are used as slices).
+
+The function :func:`.plotAtomDensity` can be used to plot the variation of atom densities between the layers.
     
 
 

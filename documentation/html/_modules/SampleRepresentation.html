@@ -35,7 +35,7 @@
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">todo: Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
@@ -91,6 +91,8 @@
 <span class="sd">* :class:`.LayerObject`: Layer with a constant (over energy) but fittable electric susceptibility tensor.</span>
 
 <span class="sd">* :class:`.ModelChiLayerObject`: This layer type holds the electric susceptibility tensor as a user-defined function of energy.</span>
+
+<span class="sd">* :class:`.MagneticLayerObject`: This layer type deals with a magnetic layer and therefor creates the off-diagonal elements of the susceptibitlity tensor from a magnetic term and two angles.</span>
 <span class="sd">    </span>
 <span class="sd">* :class:`.AtomLayerObject`: This layer deals with compositions of atoms with different formfactors. The densities of the atoms can be varied during fitting procedures and plotted with using :func:`.plotAtomDensity`. The formfactors are represented by instances of classes which are derived from :class:`.Formfactor` (the base class is abstract and cannot be used directly).</span>
 
@@ -99,6 +101,16 @@
 <span class="sd">* :class:`.FFfromFile`: Reads an energy-dependent formfactor as data points from a textfile. For energies between the data points the formfactor is linearly interpolated.</span>
 
 <span class="sd">* :class:`.FFfromScaledAbsorption`: Reads an absorption measurement (fitted to off-resonant tabulated values) and a theoretical/tabulated energy-dependen formfactor from textfiles. Within a given energy-range, the absorption is scaled with a fittable factor and the real part is obtained by a Kramers-Kronig transformation. See section 3.3 of Martin Zwiebler PhD-Thesis for details.</span>
+
+<span class="sd">* :class:`.FFfromFitableModel`: Formfactor from user-defined fitable model functions. Can be used to implement e.g. a Kramers-Kronig variational approach.</span>
+
+<span class="sd">* :class:`.MagneticFormfactor`: Basic formfactor class to deal with a magnetic formfactor, i.e. only the off-diagonal elements of a formfactor tensor. Magnetic terms are defined by the user as instances of :class:`Parameters.ParametrizedFunction`.</span>
+
+<span class="sd">* :class:`.MFFfromXMCD`: A magnetic formfactor which is created from an XMCD measurement.</span>
+
+<span class="sd">To allow for atomic slicing you can create density profiles with class :class:`.DensityProfile` or the specialized :class:`.DensityProfile_erf`. Once created, they can provide atomic densities used in :class:`.AtomLayerObject` for the different layers (which are used as slices).</span>
+
+<span class="sd">The function :func:`.plotAtomDensity` can be used to plot the variation of atom densities between the layers.</span>
 <span class="sd">    </span>
 
 

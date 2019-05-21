@@ -47,6 +47,7 @@ Functions of one variable which are parametrized can be defined with instances o
     >>> simple_derived_par = ((par_complex + 5*par_real)*0.68)**const
     >>> simple_derived_par.getValue(fitpararray)
     (8.367641368810413e+21-1.1467109965804664e+21j)
+    >>>
     >>> def sinus(A,w): return A*math.sin(w)
     >>> derived_par = Parameters.DerivedParameter(sinus, const, par_real)
     >>> derived_par.getValue(fitpararray)

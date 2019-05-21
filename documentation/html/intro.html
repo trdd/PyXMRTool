@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>todo: Introduction &#8212; PyXMRTool 0.9 documentation</title>
+    <title>Introduction &#8212; PyXMRTool 0.9 documentation</title>
     <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -42,7 +42,7 @@
 <h3><a href="index.html">Table of Contents</a></h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">PyXMRTool’s documentation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">todo: Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">todo: Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
@@ -84,9 +84,18 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="todo-introduction">
-<h1>todo: Introduction<a class="headerlink" href="#todo-introduction" title="Permalink to this headline">¶</a></h1>
-<p>to be written</p>
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>PyXMRTool is a flexibel Python3 package for the analysis of Resonant X-ray Reflectivity measurements built on the package <em>Pythonreflectivity</em>. More specifically it allows to fit a model of a heterostructure to the reflectivity data.</p>
+<p>The package has a strict object oriented design. It should enable the user to add together the building blocks in a script.
+The package has a modular structure to account for different topics.</p>
+<p>The module <a class="reference internal" href="modules-api/samplerepresentation.html#module-SampleRepresentation" title="SampleRepresentation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">SampleRepresentation</span></code></a> contains everything needed to build the model of the sample. In the end, an object of the class <a class="reference internal" href="modules-api/samplerepresentation.html#SampleRepresentation.Heterostructure" title="SampleRepresentation.Heterostructure"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRepresentation.Heterostructure</span></code></a> contains all the necessary information and serves as model representation.</p>
+<p>The above mentioned module or its classes resp. use parameters which should be fitted to the data. To allow for a centralized handling of parameters instances of <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Fitparameters</span></code> are organized within a parameter pool. Like this every parameter “knows” how to get its value from an parameter array. All this and some more can be found in the module <a class="reference internal" href="modules-api/parameters.html#module-Parameters" title="Parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>.</p>
+<p>The module <a class="reference internal" href="modules-api/experiment.html#module-Experiment" title="Experiment"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Experiment</span></code></a> deals with the experimental setup, which polarizations are measured, parametrized background etc and it deals with the measured data. All this is represented by an instance of the class <a class="reference internal" href="modules-api/experiment.html#Experiment.ReflDataSimulator" title="Experiment.ReflDataSimulator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment.ReflDataSimulator</span></code></a>. It also delivers the sum of squared residuals (SSR) or the residuals themself in dependence of a parameter array.</p>
+<p>Fitting is then the procedure of minimizing this SSR by varying the parameter array. Self-written fitting routines can be found in the module <a class="reference internal" href="modules-api/fitters.html#module-Fitters" title="Fitters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Fitters</span></code></a>, but it is better to use professional ones (see <a class="reference internal" href="hints.html#hints-fitting-label"><span class="std std-ref">Fitting</span></a>). But the module <a class="reference internal" href="modules-api/fitters.html#module-Fitters" title="Fitters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Fitters</span></code></a> contains also a tool to scan for different fixpoints in the parameter range, to explore it using <em>scipy.optimize.least_squares</em>. See <a class="reference internal" href="modules-api/fitters.html#Fitters.Explore" title="Fitters.Explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">Fitters.Explore()</span></code></a>.</p>
+<div class="figure">
+<img alt="_images/module_scheme.png" src="_images/module_scheme.png" />
+</div>
 </div>
 
 

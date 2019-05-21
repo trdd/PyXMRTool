@@ -23,8 +23,8 @@
    
    The algorithms are not well developed yet. It is better to use existing optimizers. E.g. *scipy.optimize.least_squares*.
    
-   Only :func:`Explore` and related functions are recommended to use.
-   :func:`Explore` uses *scipy.optimize.least_squares* to explore the complete parameter range and :func:`list_clusters`, :func:`plot_parameter_spread` and :func:`plot_allparameters_spread` are used to visualize the result.
+   Only :func:`.Explore` and related functions are recommended to use.
+   :func:`Explore` uses *scipy.optimize.least_squares* to explore the complete parameter range and :func:`.list_clusters`, :func:`plot_clusters_onepar`, :func:`plot_clusters_allpars` and :func:`plot_fixpoints_allpars` are used to visualize the result.
    
    
 """

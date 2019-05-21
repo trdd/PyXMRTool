@@ -15,14 +15,17 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-In this file, only the function *chantler_linerreader()* is created. It will be used by every piece of code which uses the Chantler tables within this folder.
-So if the tables change their format, the function has to be changed too.
-The function will get one line of the text file and should return a tuple *(energy, formfactor)*. With *energy* is a real number and *formfactor* is a complex number.
-If the line is commented out (with whatever symbol is chosen for that), the function should return *None*.
 
-This file will not be used as module but just execute with *execfile()*. So be carefull. Whatever you state here will be in the namespace of the executing module!!!
-"""
+### In this file, only the function *chantler_linerreader()* is created.
+### It will be used by every piece of code which uses the Chantler tables within this folder.
+### So if the tables change their format, the function has to be changed too.
+### The function will get one line of the text file and should return a tuple
+### *(energy, formfactor)*. With *energy* is a real number and *formfactor* is a complex number.
+### If the line is commented out (with whatever symbol is chosen for that), the function should return *None*.
+
+### This file will not be used as module but just execute with *execfile()*. So be carefull. Whatever you state
+### here will be in the namespace of the executing module!!!
+
 
 
 #Python Version 3.6

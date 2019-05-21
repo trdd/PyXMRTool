@@ -3,8 +3,8 @@ Hints
 =====
 
 
+.. _hints-fitting-label:
 
---------
 Fitting
 --------
 The fitting algorithms in :mod:`Fitters` are not well develeped yet. It is better to use existing optimizers.

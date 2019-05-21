@@ -43,7 +43,7 @@
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">todo: Usage</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
@@ -117,6 +117,7 @@ The values of both are obtained in the same way with <strong>getValue</strong>.<
 <span class="gp">&gt;&gt;&gt; </span><span class="n">simple_derived_par</span> <span class="o">=</span> <span class="p">((</span><span class="n">par_complex</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="n">par_real</span><span class="p">)</span><span class="o">*</span><span class="mf">0.68</span><span class="p">)</span><span class="o">**</span><span class="n">const</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">simple_derived_par</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
 <span class="go">(8.367641368810413e+21-1.1467109965804664e+21j)</span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">sinus</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">w</span><span class="p">):</span> <span class="k">return</span> <span class="n">A</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">derived_par</span> <span class="o">=</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">DerivedParameter</span><span class="p">(</span><span class="n">sinus</span><span class="p">,</span> <span class="n">const</span><span class="p">,</span> <span class="n">par_real</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">derived_par</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>

@@ -42,7 +42,7 @@
 <h3><a href="index.html">Table of Contents</a></h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">PyXMRTool’s documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">todo: Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">todo: Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
@@ -90,7 +90,7 @@
   <div class="section" id="hints">
 <h1>Hints<a class="headerlink" href="#hints" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="fitting">
-<h2>Fitting<a class="headerlink" href="#fitting" title="Permalink to this headline">¶</a></h2>
+<span id="hints-fitting-label"></span><h2>Fitting<a class="headerlink" href="#fitting" title="Permalink to this headline">¶</a></h2>
 <p>The fitting algorithms in <a class="reference internal" href="modules-api/fitters.html#module-Fitters" title="Fitters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Fitters</span></code></a> are not well develeped yet. It is better to use existing optimizers.</p>
 <p>One option which delivers good performance is the least squares optimizer of scipy (<em>scipy.optimize.least_squares</em>) used in the following way (where <em>simu</em> is an instance of <a class="reference internal" href="modules-api/experiment.html#Experiment.ReflDataSimulator" title="Experiment.ReflDataSimulator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment.ReflDataSimulator</span></code></a> and <em>pp</em> is an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameterpool</span></code>):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span><span class="o">=</span><span class="n">pp</span><span class="o">.</span><span class="n">getStartLowerUpper</span><span class="p">()</span>

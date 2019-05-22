@@ -1,3 +1,16 @@
+# This is a test implementation for a fit of reflectivity data of a LSMO heterostructure
+# measured by Florian Rasch.
+
+# The fitted model is the following (from bottom/substrate to top layer):
+# - SrTiO3 layer with variable thickness, roughness and density
+# - SrRuO3 layer with variable thickness, roughness and density
+# - LSMO layer  with variable thickness, roughness and density
+# - C layer with variable thickness, roughness and density
+#
+# Energy-dependent formfactors are taken from the Chantler Tables except for the Mn atom.
+# For MN a measured XAS spectrum is used to create a scalelable formfactor
+
+
 import math
 import numpy
 import timeit
@@ -159,7 +172,7 @@ pp.writeToFile("parameters_best.txt")
 
 #screening the whole parameter range
 print("... performing parameter range screening")
-out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),500)
+out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),100)    #comment out this line if you or reduce the number of seeds (last argument) if you don't want to wait for ever
 
 #dump result of Explore to a file for later use (Explore takes very long time)
 pickle.dump( out, open( "explore_out.p", "wb" ) )

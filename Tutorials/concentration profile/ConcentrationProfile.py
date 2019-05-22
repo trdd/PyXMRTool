@@ -10,6 +10,8 @@
 # - a "thick" AtomicLayer of pure SrO (not affected by deficiencies and whatsoever) with variable thickness
 # - a certain number of AtomicLayers containing O and Sr/Co with variable concentration;
 #   the thickness of these layers is fixed with the lattice spacing, and the number of layers results from the predifined thickness of this "transition zone"
+#
+# This example only deals with the sample representation. The experiment is not set up and fits are not performed.
 
 
 
@@ -101,9 +103,13 @@ for i in range(1,number_of_trans_layers+1):
 fitpararray, lower, upper = pp.getStartLowerUpper()
 
 cmap=['yellow','magenta','black','b','green','red','grey','magenta']
+
+#plot atom densities with start values of the parameters
 SampleRepresentation.plotAtomDensity(hs,fitpararray,cmap,["Co","Sr"])
 SampleRepresentation.plotAtomDensity(hs,fitpararray,cmap,["O"])
 SampleRepresentation.plotAtomDensity(hs,fitpararray,cmap)
-#SampleRepresentation.plotAtomDensity(hs,fitpararray,cmap)
 
-#refl=Pythonreflectivity.Reflectivity(hs.getSingleEnergyStructure(ar,850),[1+1.0*i for i in range(90)], 2*math.pi*constants.hbar/constants.e*constants.c*10**9/850)
+#plot atom densities with the lower boundary values of the parameters
+SampleRepresentation.plotAtomDensity(hs,lower,cmap)
+
+

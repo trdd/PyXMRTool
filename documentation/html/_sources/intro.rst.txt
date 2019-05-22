@@ -2,7 +2,7 @@
 Introduction 
 ==================
 
-PyXMRTool is a flexibel Python3 package for the analysis of Resonant X-ray Reflectivity measurements built on the package *Pythonreflectivity*. More specifically it allows to fit a model of a heterostructure to the reflectivity data.
+*PyXMRTool* is a flexibel Python3 package for the analysis of Resonant X-ray Reflectivity measurements built on the package *Pythonreflectivity*. More specifically it allows to fit a model of a heterostructure to the reflectivity data.
 
 The package has a strict object oriented design. It should enable the user to add together the building blocks in a script.
 The package has a modular structure to account for different topics.

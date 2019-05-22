@@ -4,3 +4,5 @@ dist/
 *.c
 *.cpp
 *.pyc
+scipy.special
+documentation/doctrees

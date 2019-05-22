@@ -70,24 +70,7 @@ if __name__ == '__main__':
     mag_height = pp.newParameter("mag_height")
     mag_width = pp.newParameter("mag_width")
     mag_position = pp.newParameter("mag_position")
-    #------
-    #def layer_chi(fitpararray, energy):
-        #en = numpy.linspace(600,750,301)                                    #define energy-range to model (from 600eV to 750eV in 301 steps), array of energies
-        #ffim = (Lorentzian(peak_height,peak_width,peak_position,en)).getValue(fitpararray) + peak_step.getValue(fitpararray) * ( numpy.arctan((en-peak_position.getValue(fitpararray))/peak_width.getValue(fitpararray)) + numpy.pi/2)      #model imaginary part of the formfactor as Lorentzian peak plus edge jump. FOR EXPLANATION of the strange constructions: You can perform arithmetic operations with Parameter type object. The result is another Parameter object. Here this is used to not evaluate only the result of Lorentzian and not every parameter individually.
-        #ffre = SampleRepresentation.KramersKronig(en,ffim)+ffre_offset.getValue(fitpararray)     #real part of formfactor as Kramers Kronig transformation of imag part + ffre_offset
-        #ff=ffre+ffim*1j
-        #ff_func = scipy.interpolate.interp1d(en,ff)                 #create function for formfactor as interpolation of the calculated values
-        #chi_diag= ff_func(energy)*atom_density*re*4*numpy.pi*energy**2/hbar_times_c**2
-        ##the same for magnetic contribution
-        #ffmag_im=Lorentzian(mag_height,mag_width,mag_position,en).getValue(fitpararray)
-        #ffmag_re=SampleRepresentation.KramersKronig(en,ffmag_im)
-        #ffmag=-1j*(ffmag_re+ffmag_im*1j)                                        #no idea why there is the factor -1j, Martin did it like this
-        #ffmag_func=scipy.interpolate.interp1d(en,ffmag)
-        #chi_mag=ffmag_func(energy)*atom_density*re*4*numpy.pi*energy**2/hbar_times_c**2
-        #return [chi_diag,chi_diag,chi_diag,chi_mag]                                         #return array for chi meaning a tensor with chi_diag on the diagonals and chi_mag and -chi_mag on two off-diagonal places depending on the magnetization direction
     
-    #layer = SampleRepresentation.ModelChiLayerObject(chitensorfunction=layer_chi,d=layer_thickness,sigma=layer_roughness,magdir="y")   #create the layer object  (this time a ModelChiLayer), magnetization points along "y"
-    #---------
     def layer_chi(energy, p_height, p_width, p_pos, p_step, ffre_os, m_height, m_width, m_pos ):
         en = numpy.linspace(600,750,301)                                    #define energy-range to model (from 600eV to 750eV in 301 steps), array of energies
         ffim = Lorentzian(p_height,p_width,p_pos,en) + p_step * ( numpy.arctan((en-p_pos)/p_width) + numpy.pi/2)      #model imaginary part of the formfactor as Lorentzian peak plus edge jump. FOR EXPLANATION of the strange constructions: You can perform arithmetic operations with Parameter type object. The result is another Parameter object. Here this is used to not evaluate only the result of Lorentzian and not every parameter individually.

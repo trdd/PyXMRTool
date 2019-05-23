@@ -45,7 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../index.html">PyXMRTool’s documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="parameters.html">Module <cite>Parameters</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="samplerepresentation.html">Module <cite>SampleRepresentation</cite></a></li>
@@ -131,8 +131,8 @@ It contains currently only the class <a class="reference internal" href="#Experi
 <code class="descname">ReadData</code><span class="sig-paren">(</span><em>files</em>, <em>linereaderfunction</em>, <em>energies=None</em>, <em>angles=None</em>, <em>filenamereaderfunction=None</em>, <em>pointmodifierfunction=None</em>, <em>headerlines=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Experiment.html#ReflDataSimulator.ReadData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Experiment.ReflDataSimulator.ReadData" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read the data files and store the data corresponding to the <strong>mode</strong> specified with instanciation (see <a class="reference internal" href="#Experiment.ReflDataSimulator.__init__" title="Experiment.ReflDataSimulator.__init__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ReflDataSimulator.__init__()</span></code></a>)</p>
 <p>This function enables a very flexible reading of the data files.
-Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd,total).
-So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
+Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigma,rpi,rleft,rright,xmcd,total).
+So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd,total)  with energies in eV and angles in degrees.
 Where the values for the independent variables comes from can differ: either from lists (<strong>energies</strong>, <strong>angles</strong>), from the filenames (<strong>filenamereaderfunction</strong>) or from the lines in the data file (<strong>linereaderfunction</strong>).</p>
 <p>The function allows for multiple data reads. Each execution adds new data to the already stored one.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -141,7 +141,7 @@ Where the values for the independent variables comes from can differ: either fro
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>files</strong> (<em>str</em><em> or </em><em>list of str</em>) – Specifies the set of data files. Either a list of filenames or one foldername of a folder containing all the data files (and only them!).</li>
-<li><strong>linereaderfunction</strong> (<em>callable</em>) – A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers <em>(energy,angle,rsigma,rpi,rleft,rright,xmcd)</em>. Entries can also be ‘None’. Exceptions will only be trown if the needed information for the specified <strong>mode</strong> is not delivered. An easy way to create such a function is to use the method <a class="reference internal" href="#Experiment.ReflDataSimulator.createLinereader" title="Experiment.ReflDataSimulator.createLinereader"><code class="xref py py-meth docutils literal notranslate"><span class="pre">createLinereader()</span></code></a>.
+<li><strong>linereaderfunction</strong> (<em>callable</em>) – A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers <em>(energy,angle,rsigma,rpi,rleft,rright,xmcd,total)</em>. Entries can also be ‘None’. Exceptions will only be trown if the needed information for the specified <strong>mode</strong> is not delivered. An easy way to create such a function is to use the method <a class="reference internal" href="#Experiment.ReflDataSimulator.createLinereader" title="Experiment.ReflDataSimulator.createLinereader"><code class="xref py py-meth docutils literal notranslate"><span class="pre">createLinereader()</span></code></a>.
 The linereaderfunction can also return a list of lists if several datapoints are present in on line of the datafile.</li>
 <li><strong>energies</strong> (<em>list of floats</em>) – Only possible to be different from <em>None</em> if <strong>files</strong> is a list of filenames and <strong>angles</strong> is <cite>None</cite>. Gives the energies which belong to the corresponding files (same order) as floats.</li>
 <li><strong>angles</strong> (<em>list of floats</em>) – Only possible to be different from <em>None</em> if <strong>files</strong> is a list of filenames and <strong>energies</strong> is <cite>None</cite>. Gives the angles which belong to the corresponding files (same order) as floats.</li>

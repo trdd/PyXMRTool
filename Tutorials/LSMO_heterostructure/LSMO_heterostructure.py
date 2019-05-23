@@ -134,9 +134,9 @@ def pointmodifier(point):        #berechnet winkel aus qz und energy und ersetzt
 print("... read experimental data")
 #read measured data from files (using pointmodifier and namerreader)
 # at first read pi polarization
-simu.ReadData("Experiment/pi",simu.createLinereader(rpi_angle_column=0,rpi_column=1), pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
+simu.ReadData("Experiment/pi",simu.createLinereader(angle_column=0,rpi_column=1), pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
 # now read in sigma polarization
-simu.ReadData("Experiment/sigma",simu.createLinereader(rsigma_angle_column=0,rsigma_column=1), pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
+simu.ReadData("Experiment/sigma",simu.createLinereader(angle_column=0,rsigma_column=1), pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
 
 # connect model with experiment
 b=pp.newParameter("background")
@@ -172,7 +172,7 @@ pp.writeToFile("parameters_best.txt")
 
 #screening the whole parameter range
 print("... performing parameter range screening")
-out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),100)    #comment out this line if you or reduce the number of seeds (last argument) if you don't want to wait for ever
+#out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),100)    #comment out this line if you or reduce the number of seeds (last argument) if you don't want to wait for ever
 
 #dump result of Explore to a file for later use (Explore takes very long time)
 pickle.dump( out, open( "explore_out.p", "wb" ) )

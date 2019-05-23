@@ -250,7 +250,7 @@ class ReflDataSimulator():
         files : str or list of str
             Specifies the set of data files. Either a list of filenames or one foldername of a folder containing all the data files (and only them!).
         linereaderfunction : callable
-            A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers *(energy,angle,rsigma,rpi,rleft,rright,xmcd)*. Entries can also be \'None\'. Exceptions will only be trown if the needed information for the specified **mode** is not delivered. An easy way to create such a function is to use the method :meth:`.createLinereader`.
+            A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers *(energy,angle,rsigma,rpi,rleft,rright,xmcd,total)*. Entries can also be \'None\'. Exceptions will only be trown if the needed information for the specified **mode** is not delivered. An easy way to create such a function is to use the method :meth:`.createLinereader`.
             The linereaderfunction can also return a list of lists if several datapoints are present in on line of the datafile.
         energies : list of floats
             Only possible to be different from *None* if **files** is a list of filenames and **angles** is `None`. Gives the energies which belong to the corresponding files (same order) as floats.
@@ -399,8 +399,8 @@ class ReflDataSimulator():
         Read the data files and store the data corresponding to the **mode** specified with instanciation (see :meth:`ReflDataSimulator.__init__`)
         
         This function enables a very flexible reading of the data files.
-        Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigmag,rpi,rleft,rright,xmcd,total).
-        So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd)  with energies in eV and angles in degrees.
+        Logically, this function uses data points which consist of the independent variables energy and angle, and the reflectivities as dependent variables (rsigma,rpi,rleft,rright,xmcd,total).
+        So one point is specified by (energy,angle,rsigmag,rpi,rleft,rright,xmcd,total)  with energies in eV and angles in degrees.
         Where the values for the independent variables comes from can differ: either from lists (**energies**, **angles**), from the filenames (**filenamereaderfunction**) or from the lines in the data file (**linereaderfunction**).
         
         The function allows for multiple data reads. Each execution adds new data to the already stored one.
@@ -410,7 +410,7 @@ class ReflDataSimulator():
         files : str or list of str
             Specifies the set of data files. Either a list of filenames or one foldername of a folder containing all the data files (and only them!).
         linereaderfunction : callable
-            A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers *(energy,angle,rsigma,rpi,rleft,rright,xmcd)*. Entries can also be \'None\'. Exceptions will only be trown if the needed information for the specified **mode** is not delivered. An easy way to create such a function is to use the method :meth:`.createLinereader`.
+            A function given by the user which takes one line of an input file as string and returns a list/tuple of real numbers *(energy,angle,rsigma,rpi,rleft,rright,xmcd,total)*. Entries can also be \'None\'. Exceptions will only be trown if the needed information for the specified **mode** is not delivered. An easy way to create such a function is to use the method :meth:`.createLinereader`.
             The linereaderfunction can also return a list of lists if several datapoints are present in on line of the datafile.
         energies : list of floats
             Only possible to be different from *None* if **files** is a list of filenames and **angles** is `None`. Gives the energies which belong to the corresponding files (same order) as floats.

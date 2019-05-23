@@ -1,5 +1,5 @@
 ===========
-Usage
+Overview
 ===========
 
 The usual usage of PyXMRTool is to write a script which set up an instance of :class:`Experiment.ReflDataSimulator` and to minimize the value of its method :meth:`Experiment.ReflDataSimulator.getSRR` with respect to the parameter array.
@@ -15,7 +15,7 @@ In the following chapter an overview over the possibility within these steps wil
 .. toctree::
     :maxdepth: 1
     
-    usage/parameters
-    usage/samplerepresentation
-    usage/experiment
-    usage/fitters
+    overview/parameters
+    overview/samplerepresentation
+    overview/experiment
+    overview/fitters

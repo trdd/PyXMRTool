@@ -1487,8 +1487,8 @@ class MagneticFormfactor(Formfactor):
         
         Parameters
         ----------
-        m_prime : :class:Parameters.ParametrizedFunction
-        m_primeprime : :class:Parameters.ParametrizedFunction
+        m_prime : :class:`Parameters.ParametrizedFunction`
+        m_primeprime : :class:`Parameters.ParametrizedFunction`
             Real and imaginary parts of the magnetic term. Given as parametrized functions of energy. See also :doc:`/definitions/coordinate_systems`.
         theta_M : :class:`Parameters.Parameter`
         phi_M : :class:`Parameters.Parameter`

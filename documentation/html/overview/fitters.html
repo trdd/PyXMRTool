@@ -93,6 +93,42 @@
             
   <div class="section" id="fitting">
 <h1>Fitting<a class="headerlink" href="#fitting" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>To perform a fit you first need start parameters and lower and upper boundaries for the parameters. Usually, you will define them in the parameter file and read it while creating the parameter pool. Then you can get the three arrays like this:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">start</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">simu</span><span class="o">.</span><span class="n">getStartLowerUpper</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+<dt>If you want to have a look on how your simulation with the start values of the parameters compares to the data you can plot both:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">simu</span><span class="o">.</span><span class="n">plotData</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>For fitting you can use whatever routine you found to be good. E.g. in the package <em>scipy</em> there is a quite good least squares fitter. You can use it like this</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">scipy.optimize</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">least_squares</span><span class="p">(</span><span class="n">simu</span><span class="o">.</span><span class="n">getResiduals</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">u</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;trf&#39;</span><span class="p">,</span> <span class="n">x_scale</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">-</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="n">jac</span><span class="o">=</span><span class="s1">&#39;3-point&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">best</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span>
+</pre></div>
+</div>
+</dd>
+<dt><em>best</em> is then the parameter array with the fitted values. You can plot your result:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">simu</span><span class="o">.</span><span class="n">plotData</span><span class="p">(</span><span class="n">best</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>You can write the result to a file:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pp</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="s2">&quot;parameters_best.txt&quot;</span><span class="p">,</span><span class="n">best</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>In general it very difficult to find the parameter set with the lowest SSR in a large parameter space. Different start values might end up in different best fits if you use a deterministic fitter like the least squares fit.
+To tackle this problem, you can use the method <a class="reference internal" href="../modules-api/fitters.html#Fitters.Explore" title="Fitters.Explore"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fitters.Explore()</span></code></a>. It is generating a certain number of random start parameter vectors (‘seeds’) inside the given parameter space and does a least squares fit for all of them. The procedure can take
+very long time depending on the number of seeds. Each least squares fit end up in a fixpoint. The method uses a clustering algorithm to group the fixpoints. All this information is returned by <a class="reference internal" href="../modules-api/fitters.html#Fitters.Explore" title="Fitters.Explore"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fitters.Explore()</span></code></a> as a dictionary.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">out</span> <span class="o">=</span> <span class="n">Fitters</span><span class="o">.</span><span class="n">Explore</span><span class="p">(</span><span class="n">simu</span><span class="o">.</span><span class="n">getResiduals</span><span class="p">,</span><span class="n">pp</span><span class="o">.</span><span class="n">getStartLowerUpper</span><span class="p">(),</span><span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With <a class="reference internal" href="../modules-api/fitters.html#Fitters.plot_clusters_allpars" title="Fitters.plot_clusters_allpars"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fitters.plot_clusters_allpars()</span></code></a> and <a class="reference internal" href="../modules-api/fitters.html#Fitters.plot_fixpoints_allpars" title="Fitters.plot_fixpoints_allpars"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fitters.plot_fixpoints_allpars()</span></code></a> you can plot the result and get an overview over the fixpoints in the parameter space.</p>
 </div>
 
 

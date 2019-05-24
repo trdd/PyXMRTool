@@ -177,7 +177,7 @@ if __name__ == '__main__':
         return simu.getResidualsSSR(fitpararray)
 
     best, ssr = Fitters.Levenberg_Marquardt_Fitter(rescost,pp.getStartLowerUpper(), parallel_points=20 ,number_of_cores=used_cores, strict=False, control_file=None,plotfunction=simu.plotData)
-    
+
     
     
         
@@ -230,14 +230,7 @@ if __name__ == '__main__':
     matplotlib.pyplot.show()
         
 
-    
-    
-    
-    
-    
-    
-    
-    
+
     
     
     

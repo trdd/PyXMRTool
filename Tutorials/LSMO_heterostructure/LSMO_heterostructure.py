@@ -170,9 +170,9 @@ pp.setStartValues(best)
 pp.writeToFile("parameters_best.txt")
 
 
-#screening the whole parameter range
+#screening the whole parameter range (randomly placing start parameter vectors within the parameters space and perform least squares fit)
 print("... performing parameter range screening")
-#out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),100)    #comment out this line if you or reduce the number of seeds (last argument) if you don't want to wait for ever
+out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),50)    #comment out this line if you or reduce the number of seeds (last argument) if you don't want to wait for ever
 
 #dump result of Explore to a file for later use (Explore takes very long time)
 pickle.dump( out, open( "explore_out.p", "wb" ) )

@@ -166,8 +166,7 @@ print("... plotting fitted model")
 simu.plotData(best)
 #write found parameter set to a file
 print("... write found parameters to a file")
-pp.setStartValues(best)
-pp.writeToFile("parameters_best.txt")
+pp.writeToFile("parameters_best.txt",best)
 
 
 #screening the whole parameter range (randomly placing start parameter vectors within the parameters space and perform least squares fit)

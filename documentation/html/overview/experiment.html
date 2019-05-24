@@ -115,7 +115,7 @@
 </pre></div>
 </div>
 </dd>
-<dt>Read measured data from files using <em>pointmodifier</em> and <em>namerreader</em>. Read pi and sigma polarization seperately. Use the funtion <a class="reference internal" href="../modules-api/experiment.html#Experiment.ReflDataSimulator.createLinereader" title="Experiment.ReflDataSimulator.createLinereader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment.ReflDataSimulator.createLinereader</span></code></a> to create a linereader function. This function returns an datapoint (as mentioned above) from a line of the data file. Entries for the datapoint can also be <em>None</em> if the information is not present in a line of text.</dt>
+<dt>Read measured data from files using <em>pointmodifier</em> and <em>namerreader</em>. Read pi and sigma polarization seperately. Use the funtion <a class="reference internal" href="../modules-api/experiment.html#Experiment.ReflDataSimulator.createLinereader" title="Experiment.ReflDataSimulator.createLinereader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment.ReflDataSimulator.createLinereader</span></code></a> to create a linereader function. This function returns an datapoint (as mentioned above) from a line of the data file. It is also possible to read pi and sigma polarization from just one file if the lines of the file look like this: <code class="code docutils literal notranslate"><span class="pre">angle,</span> <span class="pre">rpi,</span> <span class="pre">rsigma</span></code> or <code class="code docutils literal notranslate"><span class="pre">angle_pi,</span> <span class="pre">rpi,</span> <span class="pre">angle_sigma,</span> <span class="pre">rsigma</span></code>. Entries for the datapoint can also be <em>None</em> if the information is not present in a line of text.</dt>
 <dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">simu</span><span class="o">.</span><span class="n">ReadData</span><span class="p">(</span><span class="s2">&quot;Experiment/pi&quot;</span><span class="p">,</span><span class="n">simu</span><span class="o">.</span><span class="n">createLinereader</span><span class="p">(</span><span class="n">angle_column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">rpi_column</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">pointmodifierfunction</span><span class="o">=</span><span class="n">pointmodifier</span> <span class="p">,</span> <span class="n">filenamereaderfunction</span><span class="o">=</span><span class="n">namereader</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">simu</span><span class="o">.</span><span class="n">ReadData</span><span class="p">(</span><span class="s2">&quot;Experiment/sigma&quot;</span><span class="p">,</span><span class="n">simu</span><span class="o">.</span><span class="n">createLinereader</span><span class="p">(</span><span class="n">angle_column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">rsigma_column</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">pointmodifierfunction</span><span class="o">=</span><span class="n">pointmodifier</span> <span class="p">,</span> <span class="n">filenamereaderfunction</span><span class="o">=</span><span class="n">namereader</span><span class="p">)</span>
 </pre></div>
@@ -129,7 +129,23 @@
 </pre></div>
 </div>
 </dd>
+<dt>Now, <em>ReflDataSimulator</em> is set up completely. It is now possible to get the residuals between measured data and simulated data with parameter vector <em>fitpararray</em> like this:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">residuals</span> <span class="o">=</span> <span class="n">simu</span><span class="o">.</span><span class="n">getResiduals</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Or the sum of squared residuals (SSR) like this:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ssr</span> <span class="o">=</span> <span class="n">simu</span><span class="o">.</span><span class="n">getSSR</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Or both:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">residuals</span><span class="p">,</span> <span class="n">ssr</span> <span class="o">=</span> <span class="n">simu</span><span class="o">.</span><span class="n">getResidualsSSR</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
 </dl>
+<p>These functions are used in the next step to fit the model to the data.</p>
 </div>
 
 

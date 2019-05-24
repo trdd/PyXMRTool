@@ -17,7 +17,7 @@ PyXMRTool expects angles not q_z values. So from the file we read q_z values as 
     ...     point[1]=180.0/(numpy.pi)*numpy.arcsin( point[1]*simu.hcfactor/(2*numpy.pi)/(2*point[0]))
     ...     return point
     
-Read measured data from files using *pointmodifier* and *namerreader*. Read pi and sigma polarization seperately. Use the funtion :class:`Experiment.ReflDataSimulator.createLinereader` to create a linereader function. This function returns an datapoint (as mentioned above) from a line of the data file. Entries for the datapoint can also be *None* if the information is not present in a line of text.
+Read measured data from files using *pointmodifier* and *namerreader*. Read pi and sigma polarization seperately. Use the funtion :class:`Experiment.ReflDataSimulator.createLinereader` to create a linereader function. This function returns an datapoint (as mentioned above) from a line of the data file. It is also possible to read pi and sigma polarization from just one file if the lines of the file look like this: :code:`angle, rpi, rsigma` or :code:`angle_pi, rpi, angle_sigma, rsigma`. Entries for the datapoint can also be *None* if the information is not present in a line of text.
     >>> simu.ReadData("Experiment/pi",simu.createLinereader(angle_column=0,rpi_column=1), pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
     >>> simu.ReadData("Experiment/sigma",simu.createLinereader(angle_column=0,rsigma_column=1), pointmodifierfunction=pointmodifier , filenamereaderfunction=namereader)
 
@@ -26,4 +26,17 @@ Connect model of the sample with experiment. Thereby it is also posibble to defi
     >>> m=pp.newParameter("multiplier")
     >>> reflmodifier=lambda r, fitpararray: b.getValue(fitpararray) + r * m.getValue(fitpararray)
     >>> simu.setModel(hs,exp_energyshift=pp.newParameter("exp_Eshift"), exp_angleshift=pp.newParameter("exp_thetashift"),reflmodifierfunction=reflmodifier)
+
+Now, *ReflDataSimulator* is set up completely. It is now possible to get the residuals between measured data and simulated data with parameter vector *fitpararray* like this:
+    >>> residuals = simu.getResiduals(fitpararray)
     
+Or the sum of squared residuals (SSR) like this:
+    >>> ssr = simu.getSSR(fitpararray)
+
+Or both:
+    >>> residuals, ssr = simu.getResidualsSSR(fitpararray)
+
+These functions are used in the next step to fit the model to the data.
+
+You can also plot data and simulation for a certain parameter vector like this:
+>>> simu.plotData(fitpararray)

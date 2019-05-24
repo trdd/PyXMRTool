@@ -18,3 +18,9 @@ For fitting you can use whatever routine you found to be good. E.g. in the packa
 
 You can write the result to a file:
     >>> pp.writeToFile("parameters_best.txt",best)
+
+In general it very difficult to find the parameter set with the lowest SSR in a large parameter space. Different start values might end up in different best fits if you use a deterministic fitter like the least squares fit.
+To tackle this problem, you can use the method :meth:`Fitters.Explore`. It is generating a certain number of random start parameter vectors ('seeds') inside the given parameter space and does a least squares fit for all of them. The procedure can take very long time depending on the number of seeds. Each least squares fit end up in a fixpoint. The method uses a clustering algorithm to group the fixpoints. All this information is returned by :meth:`Fitters.Explore` as a dictionary. 
+    >>> out = Fitters.Explore(simu.getResiduals,pp.getStartLowerUpper(),50)
+
+With :meth:`Fitters.plot_clusters_allpars` and :meth:`Fitters.plot_fixpoints_allpars` you can plot the result and get an overview over the fixpoints in the parameter space.

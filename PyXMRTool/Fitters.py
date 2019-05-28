@@ -55,7 +55,7 @@ import sklearn.preprocessing
 import sklearn.cluster
 import scipy.optimize
 
-from PyXMRTool import Parameters
+from . import Parameters
 
 #settings############################
 numerical_derivative_factor=1.0e-9                          #defines in principle the the magnitude of  "Delta x" for the aproximation of a derivative by "Delta y/Delta x"

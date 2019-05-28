@@ -73,8 +73,6 @@
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -92,7 +90,7 @@
 <div class="section" id="fitting">
 <span id="hints-fitting-label"></span><h2>Fitting<a class="headerlink" href="#fitting" title="Permalink to this headline">¶</a></h2>
 <p>The fitting algorithms in <a class="reference internal" href="modules-api/fitters.html#module-Fitters" title="Fitters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Fitters</span></code></a> are not well develeped yet. It is better to use existing optimizers.</p>
-<p>One option which delivers good performance is the least squares optimizer of scipy (<em>scipy.optimize.least_squares</em>) used in the following way (where <em>simu</em> is an instance of <a class="reference internal" href="modules-api/experiment.html#Experiment.ReflDataSimulator" title="Experiment.ReflDataSimulator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment.ReflDataSimulator</span></code></a> and <em>pp</em> is an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameterpool</span></code>):</p>
+<p>One option which delivers good performance is the least squares optimizer of scipy (<em>scipy.optimize.least_squares</em>) used in the following way (where <em>simu</em> is an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment.ReflDataSimulator</span></code> and <em>pp</em> is an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.Parameterpool</span></code>):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span><span class="o">=</span><span class="n">pp</span><span class="o">.</span><span class="n">getStartLowerUpper</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">res</span><span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">least_squares</span><span class="p">(</span><span class="n">simu</span><span class="o">.</span><span class="n">getResiduals</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">u</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;trf&#39;</span><span class="p">,</span> <span class="n">x_scale</span><span class="o">=</span><span class="n">u</span><span class="o">-</span><span class="n">l</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="s1">&#39;3-point&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">best</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">x</span>
@@ -128,7 +126,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Yannic Utz.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
     </div>
   </body>
 </html>

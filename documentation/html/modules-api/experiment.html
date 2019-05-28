@@ -77,8 +77,6 @@
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -98,7 +96,8 @@ It contains currently only the class <a class="reference internal" href="#Experi
 <dl class="class">
 <dt id="Experiment.ReflDataSimulator">
 <em class="property">class </em><code class="descclassname">Experiment.</code><code class="descname">ReflDataSimulator</code><span class="sig-paren">(</span><em>mode</em>, <em>length_scale=1e-09</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Experiment.html#ReflDataSimulator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Experiment.ReflDataSimulator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver the sum of squared residuals (<a class="reference internal" href="#Experiment.ReflDataSimulator.getSSR" title="Experiment.ReflDataSimulator.getSSR"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getSSR()</span></code></a>) and the residuals themselfs (<a class="reference internal" href="#Experiment.ReflDataSimulator.getResidualsSSR" title="Experiment.ReflDataSimulator.getResidualsSSR"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getResidualsSSR()</span></code></a>), which both describe the difference between data and simulation at a certain parameter set. It can be in different modes which determins which data or which derived data is stored and simulated.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Holds the experimental data, simulates it according to the settings and fitparameters and can directly deliver the sum of squared residuals (<a class="reference internal" href="#Experiment.ReflDataSimulator.getSSR" title="Experiment.ReflDataSimulator.getSSR"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getSSR()</span></code></a>) and the residuals themselfs (<a class="reference internal" href="#Experiment.ReflDataSimulator.getResidualsSSR" title="Experiment.ReflDataSimulator.getResidualsSSR"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getResidualsSSR()</span></code></a>), which both describe the difference between data and simulation at a certain parameter set. It can be in different modes which determins which data or which derived data is stored and simulated.</p>
 <dl class="method">
 <dt id="Experiment.ReflDataSimulator.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>mode</em>, <em>length_scale=1e-09</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Experiment.html#ReflDataSimulator.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Experiment.ReflDataSimulator.__init__" title="Permalink to this definition">¶</a></dt>
@@ -160,8 +159,7 @@ The linereaderfunction can also return a list of lists if several datapoints are
 <code class="descname">setData</code><span class="sig-paren">(</span><em>datapoints</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Experiment.html#ReflDataSimulator.setData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Experiment.ReflDataSimulator.setData" title="Permalink to this definition">¶</a></dt>
 <dd><p>Store the data given with <strong>datapoints</strong> corresponding to the <strong>mode</strong> specified with instanciation (see <a class="reference internal" href="#Experiment.ReflDataSimulator.__init__" title="Experiment.ReflDataSimulator.__init__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ReflDataSimulator.__init__()</span></code></a>) instead of reading the data from data files (see <a class="reference internal" href="#Experiment.ReflDataSimulator.ReadData" title="Experiment.ReflDataSimulator.ReadData"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ReadData()</span></code></a>).</p>
 <dl class="docutils">
-<dt><strong>datapoints</strong> has to be a list/array of datapoints of the following form:</dt>
-<dd>[[energy1,angle1,rsigma1,rpi1,rleft1,rright1,xmcd1,total1], …, [energyK,angleK,rsigmaK,rpiK,rleftK,rrightK,xmcdK,totalK]</dd>
+<dt><strong>datapoints</strong> has to be a list/array of datapoints of the following form:</dt><dd>[[energy1,angle1,rsigma1,rpi1,rleft1,rright1,xmcd1,total1], …, [energyK,angleK,rsigmaK,rpiK,rleftK,rrightK,xmcdK,totalK]</dd>
 </dl>
 <p>Each datapoint corresponds to a measurement of the reflectivity at a certain angle and energy. Entries are alowed to hold <em>None</em> if the corresponding entry is not needed for current <strong>mode</strong>.</p>
 <p>The function allows for multiple data reads. Each execution adds new data to the already stored one.</p>
@@ -169,7 +167,7 @@ The linereaderfunction can also return a list of lists if several datapoints are
 
 <dl class="method">
 <dt id="Experiment.ReflDataSimulator.setModel">
-<code class="descname">setModel</code><span class="sig-paren">(</span><em>heterostructure</em>, <em>exp_energyshift=&lt;PyXMRTool.Parameters.Parameter object&gt;</em>, <em>exp_angleshift=&lt;PyXMRTool.Parameters.Parameter object&gt;</em>, <em>reflmodifierfunction=None</em>, <em>MultipleScattering=True</em>, <em>MagneticCutoff=1e-50</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Experiment.html#ReflDataSimulator.setModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Experiment.ReflDataSimulator.setModel" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setModel</code><span class="sig-paren">(</span><em>heterostructure</em>, <em>exp_energyshift=&lt;Parameters.Parameter object&gt;</em>, <em>exp_angleshift=&lt;Parameters.Parameter object&gt;</em>, <em>reflmodifierfunction=None</em>, <em>MultipleScattering=True</em>, <em>MagneticCutoff=1e-50</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Experiment.html#ReflDataSimulator.setModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Experiment.ReflDataSimulator.setModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set up the model for the simulation of the reflectivity data.</p>
 <p>The simulation of the reflectivities is in prinicple done by using the information about the sample stored in <strong>heterostructure</strong> (of type <a class="reference internal" href="samplerepresentation.html#SampleRepresentation.Heterostructure" title="SampleRepresentation.Heterostructure"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleRepresentation.Heterostructure</span></code></a>). But to connect the simulation with the experiment it is also important to take into account systematic errors in energy and angles and to be able to adjust the simulated reflectivities to measured ones with offset and scaling.</p>
 <p>A first step concerns the independent variables energy and angles. We assume, the experiment does not measure the true quantities. Instead they measure shifted quantities: <img class="math" src="../_images/math/2f955ecd962ca19117a755b7bf8f3967ba8a39be.png" alt="E_{exp}=E_{true}+\mathrm{exp\_energyshift}"/> and <img class="math" src="../_images/math/657f90ed5919c5c772df2ca9c27371f52827bb1e.png" alt="\theta_{exp}=\theta_{true}+\mathrm{exp\_angleshift}"/>.
@@ -358,7 +356,7 @@ BEWARE: It is <em>h</em> times <em>c</em> not <em>h_bar</em> times <em>c</em>.</
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Yannic Utz.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
     </div>
   </body>
 </html>

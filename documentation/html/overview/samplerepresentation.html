@@ -77,8 +77,6 @@
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -123,31 +121,26 @@ Each layer is represented by an layer object which is pluged into the heterostru
 <p>Here a short example shall be given. For more elaborate examples have a look in the folder <em>Tutorials</em>.</p>
 <p>We want to create a model for a sample with two layers: one substrate with an energy-independent susceptibility and a layer of C<sub>2</sub>O.</p>
 <dl class="docutils">
-<dt>As always start with the creation of the parameter pool:</dt>
-<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">PyXMRTool</span> <span class="k">import</span> <span class="n">Parameters</span>
+<dt>As always start with the creation of the parameter pool:</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">PyXMRTool</span> <span class="k">import</span> <span class="n">Parameters</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">PyXMRTool</span> <span class="k">import</span> <span class="n">SampleRepresentation</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pp</span><span class="o">=</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">()</span>
 </pre></div>
 </div>
 </dd>
-<dt>Then create the heterostructure with to layers:</dt>
-<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">hs</span><span class="o">=</span><span class="n">SampleRepresentation</span><span class="o">.</span><span class="n">Heterostructure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<dt>Then create the heterostructure with to layers:</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">hs</span><span class="o">=</span><span class="n">SampleRepresentation</span><span class="o">.</span><span class="n">Heterostructure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd>
-<dt>Create the substrate with an isotropic (same value on each diogonal entry) energy-indepedent suszeptibility, infinite thickness (0 equals infinity here), and a fitable roughness.</dt>
-<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">substrate</span> <span class="o">=</span> <span class="n">SampleRepresentation</span><span class="o">.</span><span class="n">LayerObject</span><span class="p">([</span><span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;substrate_chi&#39;</span><span class="p">)],</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;substrate_sigma&#39;</span><span class="p">))</span>
+<dt>Create the substrate with an isotropic (same value on each diogonal entry) energy-indepedent suszeptibility, infinite thickness (0 equals infinity here), and a fitable roughness.</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">substrate</span> <span class="o">=</span> <span class="n">SampleRepresentation</span><span class="o">.</span><span class="n">LayerObject</span><span class="p">([</span><span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;substrate_chi&#39;</span><span class="p">)],</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;substrate_sigma&#39;</span><span class="p">))</span>
 </pre></div>
 </div>
 </dd>
-<dt>Create the layer of C<sub>2</sub>O. Densities are here number densities. The layer has fitable thickness and sigma.</dt>
-<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">number_density_C2O</span> <span class="o">=</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="mf">0.042</span><span class="p">)</span>   <span class="c1">#in mol/cm^3</span>
+<dt>Create the layer of C<sub>2</sub>O. Densities are here number densities. The layer has fitable thickness and sigma.</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">number_density_C2O</span> <span class="o">=</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="mf">0.042</span><span class="p">)</span>   <span class="c1">#in mol/cm^3</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">layer1</span> <span class="o">=</span> <span class="n">SampleRepresentation</span><span class="o">.</span><span class="n">AtomLayerObject</span><span class="p">(</span> <span class="p">{</span> <span class="s2">&quot;C&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">number_density_C2O</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span> <span class="p">:</span> <span class="n">number_density_C2O</span><span class="p">},</span> <span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;layer_thickness&#39;</span><span class="p">),</span> <span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;layer_sigma&#39;</span><span class="p">))</span>
 </pre></div>
 </div>
 </dd>
-<dt>Plug the layers into the substrate object.</dt>
-<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">hs</span><span class="o">.</span><span class="n">setLayer</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">substrate</span><span class="p">)</span>
+<dt>Plug the layers into the substrate object.</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">hs</span><span class="o">.</span><span class="n">setLayer</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">substrate</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">hs</span><span class="o">.</span><span class="n">setLayer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">layer1</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -183,7 +176,7 @@ Each layer is represented by an layer object which is pluged into the heterostru
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Yannic Utz.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
     </div>
   </body>
 </html>

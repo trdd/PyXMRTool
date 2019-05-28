@@ -77,8 +77,6 @@
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -101,14 +99,14 @@ The values of both are obtained in the same way with <strong>getValue</strong>.<
 <p>Derived parameters which are arbitrary functions of other parameters can be defined with instance of <a class="reference internal" href="#Parameters.DerivedParameter" title="Parameters.DerivedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedParameter</span></code></a>.</p>
 <p>All parameter classes support also the creation of simple derived paramters by arithmetic operations.</p>
 <p>Functions of one variable which are parametrized can be defined with instances of :class:` ParametrizedFunction`. It is not derived from the class <a class="reference internal" href="#Parameters.Parameter" title="Parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>.</p>
-<div class="highlight-pycon notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">PyXMRTool</span> <span class="kn">import</span> <span class="n">Parameters</span>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">PyXMRTool</span> <span class="k">import</span> <span class="n">Parameters</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">math</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">const</span><span class="o">=</span><span class="n">Parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="mf">30.7</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">const</span><span class="o">.</span><span class="n">getValue</span><span class="p">()</span>
 <span class="go">30.7</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pp</span><span class="o">=</span><span class="n">Parameters</span><span class="o">.</span><span class="n">ParameterPool</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">par_real</span><span class="o">=</span><span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;par_real&#39;</span><span class="p">,</span><span class="n">start_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">lower_lim</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span><span class="n">upper_lim</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">par_complex</span><span class="o">=</span><span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;par_complex&#39;</span><span class="p">,</span><span class="n">start_val</span><span class="o">=</span><span class="mi">0</span><span class="o">+</span><span class="mi">0j</span><span class="p">,</span><span class="n">lower_lim</span><span class="o">=-</span><span class="mi">10</span><span class="o">-</span><span class="mi">1j</span><span class="p">,</span><span class="n">upper_lim</span><span class="o">=</span><span class="mf">100.3</span><span class="o">+</span><span class="mi">20j</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">par_complex</span><span class="o">=</span><span class="n">pp</span><span class="o">.</span><span class="n">newParameter</span><span class="p">(</span><span class="s1">&#39;par_complex&#39;</span><span class="p">,</span><span class="n">start_val</span><span class="o">=</span><span class="mi">0</span><span class="o">+</span><span class="mi">0</span><span class="n">j</span><span class="p">,</span><span class="n">lower_lim</span><span class="o">=-</span><span class="mi">10</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span><span class="n">upper_lim</span><span class="o">=</span><span class="mf">100.3</span><span class="o">+</span><span class="mi">20</span><span class="n">j</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fitpararray</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">par_real</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
 <span class="go">1</span>
@@ -122,21 +120,22 @@ The values of both are obtained in the same way with <strong>getValue</strong>.<
 <span class="gp">&gt;&gt;&gt; </span><span class="n">derived_par</span> <span class="o">=</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">DerivedParameter</span><span class="p">(</span><span class="n">sinus</span><span class="p">,</span> <span class="n">const</span><span class="p">,</span> <span class="n">par_real</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">derived_par</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
 <span class="go">25.833159233602423</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">((</span><span class="n">derived_par</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">((</span><span class="n">derived_par</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">))</span>
 <span class="go">667.352115989</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">growth</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">rate</span><span class="p">):</span> <span class="k">return</span> <span class="n">A</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">t</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">rate</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">par_func_growth</span> <span class="o">=</span> <span class="n">Parameters</span><span class="o">.</span><span class="n">ParametrizedFunction</span><span class="p">(</span><span class="n">growth</span><span class="p">,</span> <span class="n">const</span><span class="p">,</span> <span class="n">par_real</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">par_func_growth</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="mf">5.3</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">par_func_growth</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="mf">5.3</span><span class="p">,</span><span class="n">fitpararray</span><span class="p">))</span>
 <span class="go">6150.34006623</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">f_growth</span> <span class="o">=</span> <span class="n">par_func_growth</span><span class="o">.</span><span class="n">getFunction</span><span class="p">(</span><span class="n">fitpararray</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">f_growth</span><span class="p">(</span><span class="mf">5.3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">f_growth</span><span class="p">(</span><span class="mf">5.3</span><span class="p">))</span>
 <span class="go">6150.34006623</span>
 </pre></div>
 </div>
 <dl class="class">
 <dt id="Parameters.Parameter">
 <em class="property">class </em><code class="descclassname">Parameters.</code><code class="descname">Parameter</code><span class="sig-paren">(</span><em>value=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Parameters.html#Parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Parameters.Parameter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for parameters. It contains a (complex) value which is set as instantiation and cannot be changed.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for parameters. It contains a (complex) value which is set as instantiation and cannot be changed.</p>
 <p>This class (and all derived classes) supports creation of dependent parameters by arithmetic operations.</p>
 <dl class="method">
 <dt id="Parameters.Parameter.__init__">
@@ -282,7 +281,8 @@ Usually this property should not be changed by you (the user) but by the instanc
 <dl class="class">
 <dt id="Parameters.ParameterPool">
 <em class="property">class </em><code class="descclassname">Parameters.</code><code class="descname">ParameterPool</code><span class="sig-paren">(</span><em>parfilename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Parameters.html#ParameterPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Parameters.ParameterPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>Collects a pool of Parameter objects and connects them with a parameter file.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Collects a pool of Parameter objects and connects them with a parameter file.</p>
 <dl class="method">
 <dt id="Parameters.ParameterPool.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>parfilename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Parameters.html#ParameterPool.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Parameters.ParameterPool.__init__" title="Permalink to this definition">¶</a></dt>
@@ -377,7 +377,8 @@ If <strong>fitpararray</strong> is given, these values are written as start valu
 <dl class="class">
 <dt id="Parameters.ParametrizedFunction">
 <em class="property">class </em><code class="descclassname">Parameters.</code><code class="descname">ParametrizedFunction</code><span class="sig-paren">(</span><em>f</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Parameters.html#ParametrizedFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Parameters.ParametrizedFunction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Object of this class can be used for an easy implementation of a function of one argument which should be parametrized by fitparameters.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Object of this class can be used for an easy implementation of a function of one argument which should be parametrized by fitparameters.</p>
 <dl class="method">
 <dt id="Parameters.ParametrizedFunction.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>f</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Parameters.html#ParametrizedFunction.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Parameters.ParametrizedFunction.__init__" title="Permalink to this definition">¶</a></dt>
@@ -453,7 +454,7 @@ If <strong>fitpararray</strong> is given, these values are written as start valu
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Yannic Utz.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
     </div>
   </body>
 </html>

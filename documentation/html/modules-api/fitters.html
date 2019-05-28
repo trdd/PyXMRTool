@@ -77,8 +77,6 @@
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -115,8 +113,7 @@ More information can be found in the PhD thesis of Martin Zwiebler.</p>
 <li><strong>parameter_settings</strong> (<em>tuple of lists/arrays of floats</em>) – Sets start values, lower and upper limit of the parameters as <em>(startfitparameters, lower_limits, upper_limits )</em>, where each of the entries is an list/array of values of same length. The <em>startfitparameters</em> are not used (can be <em>None</em>) and just necessaray for compatibility.</li>
 <li><strong>number_of_seeds</strong> (<em>int</em>) – number of random seeds which should be generated</li>
 <li><strong>verbose</strong> (<em>{0</em><em>, </em><em>1</em><em>, </em><em>2}</em>) – <dl class="docutils">
-<dt>determines the level of the optimizer’s algorithm’s verbosity:</dt>
-<dd>0 : work silently.
+<dt>determines the level of the optimizer’s algorithm’s verbosity:</dt><dd>0 : work silently.
 1 : display a termination report for each seed.
 2 (default) : display progress during iterations.</dd>
 </dl>
@@ -333,7 +330,7 @@ Example for the wrapping:</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Yannic Utz.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
     </div>
   </body>
 </html>

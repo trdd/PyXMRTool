@@ -77,8 +77,6 @@
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -115,7 +113,8 @@
 <dl class="class">
 <dt id="SampleRepresentation.Heterostructure">
 <em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">Heterostructure</code><span class="sig-paren">(</span><em>number_of_layers=0</em>, <em>multilayer_structure=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Heterostructure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Heterostructure" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a heterostructure as a stack of instances of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> or of derived classes.
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a heterostructure as a stack of instances of <a class="reference internal" href="#SampleRepresentation.LayerObject" title="SampleRepresentation.LayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerObject</span></code></a> or of derived classes.
 Its main pupose is to model the sample in a very flexibel way and to get the list of layers (Layer type of the <code class="xref py py-mod docutils literal notranslate"><span class="pre">Pythonreflectivity</span></code> package from Martin Zwiebler) with defined susceptibilities at certain energies.</p>
 <p>In contrast to Martin’s list of Layer-type objects, this class contains all information also for different energies.</p>
 <dl class="method">
@@ -196,7 +195,8 @@ BEWARE: The instance of <a class="reference internal" href="#SampleRepresentatio
 <dl class="class">
 <dt id="SampleRepresentation.LayerObject">
 <em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">LayerObject</code><span class="sig-paren">(</span><em>chitensor=None</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for all layer objects as the common interface. Speciallized implementation should inherit from this class.</p>
 <dl class="method">
 <dt id="SampleRepresentation.LayerObject.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>chitensor=None</em>, <em>d=None</em>, <em>sigma=None</em>, <em>magdir='0'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#LayerObject.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.LayerObject.__init__" title="Permalink to this definition">¶</a></dt>
@@ -443,14 +443,16 @@ This can be used for an easy registration of atoms with just their tabulated for
 <dl class="class">
 <dt id="SampleRepresentation.Formfactor">
 <em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">Formfactor</code><a class="reference internal" href="../_modules/SampleRepresentation.html#Formfactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Formfactor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class to deal with energy-dependent atomic form-factors.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class to deal with energy-dependent atomic form-factors.</p>
 <p>This base class is an abstract class an cannot be used directly.
 The user should derive from this class if he wants to build his own models.</p>
 <p>See <a class="reference internal" href="../definitions/formfactors.html"><span class="doc">Formfactor and Susceptibility</span></a> for sign conventions.</p>
 <dl class="method">
 <dt id="SampleRepresentation.Formfactor.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#Formfactor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.Formfactor.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="SampleRepresentation.Formfactor.getFF">
@@ -865,7 +867,8 @@ BEWARE: The sign convention differs from the one used within PyXMRTool. See also
 <dl class="class">
 <dt id="SampleRepresentation.DensityProfile">
 <em class="property">class </em><code class="descclassname">SampleRepresentation.</code><code class="descname">DensityProfile</code><span class="sig-paren">(</span><em>start_layer_idx</em>, <em>end_layer_idx</em>, <em>layer_thickness</em>, <em>profile_function</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/SampleRepresentation.html#DensityProfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SampleRepresentation.DensityProfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>This class can be used to generate arbitrary density profiles within a stack of several <a class="reference internal" href="#SampleRepresentation.AtomLayerObject" title="SampleRepresentation.AtomLayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">AtomLayerObject</span></code></a> of equal thicknesses.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class can be used to generate arbitrary density profiles within a stack of several <a class="reference internal" href="#SampleRepresentation.AtomLayerObject" title="SampleRepresentation.AtomLayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">AtomLayerObject</span></code></a> of equal thicknesses.</p>
 <p>The idea is to collect all information regarding the density profile in an object of this class and to generate entries for the <em>densitydict</em> of the single <a class="reference internal" href="#SampleRepresentation.AtomLayerObject" title="SampleRepresentation.AtomLayerObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">AtomLayerObject</span></code></a> instances from it.
 This means that the class <a class="reference internal" href="#SampleRepresentation.DensityProfile" title="SampleRepresentation.DensityProfile"><code class="xref py py-class docutils literal notranslate"><span class="pre">DensityProfile</span></code></a> does not really talk to the layers, but is only a higher level convinience class to set up the interconnected densities of the atoms within the layers as instances of <a class="reference internal" href="parameters.html#Parameters.DerivedParameter" title="Parameters.DerivedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters.DerivedParameter</span></code></a>.</p>
 <dl class="method">
@@ -991,7 +994,7 @@ You can define which atoms you want to plot or in which order. Give <strong>atom
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Yannic Utz.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
     </div>
   </body>
 </html>

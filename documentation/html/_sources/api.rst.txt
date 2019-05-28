@@ -12,4 +12,4 @@ API
    modules-api/fitters
    
    
-Hint for API documentation: Inherited members are not repeated in the documentaion of derived classes.
+Hint for API documentation: Inherited members are not repeated in the documentation of derived classes.

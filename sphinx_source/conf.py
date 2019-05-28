@@ -197,4 +197,4 @@ todo_include_todos = True
 
 # -- Mocking Imports: needed to avoid problems regarding numpy and other imports with Readthedocs
 #    (Mocking means: do not import the listed packaged during compilation of the documentation)
-autodoc_mock_imports = ['numpy','Pythonreflectivity','scipy','scipy','matplotlib','joblib','mpl_toolkits','sklearn']
+autodoc_mock_imports = ['numpy','Pythonreflectivity','scipy','scipy','matplotlib','joblib','mpl_toolkits','sklearn','PyXMRTool']

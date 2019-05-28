@@ -72,7 +72,7 @@ from matplotlib import pyplot as plt
 import inspect
 import Pythonreflectivity
 
-from . import Parameters
+from PyXMRTool import Parameters
 
 # -----------------------------------------------------------------------------------------------------------------------------
 # global variables for setup

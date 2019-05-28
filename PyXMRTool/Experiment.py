@@ -44,8 +44,8 @@ import matplotlib.patches as mpatches
 
 import Pythonreflectivity
 
-from . import SampleRepresentation
-from . import Parameters
+from PyXMRTool import SampleRepresentation
+from PyXMRTool import Parameters
 
 
 

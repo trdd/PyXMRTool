@@ -4,8 +4,8 @@
 6.48734155219             1                         6.2                       6.8                       mdensity_LSMO            
 4.92233020147             1                         4.8                       5.2                       mdensity_SrTiO3_cap      
 0.887158623322            1                         0                         3                         mdensity_C               
-0.66                      0                         0.55                      0.75                      Mn_scaling               
-0                         1                         -10                       10                        Mn_energyshift           
+1                         0                         0.5                       1.5                       Mn_scaling               
+0                         0                         -10                       10                        Mn_energyshift           
 6.27374946051             0                         0                         10                        substrate_roughness      
 55.0704959239             0                         54                        55.5                      SrRuO3_thickness         
 0.00439591855994          0                         0                         2                         SrRuO3_roughness         
@@ -15,7 +15,7 @@
 0.999987124002            0                         0                         1                         cap_roughness            
 4.57082276167             0                         0                         10                        contamination_thickness  
 0.00627520906827          0                         0                         3                         contamination_roughness  
-0.216378                  1                         -1                        1                         exp_Eshift               
+0                         0                         -1                        1                         exp_Eshift               
 0                         0                         -1                        1                         exp_thetashift           
 0                         0                         0                         100000                    background               
 1                         0                         0.0001                    100000                    multiplier               

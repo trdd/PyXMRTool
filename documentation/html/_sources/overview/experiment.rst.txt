@@ -39,4 +39,4 @@ Or both:
 These functions are used in the next step to fit the model to the data.
 
 You can also plot data and simulation for a certain parameter vector like this:
->>> simu.plotData(fitpararray)
+    >>> simu.plotData(fitpararray)

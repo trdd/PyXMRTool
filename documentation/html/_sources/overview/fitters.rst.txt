@@ -12,7 +12,7 @@ For fitting you can use whatever routine you found to be good. E.g. in the packa
     >>> import scipy.optimize
     >>> result = scipy.optimize.least_squares(simu.getResiduals, start, bounds=(l,u), method='trf', x_scale=numpy.array(u)-numpy.array(l), jac='3-point',verbose=2)
     >>> best = result.x
-
+    
 *best* is then the parameter array with the fitted values. You can plot your result:
     >>> simu.plotData(best)
 

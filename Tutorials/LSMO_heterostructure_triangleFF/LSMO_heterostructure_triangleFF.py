@@ -99,6 +99,10 @@ Mn_XAS_FF=SampleRepresentation.FFfromScaledAbsorption('Mn', E1=600,E2=700,E3=710
 def ff_tensor(energy, *coeffs):
     """
     Model funtion for the formfactor tensor. Sum of ff_real and ff_imag on the diagonal elements.
+    
+    The imaginary part is sum of triangles with coefficients and base energies ("places where the triangles sit at").
+    **base_energies** have to be sorted. **coeffs** is a list with same length as base energies and determines the hight of every triangle.
+    (A simpler version of the procedure in Stone et al., PRB 86,024102 (2012) and Kuzmenko, Rev. Sci. Instrum. 76,083108.)
     """
     coeffs=numpy.array(coeffs)
     #helper function for real part
@@ -133,16 +137,18 @@ ff_tensor_parfunc = Parameters.ParametrizedFunction(ff_tensor,*coeff_pars_list)
 #generate Formfactor object with parametrized funtion
 Mn_triangles_FF = SampleRepresentation.FFfromFitableModel(ff_tensor_parfunc, min(base_energies), max(base_energies))
 
-#generate parameter values for coeffients
-start_triangles = [Mn_XAS_FF.getFF(energy, start)[0].imag for energy in base_energies]
-lower_triangles = [0 for energy in base_energies]
-maximum = max(start_triangles)
-upper_triangles=[2*maximum for energy in base_energies]
+#generate parameter start values and limits for coeffients
+maximum=0
+for coeff_par,energy in zip(coeff_pars_list,base_energies):
+    coeff_par.start_val= Mn_XAS_FF.getFF(energy, start)[0].imag         #set start values on the XAS measurement
+    coeff_par.lower_lim = 0                                             #lower limit is just 0
+    if coeff_par.start_val > maximum:                                   #find maximum of start values for the upper limit
+        maximum=coeff_par.start_val
+for coeff_par,energy in zip(coeff_pars_list,base_energies):
+    coeff_par.upper_lim=2*maximum                                       #upper limit is 2 times maximum of start values
 
-#concetenate parameter arrays
-start=start+start_triangles
-lower=lower+lower_triangles
-upper=upper+upper_triangles
+#get new complete set of start values and limits for all parameters
+start, lower, upper = pp.getStartLowerUpper()
 
 #--------------------------------------------------------------------------
 
